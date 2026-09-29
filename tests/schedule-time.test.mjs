@@ -60,7 +60,9 @@ test('school clock and week dates stay on Kyiv calendar around midnight and DST'
 });
 
 test('current lesson is updated in place across start/end without a reload or repeated grid render', async () => {
-    let now = new Date(2026, 8, 24, 8, 59).getTime();
+    // ClockDate represents an actual instant; schoolNow converts it to Kyiv wall time.
+    // Explicit September Kyiv offset keeps this fixture independent of the runner's TZ.
+    let now = Date.parse('2026-09-24T08:59:00+03:00');
     class ClockDate extends Date { constructor(...args) { super(...(args.length ? args : [now])); } static now() { return now; } }
     function row(index) {
         const classes = new Set(); const badge = { hidden: true };
@@ -79,14 +81,14 @@ test('current lesson is updated in place across start/end without a reload or re
     vm.runInContext(`schedule = { 4: [{common:{s:'Перша'}}, {common:{s:'Друга'}}] }; currentWeekType = getWeekType(); updateLessonHighlights(); updateNextLesson();`, context);
     assert.equal(rows[0].badge.hidden, true);
     assert.match(nodes.get('nextLessonTitle').textContent, /Перша/);
-    now = new Date(2026, 8, 24, 9).getTime(); vm.runInContext('updateLessonHighlights(); updateNextLesson();', context);
+    now = Date.parse('2026-09-24T09:00:00+03:00'); vm.runInContext('updateLessonHighlights(); updateNextLesson();', context);
     assert.equal(rows[0].classList.contains('is-current-lesson'), true);
     assert.equal(rows[0].attrs['aria-current'], 'true');
     assert.equal(rows[0].badge.hidden, false);
     assert.match(nodes.get('nextLessonTitle').textContent, /Друга/);
-    now = new Date(2026, 8, 24, 10, 20).getTime(); vm.runInContext('updateLessonHighlights();', context);
+    now = Date.parse('2026-09-24T10:20:00+03:00'); vm.runInContext('updateLessonHighlights();', context);
     assert.equal(rows[0].classList.contains('is-current-lesson'), false);
     assert.equal(rows[0].badge.hidden, true);
-    now = new Date(2026, 8, 24, 10, 30).getTime(); vm.runInContext('updateLessonHighlights();', context);
+    now = Date.parse('2026-09-24T10:30:00+03:00'); vm.runInContext('updateLessonHighlights();', context);
     assert.equal(rows[1].classList.contains('is-current-lesson'), true);
 });
