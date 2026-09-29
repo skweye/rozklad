@@ -52,10 +52,6 @@
         questionListInput: document.getElementById("questionListInput"),
         btnImportQuestionList: document.getElementById("btnImportQuestionList"),
         conclusionText: document.getElementById("conclusionText"),
-        conclusionActions: document.getElementById("conclusionActions"),
-        conclusionSkills: document.getElementById("conclusionSkills"),
-        conclusionOutcome: document.getElementById("conclusionOutcome"),
-        conclusionReason: document.getElementById("conclusionReason"),
         btnAddCustomTask: document.getElementById("btnAddCustomTask"),
         btnAutoConclusion: document.getElementById("btnAutoConclusion"),
         btnOpenPreview: document.getElementById("btnOpenPreview"),
@@ -244,7 +240,7 @@
         state.questions = [];
         state.conclusionText = "";
         dom.conclusionText.value = state.conclusionText;
-        for (const key of conclusionFields) { state[key] = ""; dom[key].value = ""; }
+        for (const key of conclusionFields) state[key] = "";
 
         renderTasks();
         renderQuestions();
@@ -423,7 +419,7 @@
             .replace(/^мета(?:\s+(?:лабораторної\s+)?роботи)?\s*[:—–-]\s*/iu, "")
             .replace(/\r\n?/g, "\n").split(/\n+/)
             .map(line => line.trim().replace(/^(?:[-•]|\d+[.)])\s+/u, "").replace(/[.;\s]+$/u, ""))
-            .filter(Boolean).join("; ");
+            .filter(Boolean).join("; ").replace(/\s+/gu, " ");
         if (!goal) return "";
         const forms = {
             "навчитися": "набуто вміння", "навчитись": "набуто вміння",
@@ -439,57 +435,43 @@
         const starts = new RegExp(`(^|[;.!?]\\s+|,\\s+|\\s+(?:і|й|та|а також)\\s+)(${Object.keys(forms).join("|")})(?![\\p{L}\\p{N}_])`, "giu");
         const text = goal.replace(starts, (_, prefix, verb) => `${prefix}${forms[verb.toLocaleLowerCase("uk-UA")]}`);
         const beginsWithResult = Object.values(forms).some(form => text.startsWith(form));
-        return beginsWithResult
-            ? `У ході виконання лабораторної роботи було ${text}.`
-            : `У ході виконання лабораторної роботи було опрацьовано тему: «${goal}».`;
+        const introduction = beginsWithResult
+            ? `у ході виконання лабораторної роботи було ${text}.`
+            : `у ході виконання лабораторної роботи було опрацьовано тему: «${goal}».`;
+        const programming = /програм(?:уван|и|у)|програмн[\p{L}]*\s+код|алгоритм|структур[\p{L}\s]*даних|[сc]\+\+|python|javascript/iu.test(goal);
+        const skills = programming ? "роботи з програмним кодом" : "виконання завдань за темою роботи";
+        return `${introduction} Під час роботи було опрацьовано теоретичні відомості та практичні завдання. У результаті виконання завдань отримано практичні навички ${skills}. Мету лабораторної роботи досягнуто.`;
     }
 
+    // Retain these values in existing drafts, although the extra form is no longer required.
     const conclusionFields = ["conclusionActions", "conclusionSkills", "conclusionOutcome", "conclusionReason"];
 
     function conclusionDetails(data) {
         for (const key of conclusionFields) state[key] = typeof data?.[key] === "string" ? data[key] : "";
         if (!["achieved", "partial", "not-achieved"].includes(state.conclusionOutcome)) state.conclusionOutcome = "";
-        for (const key of conclusionFields) dom[key].value = state[key];
     }
 
-    function composeConclusion({ goal, actions, skills, outcome, reason }) {
-        const clean = value => String(value || "").trim().replace(/\s+/gu, " ").replace(/[.;\s]+$/u, "");
-        const learned = conclusionFromGoal(goal).replace(/^У ході виконання лабораторної роботи/u, "Під час роботи");
-        if (!learned || !clean(actions) || !clean(skills) || !["achieved", "partial", "not-achieved"].includes(outcome)) return "";
-        if (outcome !== "achieved" && !clean(reason)) return "";
-        const ending = outcome === "achieved" ? "Мету лабораторної роботи досягнуто."
-            : `Мету лабораторної роботи ${outcome === "partial" ? "досягнуто частково" : "не досягнуто"}. Причина: ${clean(reason)}.`;
-        return `У ході виконання лабораторної роботи виконано такі дії: ${clean(actions)}. ${learned} У результаті виконання завдань отримано практичні навички: ${clean(skills)}. ${ending}`;
+    function syncConclusionFromGoal(previousGoal = state.labGoal) {
+        const current = dom.conclusionText.value.trim();
+        // Only an empty field or our unchanged generated text follows subsequent goal edits.
+        if (current && current !== conclusionFromGoal(previousGoal)) return;
+        const text = conclusionFromGoal(state.labGoal);
+        state.conclusionText = text;
+        dom.conclusionText.value = text;
+        resizeTextArea(dom.conclusionText);
     }
 
     async function fillConclusionFromGoal() {
-        if (!conclusionFromGoal(dom.labGoal.value)) {
+        const formulated = conclusionFromGoal(dom.labGoal.value);
+        if (!formulated) {
             showAppNotice("Спочатку заповніть мету роботи.", "info");
             dom.labGoal.focus();
             return;
         }
-        // Only completed-work steps are used; code, assignment headings and image captions
-        // are not evidence of actions or acquired skills.
-        const steps = (state.tasks || []).filter(block => block.kind === "step" && block.text?.trim())
-            .map(block => block.text.trim().replace(/[.;\s]+$/u, "")).join("; ");
-        const actions = dom.conclusionActions.value.trim() || steps;
-        const skills = dom.conclusionSkills.value.trim();
-        const outcome = dom.conclusionOutcome.value;
-        const reason = dom.conclusionReason.value.trim();
-        const missing = !actions ? ["conclusionActions", "Коротко вкажіть виконані дії або додайте заповнені пункти роботи."]
-            : !skills ? ["conclusionSkills", "Вкажіть, які практичні навички отримано."]
-            : !["achieved", "partial", "not-achieved"].includes(outcome) ? ["conclusionOutcome", "Оберіть, чи досягнуто мети роботи."]
-            : outcome !== "achieved" && !reason ? ["conclusionReason", "Поясніть, чому мети досягнуто лише частково або не досягнуто."] : null;
-        if (missing) {
-            showAppNotice(missing[1], "info");
-            dom[missing[0]].focus();
-            return;
-        }
-        const formulated = composeConclusion({ goal: dom.labGoal.value, actions, skills, outcome, reason });
         if (dom.conclusionText.value.trim() && dom.conclusionText.value.trim() !== formulated) {
             const confirmed = await showAppConfirm({
                 title: "Замінити висновок?",
-                message: "Поточний текст буде замінено висновком із мети, виконаних дій та вказаних результатів.",
+                message: "Поточний текст буде замінено автоматичним висновком із мети роботи.",
                 confirmLabel: "Замінити"
             });
             if (!confirmed) return;
@@ -537,7 +519,9 @@
             triggerAutoSave();
         });
         dom.labGoal.addEventListener("input", (e) => {
+            const previousGoal = state.labGoal;
             state.labGoal = e.target.value;
+            syncConclusionFromGoal(previousGoal);
             triggerAutoSave();
         });
         dom.labEquipment.addEventListener("input", (e) => {
@@ -549,13 +533,6 @@
             state.conclusionText = e.target.value;
             triggerAutoSave();
         });
-
-        for (const key of conclusionFields) {
-            dom[key].addEventListener(key === "conclusionOutcome" ? "change" : "input", e => {
-                state[key] = e.target.value;
-                triggerAutoSave();
-            });
-        }
 
         dom.btnAutoConclusion.addEventListener("click", fillConclusionFromGoal);
 
@@ -741,6 +718,7 @@
             dom.labGoal.value = state.labGoal;
             dom.labEquipment.value = state.labEquipment;
             dom.conclusionText.value = state.conclusionText;
+            syncConclusionFromGoal();
 
             renderTasks();
             renderQuestions();
@@ -814,6 +792,7 @@
                 dom.labGoal.value = state.labGoal || "";
                 dom.labEquipment.value = state.labEquipment || "";
                 dom.conclusionText.value = state.conclusionText || "";
+                syncConclusionFromGoal();
 
                 renderTasks();
                 renderQuestions();
@@ -926,9 +905,8 @@
         }
 
         html += `
-            <h3 style="text-align: center; margin-top: 1.5rem;">ВИСНОВОК</h3>
-            <div class="preview-para">
-                ${escapeHtml(cleanConclusion || '').replace(/\r?\n/g, '<br>')}
+            <div class="preview-para" style="margin-top: 1.5rem;">
+                <b>Висновок:</b> ${escapeHtml(cleanConclusion || '').replace(/\r?\n/g, '<br>')}
             </div>
         `;
 
@@ -1380,16 +1358,14 @@
             cleanConclusionDocx = cleanConclusionDocx.substring("висновок -".length).trim();
         }
 
-        children.push(new Paragraph({
-            alignment: AlignmentType.CENTER, keepNext: true,
-            spacing: { line: 360, lineRule: LineRuleType.AUTO, before: 180, after: 0 },
-            children: [new TextRun({ text: "ВИСНОВОК", font: "Times New Roman", size: 28, color: "000000", bold: true })]
-        }));
-        for (const line of (cleanConclusionDocx || " ").split(/\r?\n/)) {
+        for (const [index, line] of (cleanConclusionDocx || " ").split(/\r?\n/).entries()) {
             children.push(new Paragraph({
                 alignment: AlignmentType.BOTH, indent: { firstLine: 720 },
-                spacing: { line: 360, lineRule: LineRuleType.AUTO, after: 0 },
-                children: [new TextRun({ text: line || " ", font: "Times New Roman", size: 28, color: "000000" })]
+                spacing: { line: 360, lineRule: LineRuleType.AUTO, before: index === 0 ? 180 : 0, after: 0 },
+                children: [
+                    ...(index === 0 ? [new TextRun({ text: "Висновок: ", font: "Times New Roman", size: 28, color: "000000", bold: true })] : []),
+                    new TextRun({ text: line || " ", font: "Times New Roman", size: 28, color: "000000" })
+                ]
             }));
         }
 
