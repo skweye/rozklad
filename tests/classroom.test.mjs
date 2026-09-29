@@ -90,7 +90,11 @@ test('temporary token verification failure is not labelled expired permission', 
     f.verificationFails(new Error('Temporary connection failure'));
     const response = await f.connect();
     assert.equal(response.status, 502);
-    assert.deepEqual(await response.json(), { error: 'classroom_verification_unavailable' });
+    const body = await response.json();
+    assert.equal(body.error, 'classroom_verification_unavailable');
+    assert.equal(body.diagnostic.stage, 'token');
+    assert.equal(body.diagnostic.category, 'unknown');
+    assert.match(body.diagnostic.id, /^google-/);
 });
 
 test('same-account reauthentication preserves the valid Classroom connection', async () => {

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source = await readFile(new URL('../site-auth.js', import.meta.url), 'utf8');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-function uiFixture({ configured = true, fail = false, light = false, storeClassroom = true, grantClassroom = true, scheduleAdmin = false, mainAdmin = false, permissions, replacementError = null, presenceFailures = 0 } = {}) {
+function uiFixture({ configured = true, fail = false, light = false, storeClassroom = true, grantClassroom = true, scheduleAdmin = false, mainAdmin = false, permissions, replacementError = null, presenceFailures = 0, googleFailure = null } = {}) {
     class Element {
         children = []; listeners = {}; attributes = {}; textContent = ''; hidden = false; open = false; clientWidth = 320;
         classList = { contains: name => light && name === 'theme-light' };
@@ -49,6 +49,7 @@ function uiFixture({ configured = true, fail = false, light = false, storeClassr
             return Response.json({ connected: true });
         }
         if (url.endsWith('/google-connect')) {
+            if (googleFailure) return Response.json(googleFailure, { status: 502 });
             user = { id: 'subject', name: '<img src=x onerror=alert(1)>', email: 'student@example.com' };
             classroomConnected = grantClassroom && storeClassroom;
             return Response.json({ user, classroomConnected: grantClassroom });
@@ -70,6 +71,21 @@ function uiFixture({ configured = true, fail = false, light = false, storeClassr
         get disabledAutoSelect() { return disabledAutoSelect; }
     };
 }
+
+test('Google login displays a safe support code without trusting arbitrary diagnostic content', async () => {
+    const diagnostic = { id: 'google-12345678-1234-1234-1234-123456789abc', stage: 'profile', category: 'http', upstreamStatus: 503 };
+    const f = uiFixture({ googleFailure: { error: 'classroom_verification_unavailable', diagnostic } });
+    await settle(); f.button.listeners.click(); await settle();
+    f.continueGoogle();
+    await f.googleOptions.callback({ access_token: 'secret-access', expires_in: 3600 });
+    await settle();
+    const message = f.dialog.querySelector('.auth-status').textContent;
+    assert.match(message, /google-12345678-1234-1234-1234-123456789abc/);
+    assert.match(message, /profile\/http\/503/);
+    assert.doesNotMatch(message, /secret-access/);
+    const unsafe = { message: 'classroom_verification_unavailable', diagnostic: { ...diagnostic, stage: '<img src=x onerror=alert(1)>' } };
+    assert.doesNotMatch(f.auth.errorMessage(unsafe), /<img|google-12345678/);
+});
 
 test('auth snapshots distinguish pending session, confirmed guest and network failure', async () => {
     const f = uiFixture(); assert.equal(f.auth.snapshot().status, 'checking');

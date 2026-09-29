@@ -5,18 +5,20 @@ import { CLASSROOM_SCOPES } from '../server/lib/classroom.mjs';
 
 const origin = 'https://newrozklad.pp.ua';
 const clientId = 'test.apps.googleusercontent.com';
-function fixture({ info = {}, profile = {}, profileError = false } = {}) {
-    const now = Date.now(), jar = {};
+function fixture({ info = {}, profile = {}, profileError = false, tokenError, reporterThrows = false } = {}) {
+    const now = Date.now(), jar = {}, diagnostics = [];
     const handle = createAuthHandler({
         env: { AUTH_SITE_ORIGIN: origin, GOOGLE_CLIENT_ID: clientId, AUTH_SESSION_SECRET: 'test-secret-longer-than-32-characters' },
         now: () => now,
+        reportAuthFailure: diagnostic => { diagnostics.push(diagnostic); if (reporterThrows) throw new Error('logger unavailable'); },
         verifyAccessToken: async token => {
             assert.equal(token, 'secret-access');
+            if (tokenError) throw tokenError;
             return { aud: clientId, sub: 'student', scopes: CLASSROOM_SCOPES, expiry_date: now + 3600000, ...info };
         },
         getGoogleProfile: async token => {
             assert.equal(token, 'secret-access');
-            if (profileError) throw new Error('network');
+            if (profileError) throw profileError === true ? new Error('network') : profileError;
             return { sub: 'student', name: 'Student', email: 'student@example.com', email_verified: true, ...profile };
         }
     });
@@ -32,7 +34,7 @@ function fixture({ info = {}, profile = {}, profileError = false } = {}) {
         }
         return response;
     };
-    return { request, jar, async login(headers = {}) {
+    return { request, jar, diagnostics, async login(headers = {}) {
         const session = await (await request('session')).json();
         return request('google-connect', { accessToken: 'secret-access', user: { sub: 'attacker' } }, { 'x-csrf-token': session.csrf, ...headers });
     } };
@@ -84,4 +86,33 @@ test('combined login enforces same-origin and CSRF before validating Google acce
         assert.equal(response.status, 403);
         assert.equal(f.jar['__Host-study-session'], undefined);
     }
+});
+
+test('Google failures expose only safe diagnostic fields and issue no login cookies', async () => {
+    const privateError = Object.assign(new Error('secret-access student@example.com'), {
+        response: { status: 503, data: { error: 'secret-access', email: 'student@example.com' }, headers: { authorization: 'Bearer secret-access' } },
+        config: { url: 'https://example.com/?token=secret-access' }
+    });
+    for (const stage of ['token', 'profile']) {
+        const f = fixture({ [stage === 'token' ? 'tokenError' : 'profileError']: privateError, reporterThrows: true });
+        const response = await f.login(), body = await response.json();
+        assert.equal(response.status, 502);
+        assert.equal(body.error, 'classroom_verification_unavailable');
+        assert.equal(body.diagnostic.stage, stage);
+        assert.equal(body.diagnostic.category, 'http');
+        assert.equal(body.diagnostic.upstreamStatus, 503);
+        assert.match(body.diagnostic.id, /^google-[0-9a-f-]{36}$/);
+        assert.deepEqual(f.diagnostics, [{ event: 'google_auth_failure', version: 1, ...body.diagnostic }]);
+        assert.doesNotMatch(JSON.stringify([body, f.diagnostics]), /secret-access|student@example|authorization|stack|config/);
+        assert.equal(f.jar['__Host-study-session'], undefined);
+        assert.equal(f.jar['__Host-study-classroom'], undefined);
+    }
+});
+
+test('expired Google tokens keep their existing response and are not logged as outages', async () => {
+    const f = fixture({ tokenError: { response: { status: 400, data: { error: 'invalid_token' } } } });
+    const response = await f.login();
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'classroom_expired' });
+    assert.deepEqual(f.diagnostics, []);
 });

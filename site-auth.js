@@ -87,7 +87,7 @@
         google_unavailable: 'Не вдалося завантажити кнопку Google. Перевірте інтернет і блокувальник вмісту.',
         login_required: 'Увійдіть на сайт, щоб побачити свої завдання.',
         classroom_expired: 'Короткостроковий сеанс Classroom завершився. Оновіть підключення; раніше надані дозволи Google зберігаються.',
-        classroom_verification_unavailable: 'Google тимчасово не відповів на перевірку доступу. Повторіть перевірку — надавати дозвіл заново не потрібно.',
+        classroom_verification_unavailable: 'Сайт не зміг завершити перевірку входу через Google. Повторіть спробу; якщо помилка повторюється, передайте власнику код діагностики. Надавати дозволи заново не потрібно.',
         classroom_storage_failed: 'Google підтвердив доступ, але браузер не зберіг підключення. Дозвольте cookie для цього сайту та відкрийте його основну адресу. Повторна видача дозволів Google не допоможе.',
         classroom_wrong_account: 'Оберіть той самий Google-акаунт, з яким ви увійшли на сайт.',
         classroom_scope_required: 'Потрібен дозвіл на читання курсів і ваших робіт. Підключіть Classroom повторно та надайте обидва дозволи.',
@@ -135,6 +135,7 @@
             const result = await response.json();
             if (!response.ok) {
                 const error = new Error(result.error || 'unavailable');
+                error.diagnostic = safeDiagnostic(result.diagnostic);
                 error.missingPermissions = Array.isArray(result.missingPermissions) ? result.missingPermissions.filter(value => ['courses', 'coursework'].includes(value)) : [];
                 throw error;
             }
@@ -170,8 +171,21 @@
         return sdkPromise;
     }
 
+    function safeDiagnostic(value) {
+        if (!value || typeof value.id !== 'string' || !/^google-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value.id) ||
+            !['token', 'profile'].includes(value.stage) || !['http', 'unknown', 'timeout', 'network', 'runtime', 'invalid_response'].includes(value.category)) return null;
+        return { id: value.id, stage: value.stage, category: value.category,
+            upstreamStatus: Number.isInteger(value.upstreamStatus) && value.upstreamStatus >= 100 && value.upstreamStatus <= 599 ? value.upstreamStatus : null };
+    }
+
+    function diagnosticMessage(error) {
+        const detail = error.message === 'classroom_verification_unavailable' ? safeDiagnostic(error.diagnostic) : null;
+        const message = messages[error.message] || messages.unavailable;
+        return detail ? `${message} Код: ${detail.id} · ${detail.stage}/${detail.category}${detail.upstreamStatus ? `/${detail.upstreamStatus}` : ''}.` : message;
+    }
+
     function showError(error) {
-        status.textContent = messages[error.message] || messages.unavailable;
+        status.textContent = diagnosticMessage(error);
         retry.hidden = false;
     }
 
@@ -362,7 +376,7 @@
                 const labels = { courses: 'читання курсів', coursework: 'читання ваших робіт і статусів здачі' };
                 return `Google не повернув дозвіл: ${error.missingPermissions.map(key => labels[key]).join(', ')}. Натисніть кнопку нижче та відмітьте цей доступ у вікні Google.`;
             }
-            return messages[error.message] || messages.unavailable;
+            return diagnosticMessage(error);
         },
         readClassroom: () => api('classroom'),
         readPermissions: () => ownerRequest(),

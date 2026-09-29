@@ -12,6 +12,7 @@ export function createWorkerHandler(env) {
     const store = name => () => createD1Store(env.DB, name);
     return createAuthHandler({
         env,
+        reportAuthFailure: diagnostic => console.warn(JSON.stringify(diagnostic)),
         presence: createPresenceService({ getStore: store('site-presence') }),
         permissions: createPermissionsService({ getStore: store('site-permissions'), env }),
         replacements: createReplacementService({ schedule, getStore: store('schedule-replacements') }),
@@ -21,7 +22,12 @@ export function createWorkerHandler(env) {
                 headers: { Authorization: `Bearer ${token}` },
                 signal: AbortSignal.timeout(10000), redirect: 'error'
             });
-            if (!response.ok) throw new Error('google_profile_unavailable');
+            if (!response.ok) {
+                const error = new Error('google_profile_unavailable');
+                // Keep only the HTTP status, never the Google response body or headers.
+                error.response = { status: response.status };
+                throw error;
+            }
             return response.json();
         },
         getClassroom: token => loadClassroom(token),

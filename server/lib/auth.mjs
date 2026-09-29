@@ -1,6 +1,7 @@
 import { createHmac, createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'node:crypto';
 import { missingClassroomPermissions } from './classroom.mjs';
 import { isMainAdmin, fullPermissions, noPermissions } from './permissions.mjs';
+import { googleFailureDiagnostic } from './auth-diagnostics.mjs';
 
 const SESSION_SECONDS = 24 * 60 * 60;
 const CHALLENGE_SECONDS = 10 * 60;
@@ -92,7 +93,7 @@ async function readBody(request) {
     } finally { reader.releaseLock(); }
 }
 
-export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGoogleProfile, getClassroom, replacements, permissions, presence, env = process.env, now = () => Date.now() }) {
+export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGoogleProfile, getClassroom, replacements, permissions, presence, reportAuthFailure = () => {}, env = process.env, now = () => Date.now() }) {
     const accessFor = async user => {
         if (isMainAdmin(user, env)) return { mainAdmin: true, permissions: fullPermissions() };
         if (!user || !permissions) return { mainAdmin: false, permissions: noPermissions() };
@@ -102,6 +103,12 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
         const headers = new Headers({ 'Cache-Control': 'no-store', 'Vary': 'Cookie', 'X-Content-Type-Options': 'nosniff' });
         const reply = (data, status = 200) => Response.json(data, { status, headers });
         const fail = (error, status) => reply({ error }, status);
+        const googleUnavailable = (stage, error) => {
+            const diagnostic = googleFailureDiagnostic(stage, error);
+            try { reportAuthFailure({ event: 'google_auth_failure', version: 1, ...diagnostic }); }
+            catch { /* Diagnostics must not change authentication behavior. */ }
+            return reply({ error: 'classroom_verification_unavailable', diagnostic }, 502);
+        };
         const url = new URL(request.url);
         const action = url.pathname.match(/^\/api\/auth\/(session|google|google-connect|logout|classroom|classroom-connect|replacements|permissions|presence)$/)?.[1];
         if (!action) return fail('not_found', 404);
@@ -227,12 +234,12 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
             let info;
             try { info = await verifyAccessToken(body.accessToken); }
             catch (error) {
-                const status = error.response?.status;
-                const reason = error.response?.data?.error;
+                const status = error?.response?.status;
+                const reason = error?.response?.data?.error;
                 if (status === 401 || (status === 400 && ['invalid_token', 'invalid_value'].includes(reason))) {
                     return fail('classroom_expired', 401);
                 }
-                return fail('classroom_verification_unavailable', 502);
+                return googleUnavailable('token', error);
             }
             const subject = info?.sub ?? info?.user_id;
             if (info?.aud !== clientId || typeof subject !== 'string' || !subject || subject.length > 255 ||
@@ -245,7 +252,7 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
                 // Profile is fetched server-side with the verified token, never supplied by the browser.
                 let payload;
                 try { payload = await getGoogleProfile(body.accessToken); }
-                catch { return fail('classroom_verification_unavailable', 502); }
+                catch (error) { return googleUnavailable('profile', error); }
                 if (!payload || payload.sub !== subject || payload.email_verified !== true ||
                     typeof payload.email !== 'string' || !payload.email) return fail('invalid_google_token', 401);
                 const user = { id: subject, name: String(payload.name || payload.email).slice(0, 160), email: payload.email.slice(0, 254) };
