@@ -21,7 +21,7 @@
     "binding": "DB",
     "database_name": "newrozklad",
     // Replace with the ID returned by: npx wrangler d1 create newrozklad
-    "database_id": "00000000-0000-0000-0000-000000000000",
+    "database_id": "d1a1037a-5c06-4671-84d1-61f68b201acd",
     "migrations_dir": "migrations"
   }]
 }
