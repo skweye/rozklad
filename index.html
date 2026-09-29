@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="site-appearance.js"></script>
+    <link rel="icon" id="siteFavicon" href="brand-icon.svg" type="image/svg+xml">
+    <title>Розклад ПЗ-24-1/9</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="frosted-glass.css">
+    <link rel="stylesheet" href="workspace.css">
+    <link rel="stylesheet" href="appearance.css">
+    <link rel="stylesheet" href="neumorphism.css">
+    <script src="schedule-time.js" defer></script>
+    <script src="background-particles.js" defer></script>
+    <script src="site-navigation.js" defer></script>
+    <script src="site-branding.js" defer></script>
+    <script src="site-auth.js" defer></script>
+    <script src="site-admin.js" defer></script>
+    <script src="site-presence.js" defer></script>
+    <script src="background-notifications.js" defer></script>
+    <script src="schedule-notices.js" defer></script>
+    <script src="schedule-replacements.js" defer></script>
+    <script src="site-classroom.js" defer></script>
+</head>
+<body data-app="schedule">
+    <script>window.studyAppearance?.prime(document.body);</script>
+    <video id="bgVideo" class="bg-video" muted autoplay loop playsinline preload="auto"></video>
+    <div id="onboardingHint" class="onboarding-bubble hidden">
+        <div class="bubble-content">
+            <div class="bubble-icon">i</div>
+            <div class="bubble-text">
+                <b>Порада:</b> Натисніть на предмет, щоб відкрити його в <b>Classroom</b>
+            </div>
+            <button id="closeHint" class="bubble-close">&times;</button>
+        </div>
+    </div>
+
+    <header>
+        <details class="site-switcher">
+            <summary class="site-switcher-toggle" aria-label="Навігація між сторінками" title="Навігація">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </summary>
+            <nav class="site-switcher-panel" aria-label="Сторінки сайту">
+                <p class="site-switcher-label">Навігація</p>
+                <a class="site-switcher-link" href="index.html" aria-current="page"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>Розклад</span><span class="site-switcher-current">Відкрито</span></a>
+                <a class="site-switcher-link" href="reports/index.html" id="reportsNavBtn"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#file"/></svg>Звіти</span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg></a>
+            </nav>
+        </details>
+        <div class="header-inner">
+            <a class="workspace-brand" href="index.html" aria-label="Навчальний простір — розклад">
+                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                <span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span>
+            </a>
+            <div class="nav-links">
+            </div>
+        </div>
+    </header>
+
+    <!-- Settings stay outside main's stacking context, above the sticky header. -->
+        <div class="settings-fab-container">
+            <div class="settings-menu" id="settingsMenu">
+                <div class="settings-menu-inner">
+                    <div data-appearance-settings></div>
+
+                    <h3 class="settings-menu-title">Функції</h3>
+                    <div class="settings-card">
+
+                        <div class="settings-toggle-item">
+                            <span class="toggle-label" id="nextLessonRemindersLabel">Нагадування про наступну пару</span>
+                            <label class="switch">
+                                <input type="checkbox" id="nextLessonRemindersToggle" aria-labelledby="nextLessonRemindersLabel" aria-describedby="nextLessonRemindersHint">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p class="appearance-hint" id="nextLessonRemindersHint">За 10 хв до першої пари та за 5 хв до наступної. Сповіщення про заміни працюють окремо.</p>
+                        <p class="appearance-notice" id="nextLessonRemindersStatus" role="status"></p>
+                        <div class="settings-toggle-item">
+                            <div class="info-wrapper">
+                                <span class="info-icon" data-tooltip="Автоматично відкриває посилання на урок у новій вкладці за 2 хвилини до початку пари.">i</span>
+                                <span class="toggle-label">Авто-відкриття</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="autoOpenToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="settings-action-btn" id="fabTestSound" style="margin-top: 0.5rem;">
+                        <span>Перевірити звук</span>
+                    </button>
+                </div>
+            </div>
+            <button class="settings-fab" id="fabBtn" aria-label="Налаштування">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#sliders"/></svg>
+            </button>
+        </div>
+
+    <main>
+        <div id="toastContainer" class="toast-container"></div>
+        <section class="workspace-hero" aria-labelledby="workspaceTitle">
+            <div>
+                <p class="eyebrow">Твій навчальний простір</p>
+                <h1 id="workspaceTitle">Тиждень під контролем<span class="heading-dot">.</span></h1>
+                <p class="hero-description">Пари, завдання та потрібні посилання — в одному місці.</p>
+            </div>
+            <a class="hero-link" href="#weeklySchedule">До розкладу <span aria-hidden="true">↓</span></a>
+        </section>
+
+        <div class="section-heading"><p class="eyebrow">01 / Огляд дня</p><span>ПЗ-24-1/9</span></div>
+        <div class="overview-layout">
+        <div class="overview-sidebar">
+        <div class="status-grid">
+            <div class="card" style="animation-delay: 0.1s">
+                <div class="card-header">
+                    <span class="card-title">Сьогодні</span>
+                </div>
+                <div class="highlight-info" id="currentDate">
+                    <div class="loading-container" style="max-width: 150px; margin-top: 0.5rem;">
+                        <div class="linear-loader"></div>
+                    </div>
+                </div>
+                <div class="week-indicator" id="weekType">...</div>
+            </div>
+
+            <div class="card next-class-card" id="statusCard" style="animation-delay: 0.2s">
+                <div class="card-header">
+                    <span class="card-title" id="statusLabel">Статус</span>
+                    <span class="timer" id="timer">--:--</span>
+                </div>
+                <div class="highlight-info" id="statusTitle">
+                    <div class="loading-container" style="max-width: 150px; margin-top: 0.5rem;">
+                        <div class="linear-loader"></div>
+                    </div>
+                </div>
+                <div class="sub-info" id="statusSubtitle">...</div>
+            </div>
+            <div class="card upcoming-lesson-card" id="nextLessonCard">
+                <div class="card-header"><span class="card-title">Наступна пара</span></div>
+                <div class="highlight-info" id="nextLessonTitle">Завантаження…</div>
+                <p class="next-lesson-time" id="nextLessonTime"></p>
+                <div class="sub-info" id="nextLessonDetails"></div>
+            </div>
+        </div>
+
+        <nav class="links-grid" aria-label="Навчальні ресурси">
+            <a class="link-card" href="https://classroom.google.com/u/2/c/ODc2NTM2NzYyNDgw" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.3s">
+                <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#book"/></svg>
+                <div class="link-content">
+                    <span class="link-title">Класрум</span>
+                    <span class="link-subtitle">Домашні завдання та оголошення</span>
+                </div>
+                <svg class="ui-icon resource-link-indicator" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg>
+            </a>
+            <a class="link-card" href="https://meet.google.com/vib-ihvu-brs" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.4s">
+                <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#video"/></svg>
+                <div class="link-content">
+                    <span class="link-title">Відеоурок</span>
+                    <span class="link-subtitle">Google Meet</span>
+                </div>
+                <svg class="ui-icon resource-link-indicator" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg>
+            </a>
+            <a class="link-card" href="https://docs.google.com/spreadsheets/d/13S0yj6Y7RPheMGhn7ym8Jg0rixbxfHTymnp4Q2nnhL4/edit?pli=1&gid=781407494#gid=781407494" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.5s">
+                <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#table"/></svg>
+                <div class="link-content">
+                    <span class="link-title">Журнал оцінок</span>
+                    <span class="link-subtitle">Google Sheets</span>
+                </div>
+                <svg class="ui-icon resource-link-indicator" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg>
+            </a>
+        </nav>
+        </div>
+
+        <section class="classroom-panel" data-classroom data-icons="ui-icons.svg" aria-label="Найближчі здачі в Classroom">
+            <noscript>Увімкніть JavaScript, щоб увійти та побачити роботи з Classroom.</noscript>
+        </section>
+        </div>
+
+        <div class="section-heading schedule-heading" id="weeklySchedule">
+            <div><p class="eyebrow">02 / План тижня</p><h2>Розклад занять</h2></div>
+            <span class="section-hint">Натисни на предмет, щоб відкрити Classroom</span>
+        </div>
+        <div class="replacement-status-bar">
+            <p id="replacementStatus" role="status">Перевіряємо заміни…</p>
+            <div class="replacement-toolbar">
+                <button type="button" class="btn" id="toggleReplacementEditing" aria-pressed="false" hidden>Редагувати розклад</button>
+                <button type="button" class="btn" id="refreshReplacements" aria-label="Оновити заміни" title="Оновити заміни"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#refresh"/></svg></button>
+            </div>
+        </div>
+        <div id="scheduleGrid" class="schedule-grid">
+            <!-- JS generated cards -->
+        </div>
+    </main>
+
+    <script>
+        // --- Data & Config ---
+        // Note: 'subgroups' is an array if the lesson is split by group
+        let schedule = {}; // Loaded from schedule.json
+
+        const timeSlots = [
+            { start: "9:00", end: "10:20" },
+            { start: "10:30", end: "11:50" },
+            { start: "12:20", end: "13:40" },
+            { start: "13:50", end: "15:10" },
+            { start: "15:20", end: "16:40" }
+        ];
+
+        let currentWeekType = 'numerator';
+        let renderedScheduleDay = '';
+        let prevStatus = null;
+        let warnedNextIndex = null;
+        let warnedFirstKey = null;
+        let notifyAudio = null;
+        let hasInteracted = false;
+        function initNotifyAudio() {
+            try {
+                notifyAudio = new Audio('sound.mp3');
+                notifyAudio.preload = 'auto';
+                notifyAudio.volume = 0.7;
+            } catch (e) {}
+        }
+        function playNotifySound() {
+            if (!notifyAudio) initNotifyAudio();
+            if (notifyAudio) {
+                try {
+                    notifyAudio.currentTime = 0;
+                    notifyAudio.play().catch(() => {});
+                } catch (e) {}
+            }
+        }
+        let lastAnnouncementId = localStorage.getItem('lastAnnouncementId') || null;
+        function fetchAnnouncement() {
+            fetch('announcement.json', { cache: 'no-cache' })
+                .then(r => r.ok ? r.json() : null)
+                .then(obj => {
+                    if (!obj || !obj.message) return;
+                    if (obj.expiresAt && new Date(obj.expiresAt) < new Date()) return;
+                    const id = obj.id || obj.message;
+                    if (lastAnnouncementId === id) return;
+                    if (hasInteracted) showToast(obj.message, '', obj.type || 'info', 8000);
+                    lastAnnouncementId = id;
+                    localStorage.setItem('lastAnnouncementId', id);
+                })
+                .catch(() => {});
+        }
+
+        // --- Core Logic ---
+        function getWeekType() {
+            return window.studyScheduleTime.weekType(window.studyScheduleTime.schoolNow());
+        }
+
+        function timeToMins(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function getCurrentStatus() {
+            const now = window.studyScheduleTime.schoolNow();
+            const day = now.getDay(); 
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+
+            if (day === 0 || day === 6) return { type: 'weekend' };
+
+            const todaySchedule = schedule[day];
+            if (!todaySchedule) return { type: 'free' };
+
+            for (let i = 0; i < timeSlots.length; i++) {
+                const slot = timeSlots[i];
+                const start = timeToMins(slot.start);
+                const end = timeToMins(slot.end);
+
+                if (i === 0 && currentMins < start) {
+                    return { type: 'before_start', nextIndex: 0, diff: start - currentMins };
+                }
+
+                if (currentMins >= start && currentMins < end) {
+                    return { type: 'in_class', index: i, diff: end - currentMins };
+                }
+
+                if (i < timeSlots.length - 1) {
+                    const nextStart = timeToMins(timeSlots[i+1].start);
+                    if (currentMins >= end && currentMins < nextStart) {
+                        return { type: 'break', nextIndex: i + 1, diff: nextStart - currentMins };
+                    }
+                }
+            }
+
+            const lastEnd = timeToMins(timeSlots[timeSlots.length - 1].end);
+            if (currentMins >= lastEnd) return { type: 'after_school' };
+            
+            return { type: 'unknown' };
+        }
+
+        function getLesson(day, index, week) {
+            const date = window.studyScheduleTime.dateForDay(day, window.studyScheduleTime.schoolNow());
+            const replacement = window.studyScheduleTime.replacementAt(window.studyReplacements?.entries() || [], date, index);
+            if (replacement) return replacement.lesson;
+            return window.studyScheduleTime.lessonAt(schedule, day, index, week);
+        }
+
+        function formatLessonString(lesson) {
+            if (!lesson) return null;
+            if (Array.isArray(lesson)) {
+                return lesson.map(l => `${l.s} (Група ${l.g})${l.note ? ' ['+l.note+']' : ''}`).join(' / ');
+            }
+            return `${lesson.s} ${lesson.g ? '(Група '+lesson.g+')' : ''}${lesson.note ? ' ['+lesson.note+']' : ''}`;
+        }
+
+
+
+        // --- UI Updates ---
+        function updateUI() {
+            currentWeekType = getWeekType();
+            
+            // Header
+            const now = window.studyScheduleTime.schoolNow();
+            const dateStr = now.toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('currentDate').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            
+            const weekEl = document.getElementById('weekType');
+            weekEl.textContent = currentWeekType === 'numerator' ? 'Чисельник' : 'Знаменник';
+            weekEl.className = `week-indicator ${currentWeekType}`;
+
+            // Status Card
+            const status = getCurrentStatus();
+            const card = document.getElementById('statusCard');
+            const title = document.getElementById('statusTitle');
+            const sub = document.getElementById('statusSubtitle');
+            const label = document.getElementById('statusLabel');
+            const timer = document.getElementById('timer');
+
+            card.classList.remove('active');
+            label.textContent = 'Статус';
+            
+            if (status.type === 'weekend') {
+                title.textContent = "Вихідний";
+                sub.textContent = "Відпочивайте!";
+                timer.textContent = "";
+            } else if (status.type === 'free') {
+                title.textContent = "Пар немає";
+                sub.textContent = "На сьогодні занять не заплановано.";
+                timer.textContent = "";
+            } else if (status.type === 'after_school') {
+                title.textContent = "Пари закінчились";
+                sub.textContent = "До завтра!";
+                timer.textContent = "";
+            } else if (status.type === 'before_start') {
+                const next = getLesson(now.getDay(), 0, currentWeekType);
+                title.textContent = formatLessonString(next) || "Вікно";
+                sub.textContent = "Перша пара скоро почнеться";
+                timer.textContent = formatTime(status.diff);
+                label.textContent = "До початку";
+            } else if (status.type === 'in_class') {
+                card.classList.add('active');
+                const lesson = getLesson(now.getDay(), status.index, currentWeekType);
+                if (lesson) {
+                    if (Array.isArray(lesson)) {
+                        title.textContent = "Пари за підгрупами";
+                        sub.textContent = lesson.map(l => `Гр.${l.g}: ${l.s} (${l.r})${l.note ? ' ['+l.note+']' : ''}`).join(' | ');
+                    } else {
+                        title.textContent = lesson.s;
+                        sub.textContent = `${lesson.r} • ${lesson.t}${lesson.note ? ' • ['+lesson.note+']' : ''}`;
+                        if (lesson.g) title.textContent += ` (Гр. ${lesson.g})`;
+                    }
+                } else {
+                    title.textContent = "Вікно";
+                    sub.textContent = "Вільного часу";
+                }
+                label.textContent = "До кінця";
+                timer.textContent = formatTime(status.diff);
+            } else if (status.type === 'break') {
+                const next = getLesson(now.getDay(), status.nextIndex, currentWeekType);
+                title.textContent = "Перерва";
+                if (next) {
+                    sub.textContent = `Наступна: ${formatLessonString(next)}`;
+                } else {
+                    sub.textContent = "Наступна: Вікно";
+                }
+                label.textContent = "До пари";
+                timer.textContent = formatTime(status.diff);
+            }
+            updateNextLesson(now);
+            updateLessonHighlights(now);
+        }
+
+        function updateLessonHighlights(now = window.studyScheduleTime.schoolNow()) {
+            if (renderedScheduleDay && renderedScheduleDay !== now.toDateString()) renderSchedule();
+            const status = getCurrentStatus();
+            document.querySelectorAll('[data-lesson-day]').forEach(row => {
+                const day = Number(row.dataset.lessonDay), index = Number(row.dataset.lessonIndex);
+                const current = day === now.getDay() && status.type === 'in_class' && index === status.index && Boolean(getLesson(day, index, currentWeekType));
+                row.classList.toggle('is-current-lesson', current);
+                if (current) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
+                row.querySelector('.lesson-current-badge').hidden = !current;
+            });
+        }
+
+        function updateNextLesson(now = window.studyScheduleTime.schoolNow()) {
+            const next = window.studyScheduleTime.nextLesson(schedule, timeSlots, now, window.studyReplacements?.entries() || []);
+            const title = document.getElementById('nextLessonTitle');
+            const time = document.getElementById('nextLessonTime');
+            const details = document.getElementById('nextLessonDetails');
+            if (!next) {
+                title.textContent = 'Найближчих пар немає';
+                time.textContent = '';
+                details.textContent = 'У розкладі на найближчі два тижні немає занять.';
+                return;
+            }
+            title.textContent = formatLessonString(next.lesson);
+            const start = new Date(next.start), minutes = Math.ceil((next.start - now.getTime()) / 60000);
+            const day = start.toDateString() === now.toDateString() ? 'Сьогодні' : start.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric', month: 'short' });
+            const remaining = minutes >= 1440 ? `${Math.floor(minutes / 1440)} дн. ${Math.floor(minutes % 1440 / 60)} год.` : formatTime(minutes);
+            time.textContent = `${day} · ${timeSlots[next.index].start}–${next.end} · через ${remaining}`;
+            const lessons = Array.isArray(next.lesson) ? next.lesson : [next.lesson];
+            details.textContent = lessons.map(lesson => [lesson.g ? `Гр. ${lesson.g}` : '', lesson.t, lesson.r && lesson.r !== '-' ? `Ауд. ${lesson.r}` : ''].filter(Boolean).join(' · ')).join(' / ');
+        }
+
+        // Актуальні посилання Classroom за дисциплінами. Назва предмета веде саме сюди.
+        const classroomLinks = {
+            homeroom: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODg2MTU1NDI5OTMz?hl=ru',
+            discreteMath: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc3OTE0MTY5MDc3?hl=ru',
+            operatingSystems: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc3ODY1MDkzODI5?hl=ru',
+            physicalEducation: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc3NjA0NDA0OTk2?hl=ru',
+            foreignMormul: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODI2MTQ4NzgzMDMz?hl=ru',
+            oop: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc3Mjg3NzI0OTE4?hl=ru',
+            arduino: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc3MDMyODI5NjEy?hl=ru',
+            databases: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc2Nzg4MzE3MTcw?hl=ru',
+            algorithms: 'https://classroom.google.com/u/2/w/ODc2NTM2NzYyNDgw/tc/ODc2NjY5ODc5NTgy?hl=ru',
+            foreignDonets: 'https://classroom.google.com/u/3/w/ODc2NTM2NzYyNDgw/tc/ODc3NTcxMTQ4NzY0'
+        };
+
+        function getClassroomLink(lesson) {
+            if (!lesson || !lesson.s) return null;
+            const subject = lesson.s.trim().toLocaleLowerCase('uk-UA');
+            const teacher = (lesson.t || '').toLocaleLowerCase('uk-UA');
+
+            if (subject.includes('класна година') || subject.includes('виховна година')) return classroomLinks.homeroom;
+            if (subject.includes('дискретн')) return classroomLinks.discreteMath;
+            if (subject.includes('операційн')) return classroomLinks.operatingSystems;
+            if (subject.includes('фізичн')) return classroomLinks.physicalEducation;
+            if (subject.includes('іноземна мова')) {
+                // В актуальному розкладі Ірина Володимирівна — Мормуль, Анна Олександрівна — Донець.
+                return teacher.includes('анна') ? classroomLinks.foreignDonets : classroomLinks.foreignMormul;
+            }
+            if (subject.includes('об\'єктно') || subject.includes('ооп')) return classroomLinks.oop;
+            if (subject.includes('arduino') || subject.includes('мікроконтролер')) return classroomLinks.arduino;
+            if (subject.includes('бази даних')) return classroomLinks.databases;
+            if (subject.includes('алгоритми')) return classroomLinks.algorithms;
+            return null;
+        }
+
+        function renderSubjectName(lesson) {
+            const name = `<span class="subject-name-text">${escapeLessonText(lesson.s)}</span> <span class="subject-room">(${escapeLessonText(lesson.r || '—')})</span>`;
+            const classroomLink = getClassroomLink(lesson);
+            return classroomLink
+                ? `<a href="${classroomLink}" target="_blank" rel="noopener noreferrer" class="subject-name subject-classroom-link" title="Відкрити предмет у Google Classroom">${name}</a>`
+                : `<span class="subject-name">${name}</span>`;
+        }
+
+        function escapeLessonText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        }
+
+        function renderLessonCell(lesson) {
+            if (!lesson) return `<span style="color:var(--text-secondary)">—</span>`;
+            
+            const noteBadge = (l) => l && l.note ? `<span class="lesson-note">${escapeLessonText(l.note)}</span>` : '';
+            
+            if (Array.isArray(lesson)) {
+                let html = '<div class="subgroup-container">';
+                lesson.forEach(l => {
+                    html += `
+                        <div class="subgroup-item">
+                            <span class="subgroup-label">Група ${escapeLessonText(l.g)}</span>
+                            ${noteBadge(l)}
+                            ${renderSubjectName(l)}
+                            <div class="subject-details">${escapeLessonText(l.t)}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                return html;
+            } else {
+                return `
+                    ${lesson.g ? `<span class="subgroup-label">Група ${escapeLessonText(lesson.g)}</span>` : ''}
+                    ${noteBadge(lesson)}
+                    ${renderSubjectName(lesson)}
+                    <div class="subject-details">${escapeLessonText(lesson.t)}</div>
+                `;
+            }
+        }
+
+        function renderSlotWithWeeks(slot) {
+            if (!slot) return `<span style="color:var(--text-secondary)">—</span>`;
+
+            if (slot.common) {
+                return renderLessonCell(slot.common);
+            }
+
+            if (slot.num == null && slot.den == null) {
+                return `<span style="color:var(--text-secondary)">—</span>`;
+            }
+
+            const current = currentWeekType;
+            const isSplit = slot.num !== undefined && slot.den !== undefined;
+
+            const emptyTpl = `<span style="color:var(--text-secondary); font-size: 0.78rem; font-style: italic; opacity: 0.8;">— пари немає —</span>`;
+
+            function renderVariant(key, label, badgeClass) {
+                const lesson = slot[key];
+                const isCurrent = current === (key === 'num' ? 'numerator' : 'denominator');
+                return `
+                    <div class="week-lesson-block ${isCurrent ? 'week-current' : ''}">
+                        <span class="week-badge ${badgeClass}">${label}</span>
+                        ${lesson ? renderLessonCell(lesson) : emptyTpl}
+                    </div>
+                `;
+            }
+
+            if (!isSplit) {
+                if (slot.num !== undefined) {
+                    return `<div class="week-variants">${renderVariant('num', 'Чисельник', 'num')}</div>`;
+                }
+                if (slot.den !== undefined) {
+                    return `<div class="week-variants">${renderVariant('den', 'Знаменник', 'den')}</div>`;
+                }
+            }
+
+            return `
+                <div class="week-variants">
+                    ${renderVariant('num', 'Чисельник', 'num')}
+                    ${renderVariant('den', 'Знаменник', 'den')}
+                </div>
+            `;
+        }
+
+        function renderSchedule() {
+            const grid = document.getElementById('scheduleGrid');
+            if (!grid) return;
+
+            if (!schedule || Object.keys(schedule).length === 0) {
+                grid.innerHTML = '<div class="card" style="text-align:center; padding: 3rem; color:var(--text-secondary); grid-column: 1/-1;">Дані розкладу не завантажені або порожні. Будь ласка, перевірте файл schedule.json та спробуйте оновити сторінку.</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            renderedScheduleDay = window.studyScheduleTime.schoolNow().toDateString();
+
+
+            const days = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця'];
+            const status = getCurrentStatus();
+            const currentDay = window.studyScheduleTime.schoolNow().getDay();
+
+            const now = window.studyScheduleTime.schoolNow();
+            const monday = new Date(now);
+            const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+            monday.setDate(now.getDate() - (dayOfWeek - 1));
+            monday.setHours(0, 0, 0, 0);
+
+            function formatDayDate(offsetDays) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + offsetDays);
+                return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+            }
+
+            function buildDayCard(d) {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card card';
+                if (d === currentDay) dayCard.classList.add('is-today');
+
+                let html = `
+                    <div class="day-header">
+                        <span class="day-name">${days[d-1]}</span>
+                        <span class="day-date">${formatDayDate(d - 1)}</span>
+                    </div>
+                    <div class="day-lessons">
+                `;
+
+                let hasLessons = false;
+                timeSlots.forEach((slot, index) => {
+                    const rawSlot = schedule[d] ? schedule[d][index] : null;
+                    const date = window.studyScheduleTime.dateForDay(d, now);
+                    const dateKey = window.studyScheduleTime.dateKey(date);
+                    const replacement = window.studyScheduleTime.replacementAt(window.studyReplacements?.entries() || [], date, index);
+                    const editable = (window.studyReplacements?.canEditSlot?.(replacement) ?? window.studyReplacements?.canEdit()) && dateKey >= window.studyScheduleTime.dateKey(now);
+                    const hasAny = rawSlot && (rawSlot.common != null || rawSlot.num != null || rawSlot.den != null);
+                    if (hasAny || replacement || editable) {
+                        hasLessons = true;
+                        let cellClass = 'lesson-item';
+                        const currentLesson = getLesson(d, index, currentWeekType);
+                        if (status.type === 'in_class' && status.index === index && d === currentDay && currentLesson) {
+                            cellClass += ' is-current-lesson';
+                        }
+
+                        html += `
+                            <div class="${cellClass}" data-lesson-day="${d}" data-lesson-index="${index}">
+                                <div class="lesson-time">
+                                    <span class="lesson-number">${index + 1}</span>
+                                    <span class="lesson-hours">${slot.start} - ${slot.end}</span>
+                                    <span class="lesson-current-badge" hidden>Зараз</span>
+                                </div>
+                                <div class="lesson-content">
+                                    ${replacement ? `<span class="replacement-badge">Заміна · ${formatDayDate(d - 1)}</span>${replacement.lesson ? renderLessonCell(replacement.lesson) : '<span class="subject-name">Вікно</span><span class="subject-details">Пари немає</span>'}<span class="replacement-original">Замість: ${escapeLessonText(formatLessonString(window.studyScheduleTime.lessonAt(schedule, d, index, currentWeekType)) || 'вікна')}</span>` : renderSlotWithWeeks(rawSlot)}
+                                    ${editable ? `<button type="button" class="replacement-edit" data-replacement-date="${dateKey}" data-replacement-index="${index}" aria-label="${replacement ? 'Редагувати заміну' : 'Заміна'}: ${formatDayDate(d - 1)}, пара ${index + 1}">${replacement ? 'Редагувати заміну' : 'Заміна'}</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (!hasLessons) {
+                    html += `<div class="no-lessons">Пар немає</div>`;
+                }
+
+                html += `</div>`;
+                dayCard.innerHTML = html;
+                return dayCard;
+            }
+
+            for (let day = 1; day <= 5; day++) {
+                grid.appendChild(buildDayCard(day));
+            }
+            updateLessonHighlights();
+        }
+
+        window.scheduleReplacementView = {
+            schedule: () => schedule,
+            refresh() { renderSchedule(); updateUI(); }
+        };
+
+        function formatTime(mins) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            if (h > 0) return `${h}год ${m}хв`;
+            return `${m}хв`;
+        }
+        function showToast(title, meta, type = 'info', timeout = 6000) {
+            const c = document.getElementById('toastContainer');
+            if (!c) return;
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            const content = document.createElement('div');
+            const tEl = document.createElement('div');
+            tEl.className = 'toast-title';
+            tEl.textContent = title;
+            content.appendChild(tEl);
+            if (meta) {
+                const mEl = document.createElement('div');
+                mEl.className = 'toast-meta';
+                mEl.textContent = meta;
+                content.appendChild(mEl);
+            }
+            const close = document.createElement('button');
+            close.className = 'toast-close';
+            close.textContent = '×';
+            el.appendChild(content);
+            el.appendChild(close);
+            c.appendChild(el);
+            playNotifySound();
+            let timer = null;
+            function dismiss() {
+                el.style.animation = 'toast-out 160ms ease-in both';
+                setTimeout(() => { el.remove(); }, 160);
+                if (timer) clearTimeout(timer);
+            }
+            close.addEventListener('click', dismiss);
+            timer = setTimeout(dismiss, timeout);
+        }
+        let lastOpenedLessonKey = '';
+
+        function checkAutoOpen(status) {
+            const isAutoOpenEnabled = document.getElementById('autoOpenToggle').checked;
+            if (!isAutoOpenEnabled) return;
+
+            const now = window.studyScheduleTime.schoolNow();
+            const day = now.getDay();
+            let lessonIndex = -1;
+
+            // Trigger window: 2 minutes or less before start
+            if (status.type === 'before_start' && status.diff <= 2) {
+                lessonIndex = 0;
+            } else if (status.type === 'break' && status.diff <= 2) {
+                lessonIndex = status.nextIndex;
+            }
+
+            if (lessonIndex !== -1) {
+                const lesson = getLesson(day, lessonIndex, currentWeekType);
+                if (lesson) {
+                    const lessonKey = `${day}-${lessonIndex}-${currentWeekType}`;
+                    if (lastOpenedLessonKey !== lessonKey) {
+                        const links = extractLinks(lesson);
+                        const lessonName = Array.isArray(lesson) ? (lesson[0].s || 'Пара') : (lesson.s || 'Пара');
+                        if (links.length > 0) {
+                            links.forEach(link => {
+                                const win = window.open(link, '_blank');
+                                if (!win) {
+                                    showToast('Помилка', 'Браузер заблокував спливаюче вікно. Дозвольте вікна для цього сайту.', 'warning', 7000);
+                                }
+                            });
+                            showToast('Авто-відкриття', `Урок "${lessonName}" відкрито`, 'success', 5000);
+                            lastOpenedLessonKey = lessonKey;
+                        } else {
+                            // If no links found, we still mark it as "attempted" for this lesson key
+                            // so we don't spam the toast, but we inform the user once
+                            showToast('Авто-відкриття', `У розкладі немає посилання для "${lessonName}"`, 'info', 5000);
+                            lastOpenedLessonKey = lessonKey;
+                        }
+                    }
+                }
+            }
+        }
+
+        function extractLinks(lesson) {
+            const links = [];
+            if (!lesson) return links;
+            
+            if (Array.isArray(lesson)) {
+                lesson.forEach(l => { 
+                    if (l && l.link) links.push(l.link); 
+                });
+            } else if (lesson.link) {
+                links.push(lesson.link);
+            }
+            return links;
+        }
+
+        let nextLessonRemindersEnabled = false;
+        function initLessonReminderSettings() {
+            const toggle = document.getElementById('nextLessonRemindersToggle');
+            try { nextLessonRemindersEnabled = localStorage.getItem('nextLessonRemindersEnabled') === 'true'; }
+            catch { nextLessonRemindersEnabled = false; }
+            toggle.checked = nextLessonRemindersEnabled;
+            toggle.addEventListener('change', () => {
+                nextLessonRemindersEnabled = toggle.checked;
+                const message = document.getElementById('nextLessonRemindersStatus');
+                message.textContent = '';
+                try { localStorage.setItem('nextLessonRemindersEnabled', String(nextLessonRemindersEnabled)); }
+                catch { message.textContent = 'Налаштування діє в цій вкладці; браузер не дозволив його зберегти.'; }
+            });
+            window.addEventListener('storage', event => {
+                if (event.key !== 'nextLessonRemindersEnabled' && event.key !== null) return;
+                nextLessonRemindersEnabled = event.key !== null && event.newValue === 'true';
+                toggle.checked = nextLessonRemindersEnabled;
+            });
+        }
+
+        function checkNotifications() {
+            const now = window.studyScheduleTime.schoolNow();
+            const day = now.getDay();
+            const status = getCurrentStatus();
+            
+            checkAutoOpen(status);
+
+            if (!prevStatus) {
+                prevStatus = status;
+                return;
+            }
+            if (status.type === 'in_class' && prevStatus.type !== 'in_class') {
+                const lesson = getLesson(day, status.index, currentWeekType);
+                const meta = lesson ? formatLessonString(lesson) : '';
+                if (hasInteracted && lesson) showToast('Пара началась', meta, 'success', 6000);
+                warnedNextIndex = null;
+            }
+            if (prevStatus.type === 'in_class' && status.type !== 'in_class') {
+                if (hasInteracted && getLesson(day, prevStatus.index, currentWeekType)) showToast('Пара закончилась', '', 'info', 5000);
+            }
+            if (nextLessonRemindersEnabled && status.type === 'before_start' && status.diff <= 10) {
+                const key = now.toDateString() + '-first';
+                if (warnedFirstKey !== key) {
+                    const next = getLesson(day, 0, currentWeekType);
+                    const meta = next ? formatLessonString(next) : '';
+                    if (hasInteracted && next) showToast(`Через ${status.diff} мин начнется пара`, meta, 'warning', 6000);
+                    warnedFirstKey = key;
+                }
+            }
+            if (nextLessonRemindersEnabled && status.type === 'break' && status.diff <= 5) {
+                const key2 = day + '-' + status.nextIndex;
+                if (warnedNextIndex !== key2) {
+                    const next = getLesson(day, status.nextIndex, currentWeekType);
+                    const meta2 = next ? formatLessonString(next) : '';
+                    if (hasInteracted && next) showToast(`Через ${status.diff} мин начнется пара`, meta2, 'warning', 6000);
+                    warnedNextIndex = key2;
+                }
+            }
+            prevStatus = status;
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initLessonReminderSettings();
+            // Load Schedule from JSON file
+            fetch('schedule.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    schedule = data;
+                    (function clearLessonLinks(s) {
+                        const walkEntry = (e) => {
+                            if (!e) return;
+                            if (Array.isArray(e)) { e.forEach(walkEntry); return; }
+                            if ('link' in e) e.link = null;
+                            if ('assignmentLink' in e) e.assignmentLink = null;
+                        };
+                        Object.values(s || {}).forEach(day => {
+                            if (!Array.isArray(day)) return;
+                            day.forEach(entry => {
+                                ['common', 'num', 'den'].forEach(k => walkEntry(entry[k]));
+                            });
+                        });
+                    })(schedule);
+                    updateUI();
+                    renderSchedule();
+                    prevStatus = getCurrentStatus();
+                    fetchAnnouncement();
+                })
+                .catch(err => {
+                    console.error('Failed to load schedule.json', err);
+                    const dateEl = document.getElementById('currentDate');
+                    if (dateEl) dateEl.innerHTML = '<span style="color:var(--warning-color)">Помилка завантаження</span>';
+                    const titleEl = document.getElementById('statusTitle');
+                    if (titleEl) titleEl.innerHTML = '<span style="color:var(--text-secondary)">Офлайн режим</span>';
+                    updateUI();
+                    renderSchedule();
+                    prevStatus = getCurrentStatus();
+                    fetchAnnouncement();
+                });
+
+            setInterval(() => { updateUI(); checkNotifications(); fetchAnnouncement(); }, 10000);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) updateUI(); });
+            
+            // FAB Settings logic
+            const fabBtn = document.getElementById('fabBtn');
+            const settingsMenu = document.getElementById('settingsMenu');
+
+            fabBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fabBtn.classList.toggle('active');
+                settingsMenu.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!settingsMenu.contains(e.target) && !fabBtn.contains(e.target)) {
+                    fabBtn.classList.remove('active');
+                    settingsMenu.classList.remove('active');
+                }
+            });
+
+            document.getElementById('fabTestSound').addEventListener('click', () => {
+                playNotifySound();
+                showToast('Тест звуку', 'Сповіщення працюють коректно', 'info', 3000);
+            });
+
+            // Auto-open persistence
+            const autoOpenToggle = document.getElementById('autoOpenToggle');
+            const savedAutoOpen = localStorage.getItem('autoOpenEnabled');
+            autoOpenToggle.checked = savedAutoOpen === 'true';
+
+            
+            autoOpenToggle.addEventListener('change', () => {
+                if (autoOpenToggle.checked) {
+                    // Request permission for popups by trying to open and close a tab
+                    const testWin = window.open('about:blank', '_blank');
+                    if (!testWin || testWin.closed || typeof testWin.closed === 'undefined') {
+                        showToast('Блокування вікон', 'Будь ласка, дозвольте спливаючі вікна для коректної роботи авто-відкриття.', 'warning', 10000);
+                        autoOpenToggle.checked = false;
+                        localStorage.setItem('autoOpenEnabled', 'false');
+                    } else {
+                        // Close the test tab immediately and return focus to current window
+                        testWin.close();
+                        window.focus();
+                        localStorage.setItem('autoOpenEnabled', 'true');
+                        showToast('Авто-відкриття', 'Дозволи отримано. Посилання відкриватимуться автоматично.', 'success', 4000);
+                    }
+                } else {
+                    localStorage.setItem('autoOpenEnabled', 'false');
+                }
+            });
+
+            // Onboarding Hint logic
+            const hintBubble = document.getElementById('onboardingHint');
+            const closeHintBtn = document.getElementById('closeHint');
+            const hasSeenHint = localStorage.getItem('hasSeenClassroomHint');
+
+            if (!hasSeenHint) {
+                setTimeout(() => {
+                    hintBubble.classList.remove('hidden');
+                }, 2000); // Wait a bit longer for table to load
+            }
+
+            closeHintBtn.addEventListener('click', () => {
+                hintBubble.classList.add('hidden');
+                localStorage.setItem('hasSeenClassroomHint', 'true');
+            });
+
+            // Escape closes the settings menu.
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    fabBtn.classList.remove('active');
+                    settingsMenu.classList.remove('active');
+                }
+            });
+            const enableAudio = () => {
+                hasInteracted = true;
+                if (!notifyAudio) initNotifyAudio();
+                if (notifyAudio) {
+                    notifyAudio.play().then(() => {
+                        notifyAudio.pause();
+                        notifyAudio.currentTime = 0;
+                    }).catch(() => {});
+                }
+                ['click', 'keydown', 'touchstart'].forEach(evt => 
+                    document.removeEventListener(evt, enableAudio)
+                );
+            };
+            ['click', 'keydown', 'touchstart'].forEach(evt => 
+                document.addEventListener(evt, enableAudio)
+            );
+
+        });
+    </script>
+
+    <footer class="site-legal-footer" aria-label="Правова інформація">
+        <span>Навчальний простір</span>
+        <a href="/privacy.html">Політика конфіденційності</a>
+        <a href="/terms.html">Умови використання</a>
+        <a href="mailto:skweye.su@gmail.com">Зв’язок</a>
+    </footer>
+</body>
+</html>

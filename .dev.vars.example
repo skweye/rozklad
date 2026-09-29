@@ -1,0 +1,4 @@
+GOOGLE_CLIENT_ID=replace-with-your-client-id.apps.googleusercontent.com
+AUTH_SESSION_SECRET=replace-with-a-random-secret-at-least-32-characters
+# npm run dev sets AUTH_SITE_ORIGIN=http://localhost:8787.
+# Use a separate Google OAuth client and secret for local testing.

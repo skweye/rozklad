@@ -1,0 +1,122 @@
+/* Soft molded surfaces, lit from the top left. Scoped so saved themes keep their look. */
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) {
+    --neu-base: #e6ebf2;
+    --neu-light: rgba(255,255,255,.94);
+    --neu-shade: rgba(159,174,195,.48);
+    --neu-raised: -7px -7px 18px var(--neu-light), 7px 7px 18px var(--neu-shade);
+    --neu-small: -3px -3px 7px var(--neu-light), 3px 3px 7px var(--neu-shade);
+    --neu-inset-shade: rgba(159,174,195,.42);
+    --neu-inset-light: rgba(255,255,255,.88);
+    --neu-inset: inset 4px 4px 9px var(--neu-inset-shade), inset -4px -4px 9px var(--neu-inset-light);
+    --neu-edge: rgba(255,255,255,.48);
+    --neu-control-edge: rgba(255,255,255,.4);
+    --neu-field-edge: rgba(255,255,255,.35);
+    --neu-active-edge-base: #ffffff;
+    --neu-subgroup: rgba(255,255,255,.25);
+    --neu-hover: color-mix(in srgb,white 18%,var(--neu-base));
+    --neu-footer-edge: rgba(159,174,195,.3);
+    --neu-danger-text: #a4374b;
+    --neu-danger-bg: #efdae1;
+    --neu-danger-edge: #b55b6d;
+    --ui-radius: 22px;
+    --ui-danger: #a4374b;
+    color: var(--ui-text);
+}
+/* Dark variant uses the same geometry without white rims or pale inset panels. */
+body[data-app][data-theme="neumorphism-dark"] {
+    --neu-base: #252b34;
+    --neu-light: rgba(66,76,91,.42);
+    --neu-shade: rgba(9,12,17,.62);
+    --neu-inset-shade: rgba(9,12,17,.6);
+    --neu-inset-light: rgba(67,78,93,.36);
+    --neu-edge: rgba(181,195,215,.08);
+    --neu-control-edge: rgba(181,195,215,.1);
+    --neu-field-edge: rgba(181,195,215,.07);
+    --neu-active-edge-base: #414b5b;
+    --neu-subgroup: rgba(181,195,215,.045);
+    --neu-hover: #2c3440;
+    --neu-footer-edge: rgba(181,195,215,.12);
+    --neu-danger-text: #ffc1cc;
+    --neu-danger-bg: #422d36;
+    --neu-danger-edge: #a56777;
+    --ui-danger: #ffadbd;
+}
+
+body:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) > .background-particles { display: none; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .workspace-hero { padding-top: 44px; padding-bottom: 30px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .workspace-hero h1 { font-size: clamp(30px,3.4vw,48px); letter-spacing: -.045em; font-weight: 600; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .eyebrow { color: var(--ui-muted); letter-spacing: .12em; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.header-inner,.card,.card:hover,.card.day-card:hover,.links-grid,.classroom-panel,.report-steps,.live-preview-card,.actions-footer,.settings-menu,.reports-settings-menu,.site-switcher-panel,.auth-dialog,.modal-sheet,.rb-picker) {
+    background: var(--ui-panel) !important;
+    border: 1px solid var(--neu-edge) !important;
+    box-shadow: var(--neu-raised) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    transform: none;
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.settings-menu,.reports-settings-menu,.site-switcher-panel,.auth-dialog,.modal-sheet,.rb-picker) { background: var(--neu-base) !important; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .header-inner { border-radius: 24px; min-height: 60px; padding-inline: 20px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .brand-mark { color: var(--ui-accent); background: var(--neu-base); box-shadow: var(--neu-small); border-radius: 13px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .overview-layout { gap: 30px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .status-grid { gap: 20px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .status-grid > .card { padding: 22px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .card.next-class-card { border-top: 1px solid var(--neu-edge) !important; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.upcoming-lesson-card,.next-class-card) .card-title { display: flex; align-items: center; gap: 8px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.upcoming-lesson-card,.next-class-card) .card-title::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--ui-accent); }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .week-indicator { border: 0; background: var(--neu-base); box-shadow: var(--neu-inset); border-radius: 9px; padding: 7px 11px; color: var(--ui-accent); }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .links-grid { margin-top: 8px; border-radius: 20px; padding: 6px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .link-card { border-radius: 15px; gap: 14px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .link-card .resource-icon { padding: 9px; box-sizing: content-box; border-radius: 12px; background: var(--neu-base); box-shadow: var(--neu-small); color: var(--ui-accent); }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-panel { padding: 24px; border-radius: 24px; box-sizing: border-box; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-heading-icon { background: var(--neu-base); box-shadow: var(--neu-small); border-radius: 12px; padding: 10px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-list { background: transparent !important; border: 0; box-shadow: none; gap: 12px; overflow: visible; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-work { background: var(--neu-base); box-shadow: var(--neu-inset); border: 1px solid transparent; border-radius: 15px; padding: 16px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-work + .classroom-work { border-top-color: transparent; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-filters { border: 0; gap: 10px; padding: 4px 0 8px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.btn,.btn.btn-primary,.btn-tool,.settings-fab,.reports-settings-fab,.floating-preview-btn,.site-switcher-toggle,.classroom-filter,.settings-action-btn,.reports-settings-action-btn,.auth-trigger,.auth-google-button,.rb-choice,[data-transparency-choice]) {
+    background: var(--neu-base); border: 1px solid var(--neu-control-edge); border-radius: 12px;
+    box-shadow: var(--neu-small) !important; color: var(--ui-text); text-shadow: none;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-filter { padding: 10px 13px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.btn.btn-primary,.classroom-filter[aria-pressed="true"],[data-transparency-choice][aria-pressed="true"]) {
+    color: var(--ui-accent); background: color-mix(in srgb,var(--ui-accent) 9%,var(--neu-base)); border-color: color-mix(in srgb,var(--ui-accent) 45%,transparent);
+    box-shadow: var(--neu-inset) !important;
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.btn,.classroom-filter,.rb-choice,.site-switcher-toggle):not(:disabled):active { box-shadow: var(--neu-inset) !important; transform: none; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .btn.btn-danger-dialog { color: var(--neu-danger-text); background: var(--neu-danger-bg); border-color: var(--neu-danger-edge); }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.classroom-tools input,.classroom-tools select,.form-control,.form-control:focus,.rb-image-drop,.rb-block,.question-item) {
+    background: var(--neu-base) !important; border: 1px solid var(--neu-field-edge); border-radius: 12px; box-shadow: var(--neu-inset) !important; color: var(--ui-text);
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-tools { gap: 14px; margin-bottom: 20px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .schedule-grid { gap: 24px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .day-card { padding: 8px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .day-header { margin: 4px 4px 0; border: 0; background: transparent; border-radius: 14px; padding: 16px 12px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .day-card.is-today { border-color: color-mix(in srgb,var(--ui-accent) 45%,var(--neu-active-edge-base)) !important; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .day-card.is-today .day-header { background: color-mix(in srgb,var(--ui-accent) 10%,var(--neu-base)); box-shadow: var(--neu-inset); }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .day-lessons { padding: 12px 6px 6px; gap: 12px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.lesson-item,.lesson-item:hover) {
+    background: var(--neu-base) !important; padding: 14px !important; margin: 0;
+    border: 1px solid transparent !important; border-radius: 14px; box-shadow: var(--neu-inset); opacity: 1; transform: none;
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.lesson-item.is-current-lesson,.lesson-item.is-current-lesson:hover) {
+    background: color-mix(in srgb,var(--ui-accent) 12%,var(--neu-base)) !important;
+    border-color: var(--ui-accent) !important; box-shadow: inset 3px 0 0 var(--ui-accent), var(--neu-inset) !important;
+}
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .lesson-item.is-current-lesson::before { display: none; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .lesson-number { background: var(--neu-base); color: var(--ui-accent); box-shadow: var(--neu-small); border-radius: 7px; width: 25px; height: 25px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.subgroup-item,.week-lesson-block) { background: var(--neu-subgroup); border-radius: 10px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(button,a,input,textarea,select,summary):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 4px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .site-footer { border-top-color: var(--neu-footer-edge); }
+@media (hover: hover) {
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.btn,.classroom-filter,.rb-choice,.site-switcher-toggle):not(:disabled):hover { color: var(--ui-accent); background: var(--neu-hover); }
+}
+@media (min-width: 1450px) { body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .schedule-grid { grid-template-columns: repeat(5,minmax(0,1fr)); } }
+@media (max-width: 700px) {
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) { --neu-raised: -4px -4px 10px var(--neu-light), 4px 4px 10px var(--neu-shade); }
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .classroom-panel { padding: 18px; }
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .overview-layout { gap: 22px; }
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .workspace-hero { padding-top: 30px; }
+    body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.classroom-tools input,.classroom-tools select,.form-control) { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { body:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) :is(.btn,.classroom-filter,.rb-choice) { transition: none; } }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"])[data-low-power="true"] { --neu-raised: -3px -3px 6px var(--neu-light), 3px 3px 6px var(--neu-shade); }

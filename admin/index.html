@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="/site-appearance.js"></script>
+    <meta name="robots" content="noindex, nofollow">
+    <title>Адмін-панель — Навчальний простір</title>
+    <link rel="icon" id="siteFavicon" href="/brand-icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/frosted-glass.css">
+    <link rel="stylesheet" href="/workspace.css">
+    <link rel="stylesheet" href="/appearance.css">
+    <link rel="stylesheet" href="/neumorphism.css">
+    <link rel="stylesheet" href="/admin/style.css">
+    <script src="/site-navigation.js" defer></script>
+    <script src="/site-branding.js" defer></script>
+    <script src="/site-auth.js" defer></script>
+    <script src="/site-admin.js" defer></script>
+    <script src="/site-presence.js" defer></script>
+    <script src="/site-permissions.js" defer></script>
+    <script src="/admin/online.js" defer></script>
+    <script src="/schedule-time.js" defer></script>
+    <script src="/background-notifications.js" defer></script>
+    <script src="/schedule-notices.js" defer></script>
+    <script src="/admin/settings.js" defer></script>
+</head>
+<body data-app="admin">
+    <script>window.studyAppearance?.prime(document.body);</script>
+    <video id="bgVideo" class="bg-video" muted loop playsinline preload="none"></video>
+    <header>
+        <details class="site-switcher">
+            <summary class="site-switcher-toggle" aria-label="Навігація між сторінками" title="Навігація">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </summary>
+            <nav class="site-switcher-panel" aria-label="Сторінки сайту">
+                <p class="site-switcher-label">Навігація</p>
+                <a class="site-switcher-link" href="/"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#calendar"/></svg>Розклад</span></a>
+                <a class="site-switcher-link" href="/reports/"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#file"/></svg>Звіти</span></a>
+            </nav>
+        </details>
+        <div class="header-inner">
+            <a class="workspace-brand" href="/" aria-label="Навчальний простір — розклад">
+                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                <span class="brand-copy">Навчальний простір<small>Керування сайтом</small></span>
+            </a>
+            <div class="nav-links"></div>
+        </div>
+    </header>
+    <div class="settings-fab-container">
+        <div class="settings-menu" id="adminSettingsMenu" role="region" aria-label="Налаштування" aria-hidden="true" inert>
+            <div class="settings-menu-inner">
+                <div data-appearance-settings></div>
+                <button type="button" class="settings-action-btn" id="adminTestSound">Перевірити звук</button>
+                <p class="appearance-notice" id="adminSoundStatus" role="status"></p>
+            </div>
+        </div>
+        <button type="button" class="settings-fab" id="adminSettingsFab" aria-label="Налаштування" aria-expanded="false" aria-controls="adminSettingsMenu">
+            <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#sliders"/></svg>
+        </button>
+    </div>
+    <main class="admin-main">
+        <section class="admin-hero" aria-labelledby="admin-title">
+            <div><p class="eyebrow">Керування навчальним простором</p><h1 id="admin-title">Адмін-панель<span class="heading-dot">.</span></h1><p class="hero-description">Користувачі, доступ і активність — в одному місці.</p></div>
+            <a class="hero-link" href="/#weeklySchedule">До розкладу <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#calendar"/></svg></a>
+        </section>
+        <section class="admin-gate" data-admin-gate aria-labelledby="access-title">
+            <h2 id="access-title">Доступ адміністратора</h2>
+            <p data-admin-message role="status">Перевіряємо ваш акаунт…</p>
+            <button type="button" class="btn" data-admin-login hidden>Повторити перевірку</button>
+            <noscript><p>Для входу й керування потрібен JavaScript. Без нього дані користувачів не завантажуються.</p></noscript>
+        </section>
+        <div data-admin-content hidden>
+            <nav class="admin-sections" aria-label="Розділи панелі"><a href="#online">Користувачі онлайн</a><a href="#permissions">Права доступу</a><span>Лише головний адміністратор</span></nav>
+            <div class="admin-grid">
+                <div id="online" data-admin-presence></div>
+                <div id="permissions" data-admin-permissions></div>
+            </div>
+        </div>
+    </main>
+    <footer class="site-legal-footer" aria-label="Правова інформація">
+        <span>Навчальний простір</span>
+        <a href="/privacy.html">Політика конфіденційності</a>
+        <a href="/terms.html">Умови використання</a>
+        <a href="mailto:skweye.su@gmail.com">Зв’язок</a>
+    </footer>
+</body>
+</html>

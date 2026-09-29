@@ -1,0 +1,88 @@
+/* Content builder: theme-aware controls; document output stays black on white. */
+.rb-rules, .rb-hint { color: var(--text-secondary); font-size: .8rem; line-height: 1.6; }
+.rb-rules { margin: 0 0 1.25rem; max-width: 70ch; }
+.rb-block { min-width: 0; border: 1px solid color-mix(in srgb, var(--text-primary) 16%, transparent); border-radius: 16px; padding: 18px; margin: 0 0 16px; background: color-mix(in srgb, var(--text-primary) 3%, transparent); }
+.rb-block > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.rb-block h3 { display: flex; align-items: center; gap: 9px; font-weight: 600; line-height: 1.4; font-size: .9rem; margin: 0; color: var(--text-primary); }
+.rb-block svg, .rb-add-bottom svg, .rb-picker svg { width: 20px; height: 20px; flex: 0 0 20px; }
+.rb-actions, .rb-table-tools, .rb-format { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.rb-block .rb-icon-button, .rb-picker .rb-icon-button { padding: 8px; min-width: 36px; min-height: 36px; border-radius: 9px; color: var(--text-primary); }
+.rb-block button:disabled { opacity: .35; cursor: default; }
+.rb-block :focus-visible, .rb-picker :focus-visible, .rb-add-bottom:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+.rb-field { display: grid; gap: 8px; margin: 0 0 12px; color: var(--text-secondary); font-size: .8rem; }
+.rb-field textarea { width: 100%; resize: vertical; }
+.rb-field > select { max-width: 180px; }
+.rb-format { margin: 10px 0; gap: 16px; color: var(--text-secondary); font-size: .75rem; }
+.rb-format label { display: flex; align-items: center; gap: 6px; }
+.rb-format .form-control { padding: 6px 9px; min-height: 34px; width: auto; font-size: .75rem; }
+.rb-check { color: var(--text-secondary); font-size: .8rem; }
+.rb-block .rb-insert { margin-top: 16px; font-size: .75rem; color: var(--text-secondary); background: transparent; }
+.rb-add-bottom { width: 100%; gap: 8px; min-height: 46px; }
+.rb-empty { text-align: center; border: 1px dashed color-mix(in srgb, var(--text-primary) 25%, transparent); border-radius: 16px; padding: 32px 18px; margin-bottom: 14px; }
+.rb-empty > svg { width: 30px; height: 30px; color: var(--text-secondary); }
+.rb-empty h3 { margin: 12px 0 6px; font-size: 1rem; color: var(--text-primary); }
+.rb-empty p { color: var(--text-secondary); font-size: .85rem; }
+.rb-image-drop { display: grid; justify-items: center; gap: 14px; padding: 18px; border: 1px dashed color-mix(in srgb, var(--text-primary) 25%, transparent); border-radius: 12px; margin-bottom: 14px; }
+.rb-image-drop > img { max-width: 100%; max-height: 320px; object-fit: contain; border-radius: 4px; }
+.rb-image-placeholder { display: grid; justify-items: center; gap: 10px; color: var(--text-secondary); text-align: center; font-size: .8rem; }
+.rb-upload { position: relative; overflow: hidden; cursor: pointer; }
+.rb-upload input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+.rb-upload:focus-within { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+.rb-table-scroll { overflow: auto; margin-bottom: 10px; }
+.rb-edit-table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: 300px; }
+.rb-edit-table td { min-width: 80px; vertical-align: top; }
+.rb-edit-table textarea { width: 100%; padding: 8px; min-height: 64px; font-size: .8rem; }
+.rb-picker { width: min(660px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid color-mix(in srgb, var(--text-primary) 22%, transparent); border-radius: 22px; color: var(--text-primary); background: var(--surface-solid, #16191e); box-shadow: 0 24px 100px #0006; overflow-y: auto; margin: auto; }
+.rb-picker::backdrop { background: #0009; }
+.rb-picker { background: var(--ui-ground, #16191e); }
+.rb-picker > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.rb-picker h2 { font-size: 1.25rem; margin: 0 0 6px; color: var(--text-primary); }
+.rb-picker header p { color: var(--text-secondary); font-size: .85rem; line-height: 1.5; margin: 0; }
+.rb-picker-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rb-choice { display: flex; align-items: flex-start; gap: 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--text-primary) 15%, transparent); background: color-mix(in srgb, var(--text-primary) 4%, transparent); padding: 16px; color: var(--text-primary); text-align: left; font: inherit; cursor: pointer; }
+.rb-choice strong, .rb-choice small { display: block; }
+.rb-choice strong { font-size: .85rem; font-weight: 600; }
+.rb-choice small { margin-top: 5px; color: var(--text-secondary); font-size: .75rem; line-height: 1.5; }
+.rb-choice:hover { background: color-mix(in srgb, var(--text-primary) 10%, transparent); border-color: color-mix(in srgb, var(--text-primary) 40%, transparent); }
+.rb-picker > .rb-hint { margin: 16px 0 0; }
+.preview-page .rb-preview-text { color: #000; font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5; text-indent: 1.25cm; overflow-wrap: anywhere; }
+.preview-page .rb-preview-heading { margin: 12pt 0 6pt; text-indent: 0; break-after: avoid; }
+.preview-page .rb-preview-code { color: #000; background: transparent; font-family: Consolas, monospace; font-size: 11pt; line-height: 1; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.preview-page .rb-figure { margin: 10px 0; text-align: center; color: #000; break-inside: avoid; }
+.preview-page .rb-figure img { max-height: 760px; height: auto; object-fit: contain; }
+.preview-page .rb-figure figcaption { font: 14pt/1.5 'Times New Roman', serif; overflow-wrap: anywhere; }
+.preview-page .rb-preview-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 8px 0; color: #000; font: 14pt/1.5 'Times New Roman', serif; }
+.preview-page .rb-preview-table td { border: 1px solid #000; padding: 4px 6px; overflow-wrap: anywhere; vertical-align: top; }
+.preview-page .rb-preview-list { padding-left: 24px; color: #000; font: 14pt/1.5 'Times New Roman', serif; }
+.rb-page-break { border-top: 1px dashed #888; margin: 24px 0; text-align: center; break-after: page; }
+.rb-page-break::after { content: 'Нова сторінка'; font: 11px/1.5 sans-serif; color: #666; }
+@media (max-width: 540px) {
+    .rb-picker { padding: 18px; }
+    .rb-picker-grid { grid-template-columns: 1fr; }
+    .rb-choice { padding: 13px; }
+    .rb-block { padding: 12px; }
+    .rb-block .rb-icon-button { min-width: 42px; min-height: 42px; }
+    .rb-format label:first-child { width: 100%; }
+    .rb-format label:first-child select { flex: 1; }
+}
+@media print { .rb-page-break { border: 0; } .rb-page-break::after { content: none; } }
+
+/* Anchored, non-modal deletion: no full-screen overlay or blocked background. */
+.delete-confirm {
+    position: fixed; inset: auto; margin: 0; z-index: 30000; box-sizing: border-box;
+    width: 292px; padding: 16px; overflow: auto; border-radius: 16px;
+    color: var(--ui-text); background: var(--ui-ground);
+    border: 1px solid var(--ui-line); box-shadow: 0 12px 36px #0004;
+    font-family: inherit; text-align: left;
+}
+.delete-confirm::backdrop { background: transparent; pointer-events: none; }
+.delete-confirm h3 { font-size: .9rem; line-height: 1.4; margin: 0 0 7px; color: var(--ui-text); }
+.delete-confirm p { font-size: .8rem; line-height: 1.5; margin: 0 0 8px; color: var(--ui-muted); }
+.delete-confirm small { display: block; font-size: .7rem; line-height: 1.5; color: var(--ui-muted); }
+.delete-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+body[data-app] .delete-confirm .btn { min-height: 40px; padding: 8px 12px; font-size: .8rem; }
+body[data-app] .delete-confirm .delete-confirm-accept { color: var(--ui-danger, #b1263c); border-color: currentColor; }
+body[data-app] .delete-confirm .btn:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+body[data-app]:is([data-theme="neumorphism"],[data-theme="neumorphism-dark"]) .delete-confirm {
+    background: var(--neu-base); border-color: var(--neu-edge); box-shadow: var(--neu-raised);
+}

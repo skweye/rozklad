@@ -1,0 +1,300 @@
+{
+    "1": [
+        {
+            "time": "9:00-10:20",
+            "common": [
+                {
+                    "s": "Операційні системи",
+                    "r": "-",
+                    "t": "Артем Олександрович",
+                    "g": "I",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODQyNDA4MzUx"
+                },
+                {
+                    "s": "Операційні системи",
+                    "r": "-",
+                    "t": "Вадим Валерійович",
+                    "g": "II",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODQxMzIyMjU1NzUx"
+                }
+            ]
+        },
+        {
+            "time": "10:30-11:50",
+            "common": {
+                "s": "Програмування мікроконтролерів сімейства Arduino ",
+                "r": "-",
+                "t": "Ксенія Олексіївна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODExMzM0MDky"
+            }
+        },
+        {
+            "time": "12:20-13:40",
+            "num": [
+                {
+                    "s": "Іноземна мова",
+                    "r": "-",
+                    "t": "Ірина Володимирівна",
+                    "g": "I",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODQyNDA4MzUx"
+                },
+                {
+                    "s": "Іноземна мова",
+                    "r": "-",
+                    "t": "Анна Олександрівна",
+                    "g": "II",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODQxMzIyMjU1NzUx"
+                }
+            ],
+            "den": {
+                "s": "Алгоритми та СД",
+                "r": "-",
+                "t": "Ірина Григорівна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODE0NDgwOTQ0"
+            }
+        },
+        {
+            "time": "13:50-15:10",
+            "common": {
+                "s": "Основи дискретної математики",
+                "r": "-",
+                "t": "Володимир Іванович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4NDI1NzYwMDIy"
+            }
+        },
+        {
+            "time": "15:20-16:40",
+            "common": {
+                "s": "Програмування мікроконтролерів сімейства Arduino",
+                "r": "-",
+                "t": "Ксенія Олексіївна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODExMzM0MDky",
+                "note": "борги і т.д."
+            }
+        }
+    ],
+    "2": [
+        {
+            "time": "9:00-10:20",
+            "num": {
+                "s": "Алгоритми та структури даних",
+                "r": "-",
+                "t": "Ірина Григорівна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODE0NDgwOTQ0"
+            },
+            "den": null
+        },
+        {
+            "time": "10:30-11:50",
+            "common": {
+                "s": "Бази даних",
+                "r": "-",
+                "t": "Михайло Володимирович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null
+            }
+        },
+        {
+            "time": "12:20-13:40",
+            "common": {
+                "s": "Об'єктно-орієнтоване програмування",
+                "r": "-",
+                "t": "Валентина Вікторівна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null
+            }
+        },
+        {
+            "time": "13:50-15:10",
+            "common": {
+                "s": "Класна година",
+                "r": "304",
+                "t": "Лариса Юрівна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4Nzg1NDU1MTE4"
+            }
+        }
+    ],
+    "3": [
+        {
+            "time": "9:00-10:20",
+            "common": {
+                "s": "Операційні системи",
+                "r": "-",
+                "t": "Артем Олександрович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODQyNDA4MzUx"
+            }
+        },
+        {
+            "time": "10:30-11:50",
+            "common": {
+                "s": "Алгоритми та структури даних",
+                "r": "-",
+                "t": "Ірина Григорівна",
+                "g": "I",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODE0NDgwOTQ0"
+            }
+        },
+        {
+            "time": "12:20-13:40",
+            "common": {
+                "s": "Бази даних",
+                "r": "-",
+                "t": "Михайло Володимирович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null
+            }
+        },
+        {
+            "time": "13:50-15:10",
+            "common": {
+                "s": "Алгоритми та структури даних",
+                "r": "-",
+                "t": "Ірина Григорівна",
+                "g": "II",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODE0NDgwOTQ0"
+            }
+        },
+        {
+            "time": "15:20-16:40",
+            "common": {
+                "s": "Бази даних",
+                "r": "-",
+                "t": "Михайло Володимирович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null,
+                "note": "борги і т.д."
+            }
+        }
+    ],
+    "4": [
+        {
+            "time": "9:00-10:20",
+            "common": {
+                "s": "Об'єктно-орієнтоване програмування",
+                "r": "-",
+                "t": "Валентина Вікторівна",
+                "g": "I",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null
+            }
+        },
+        {
+            "time": "10:30-11:50",
+            "common": {
+                "s": "Програмування мікроконтролерів сімейства Arduino",
+                "r": "-",
+                "t": "Ксенія Олексіївна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODExMzM0MDky"
+            }
+        },
+        {
+            "time": "12:20-13:40",
+            "common": {
+                "s": "Об'єктно-орієнтоване програмування",
+                "r": "-",
+                "t": "Валентина Вікторівна",
+                "g": "II",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null
+            }
+        },
+        {
+            "time": "13:50-15:10",
+            "den": [
+                {
+                    "s": "Операційні системи",
+                    "r": "-",
+                    "t": "Артем Олександрович",
+                    "g": "I",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODQyNDA4MzUx"
+                },
+                {
+                    "s": "Операційні системи",
+                    "r": "-",
+                    "t": "Вадим Валерійович",
+                    "g": "II",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODQxMzIyMjU1NzUx"
+                }
+            ],
+            "num": {
+                "s": "Бази даних",
+                "r": "-",
+                "t": "Михайло Володимирович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": null,
+                "note": "борги і т.д."
+            }
+        },
+        {
+            "time": "15:20-16:40",
+            "num": null,
+            "den": {
+                "s": "Програмування мікроконтролерів сімейства Arduino",
+                "r": "-",
+                "t": "Ксенія Олексіївна",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODExMzM0MDky",
+                "note": "борги і т.д."
+            }
+        }
+    ],
+    "5": [
+        {
+            "time": "12:20-13:40",
+            "common": [
+                {
+                    "s": "Іноземна мова",
+                    "r": "-",
+                    "t": "Ірина Володимирівна",
+                    "g": "I",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4ODQyNDA4MzUx"
+                },
+                {
+                    "s": "Іноземна мова",
+                    "r": "-",
+                    "t": "Анна Олександрівна",
+                    "g": "II",
+                    "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                    "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODQxMzIyMjU1NzUx"
+                }
+            ]
+        },
+        {
+            "time": "10:30-11:50",
+            "common": {
+                "s": "Основи дискретної математики",
+                "r": "-",
+                "t": "Володимир Іванович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM4NDI1NzYwMDIy"
+            }
+        },
+        {
+            "time": "12:20-13:40",
+            "common": {
+                "s": "Фізичне виховання",
+                "r": "с/з",
+                "t": "Костянтин Георгійович",
+                "link": "https://meet.google.com/mkc-zazj-dhz?authuser=2",
+                "assignmentLink": "https://classroom.google.com/u/2/w/ODM4MzM3MTY0MjU1/tc/ODM5NjU5NjQ4Mjc5"
+            }
+        }
+    ]
+}

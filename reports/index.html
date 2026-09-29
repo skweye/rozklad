@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../site-appearance.js"></script>
+    <title>Автоматизація створення звіту</title>
+    <link rel="icon" id="siteFavicon" href="../brand-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cascadia+Mono:wght@400;600&family=Google+Sans:wght@500&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../frosted-glass.css">
+    <link rel="stylesheet" href="../workspace.css">
+    <link rel="stylesheet" href="../appearance.css">
+    <link rel="stylesheet" href="blocks.css">
+    <link rel="stylesheet" href="../neumorphism.css">
+    <script src="../background-particles.js" defer></script>
+    <script src="../site-navigation.js" defer></script>
+    <script src="../site-branding.js" defer></script>
+    <script src="../site-auth.js" defer></script>
+    <script src="../site-admin.js" defer></script>
+    <script src="../site-presence.js" defer></script>
+    <script src="../schedule-time.js" defer></script>
+    <script src="../background-notifications.js" defer></script>
+    <script src="../schedule-notices.js" defer></script>
+</head>
+
+<body data-app="reports">
+    <script>window.studyAppearance?.prime(document.body);</script>
+    <video id="reportsBgVideo" class="reports-bg-video" muted autoplay loop playsinline preload="auto"></video>
+    <!-- Шапка сайту (у стилі розкладу) -->
+    <header class="app-header">
+        <details class="site-switcher">
+            <summary class="site-switcher-toggle" aria-label="Навігація між сторінками" title="Навігація">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </summary>
+            <nav class="site-switcher-panel" aria-label="Сторінки сайту">
+                <p class="site-switcher-label">Навігація</p>
+                <a class="site-switcher-link" href="../index.html" id="btnBackToSchedule"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#calendar"/></svg>Розклад</span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#link"/></svg></a>
+                <a class="site-switcher-link" href="index.html" aria-current="page"><span class="icon-label"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg>Звіти</span><span class="site-switcher-current">Відкрито</span></a>
+            </nav>
+        </details>
+        <div class="header-inner">
+            <div class="header-brand-group">
+                <a class="workspace-brand" href="../index.html" aria-label="Навчальний простір — розклад">
+                    <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                    <span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span>
+                </a>
+                <!-- Індикатор локального збереження в шапці -->
+                <div class="header-save-badge saved" id="saveStatusIndicator" role="status" aria-live="polite" aria-atomic="true"
+                    data-tooltip="Звіт автоматично зберігається у цьому браузері.">
+                    <span class="save-status-dot" aria-hidden="true"></span>
+                    <span class="save-status-text">Збережено локально</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <button type="button" class="btn btn-reports-nav" id="btnToggleSplitView" aria-pressed="true"
+                    data-tooltip="Показати або сховати попередній перегляд A4 у реальному часі">
+                    <svg class="ui-icon" id="splitViewIcon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg>
+                    <span class="btn-text" id="splitViewText">Перегляд</span>
+                </button>
+                <button type="button" class="btn btn-reports-nav" id="btnExportDraft"
+                    data-tooltip="Зберегти всі заповнені поля та зображення у файл чернетки .json">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>
+                    <span class="btn-text">Зберегти</span>
+                </button>
+                <button type="button" class="btn btn-reports-nav" id="btnImportDraft"
+                    data-tooltip="Завантажити звіт із раніше збереженого .json файлу чернетки">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#upload"/></svg>
+                    <span class="btn-text">Завантажити</span>
+                </button>
+                <input type="file" id="draftFileInput" accept=".json" style="display: none;">
+                <button type="button" class="btn btn-reports-nav btn-danger-nav" id="btnClearForm"
+                    data-tooltip="Очистити всі поля форми та почати новий звіт заново">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#trash"/></svg>
+                    <span class="btn-text">Очистити</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <section class="workspace-hero reports-hero" aria-labelledby="reportsTitle">
+        <div>
+            <p class="eyebrow">Майстерня документів</p>
+            <h1 id="reportsTitle">Від завдання до звіту<span class="heading-dot">.</span></h1>
+            <p class="hero-description">Склади звіт із потрібних блоків, перевір оформлення та збережи документ.</p>
+        </div>
+        <span class="hero-tag">Лабораторні та практичні</span>
+    </section>
+    <nav class="report-steps" aria-label="Розділи звіту">
+        <a href="#reportStudent"><span>01</span> Дані студента</a>
+        <a href="#reportDetails"><span>02</span> Параметри</a>
+        <a href="#reportWork"><span>03</span> Хід роботи</a>
+        <a href="#reportQuestions"><span>04</span> Питання</a>
+        <a href="#reportConclusion"><span>05</span> Висновок</a>
+    </nav>
+    <div class="workspace-wrapper" id="workspaceWrapper">
+        <main class="main-container editor-pane">
+
+        <!-- 1. Дані студента (Титульний аркуш) -->
+        <section class="card report-section" id="reportStudent">
+            <p class="eyebrow">01 / Титульна сторінка</p>
+            <h2 class="card-title">
+                <span>Дані студента</span>
+                <span class="badge">Титулка</span>
+            </h2>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="studentName">Студент (ПІБ) <span class="req">*</span></label>
+                    <input type="text" id="studentName" class="form-control" placeholder="Наприклад: Гриженко Я. М."
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="studentGroup">Група <span class="req">*</span></label>
+                    <input type="text" id="studentGroup" class="form-control" placeholder="Наприклад: ПЗ-24-1/9"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="studentTeacher">Перевірив (Викладач) <span class="req">*</span></label>
+                    <input type="text" id="studentTeacher" class="form-control"
+                        placeholder="Наприклад: Саприкіна І.Г." required>
+                </div>
+                <div class="form-group">
+                    <label for="reportYear">Навчальний рік (у самому низу сторінки) <span class="req">*</span></label>
+                    <input type="text" id="reportYear" class="form-control" value="2026 – 2027 н.р."
+                        placeholder="2026 – 2027 н.р." required>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 2. Інформація про лабораторну роботу -->
+        <section class="card report-section" id="reportDetails">
+            <p class="eyebrow">02 / Параметри роботи</p>
+            <h2 class="card-title">
+                <span id="labTitleDisplay">Лабораторна робота №1</span>
+                <span class="badge">Параметри роботи</span>
+            </h2>
+            <div class="lab-meta-display">
+                <div class="meta-item" style="max-width: 160px;">
+                    <strong>Номер роботи</strong>
+                    <input type="number" id="labNumberInput" class="form-control" value="1" min="1" max="50"
+                        style="font-weight: 700; font-size: 0.95rem;">
+                </div>
+                <div class="meta-item">
+                    <strong>Дисципліна (Всі великі літери, без лапок)</strong>
+                    <textarea id="disciplineInput" class="form-control" rows="1"
+                        style="font-weight: 600; font-size: 0.9rem;"></textarea>
+                </div>
+                <div class="meta-item">
+                    <strong>Шифр роботи</strong>
+                    <textarea id="cipherInput" class="form-control" rows="1" style="font-size: 0.9rem;"></textarea>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="labTheme">Тема роботи:</label>
+                    <textarea id="labTheme" class="form-control" rows="1"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="labGoal">Мета роботи:</label>
+                    <textarea id="labGoal" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="labEquipment">Обладнання:</label>
+                    <textarea id="labEquipment" class="form-control" rows="1"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Хід роботи -->
+        <section class="card report-section" id="reportWork">
+            <p class="eyebrow">03 / Практична частина</p>
+            <div class="card-section-header work-section-header">
+                <div>
+                    <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0;">
+                        Хід роботи
+                    </h2>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                        Додавайте лише потрібні блоки та змінюйте їх порядок.
+                    </p>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAddCustomTask">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Додати блок
+                </button>
+            </div>
+
+            <p class="rb-rules">Вільний зміст, єдине оформлення: A4 · Times New Roman 14 · інтервал 1,5.
+                Описуйте дії безособово: «Відкрито…», «Створено…», «Перевірено…».
+                Пункти та рисунки нумеруються автоматично.</p>
+            <div id="tasksContainer" aria-label="Блоки ходу роботи"></div>
+        </section>
+
+        <!-- 5. Відповіді на контрольні питання -->
+        <section class="card report-section" id="reportQuestions">
+            <p class="eyebrow">04 / Перевірка знань</p>
+            <div class="card-section-header">
+                <div>
+                    <h2 class="card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+                        <span>Відповіді на контрольні питання</span>
+                        <span class="badge">Перевірка знань</span>
+                    </h2>
+                    <p class="card-subtitle" style="margin-top: 0.2rem; margin-bottom: 0;">
+                        Нумерація автоматична. Вставте список у поле запитання (Ctrl+V): кожен новий рядок стане окремим питанням.
+                    </p>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAddQuestion">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Додати питання
+                </button>
+            </div>
+            <details class="question-import" id="questionImportPanel">
+                <summary class="btn btn-secondary btn-sm">Вставити список питань</summary>
+                <div class="question-import-body">
+                    <label for="questionListInput">Список питань — одне на рядок</label>
+                    <textarea class="form-control" id="questionListInput" rows="4" placeholder="Вставте сюди скопійований список питань…" aria-describedby="questionImportHint"></textarea>
+                    <p id="questionImportHint">Кожен Enter розділяє питання. Порожні рядки пропускаються. Список буде додано до наявних питань.</p>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnImportQuestionList">Додати питання зі списку</button>
+                </div>
+            </details>
+            <div id="questionsContainer">
+                <!-- Динамічно генерується скриптом -->
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button type="button" class="btn btn-dashed-block" id="btnAddQuestionBottom">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Додати контрольне питання
+                </button>
+            </div>
+        </section>
+
+        <!-- 6. Висновок -->
+        <section class="card report-section" id="reportConclusion">
+            <p class="eyebrow">05 / Підсумок</p>
+            <div class="conclusion-header">
+                <h2 class="card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+                    <span>Висновок</span>
+                </h2>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAutoConclusion"
+                    title="Сформувати структуру висновку згідно інструкції">
+                    Заповнити за методичкою
+                </button>
+            </div>
+            <p class="card-subtitle" style="margin-top: 0.5rem;">
+                Орієнтовна структура: «У ході виконання лабораторної роботи було... Під час роботи було опрацьовано... У
+                результаті виконання завдань отримано практичні навички... Мету лабораторної роботи досягнуто.»
+            </p>
+            <div class="form-group" style="margin-top: 0.85rem;">
+                <textarea id="conclusionText" class="form-control" rows="4"
+                    placeholder="Введіть висновок до роботи..."></textarea>
+            </div>
+        </section>
+
+        <!-- Нижні головні кнопки -->
+        <div class="actions-footer">
+            <button type="button" class="btn btn-secondary btn-lg" id="btnOpenPreview">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg>Попередній перегляд (A4)
+            </button>
+            <button type="button" class="btn btn-primary btn-lg" id="btnGenerateDocx">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Завантажити звіт .docx
+            </button>
+        </div>
+    </main>
+
+    <!-- Права колонка: Перегляд файлу в реальному часі -->
+    <aside class="live-preview-pane" id="livePreviewPane">
+        <div class="live-preview-card">
+            <div class="live-preview-header">
+                <div class="live-preview-title">
+                    <span class="live-pulse-dot"></span>
+                    <span>Твій документ <small>А4 · Перегляд</small></span>
+                </div>
+                <div class="live-preview-tools">
+                    <button type="button" class="btn-tool" id="btnZoomOut" title="Зменшити масштабування">−</button>
+                    <span class="zoom-badge" id="zoomBadge">75%</span>
+                    <button type="button" class="btn-tool" id="btnZoomIn" title="Збільшити масштабування">+</button>
+                    <button type="button" class="btn-tool" id="btnZoomFit" title="Вписати по ширині">Fit</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-quick-docx" id="btnLiveDocx" title="Сформувати та скачати готовий звіт DOCX">
+                        DOCX
+                    </button>
+                </div>
+            </div>
+            <div class="live-preview-viewport" id="livePreviewViewport">
+                <div class="live-preview-scaler" id="livePreviewScaler">
+                    <div class="live-preview-content" id="livePreviewContent">
+                        <!-- Тут наживо рендериться A4 документ у реальному часі -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Мобільна плаваюча кнопка для швидкого перегляду -->
+<button type="button" class="floating-preview-btn" id="btnFloatingPreview" title="Перегляд наживо">
+    <span class="live-pulse-dot"></span> Перегляд
+</button>
+
+<!-- Налаштування, синхронізовані з сайтом розкладу (без авто-відкриття) -->
+<div class="reports-settings-fab-container">
+    <div class="reports-settings-menu" id="reportsSettingsMenu" aria-hidden="true">
+        <div class="reports-settings-menu-inner">
+            <div data-appearance-settings></div>
+            <button type="button" class="reports-settings-action-btn reports-test-sound" id="reportsTestSound">Перевірити звук</button>
+        </div>
+    </div>
+    <button type="button" class="reports-settings-fab" id="reportsSettingsFab" aria-label="Налаштування" aria-expanded="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#sliders"/></svg></button>
+</div>
+
+    <!-- Модальне вікно попереднього перегляду -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h2>Попередній перегляд звіту (A4)</h2>
+                <button type="button" class="modal-close-btn" id="btnClosePreview">&times;</button>
+            </div>
+            <div class="modal-body" id="previewContainer">
+                <!-- Тут рендериться віртуальний документ А4 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnClosePreviewBottom">Закрити</button>
+                <button type="button" class="btn btn-primary" id="btnGenerateFromPreview">Сформувати DOCX</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно успіху -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-sheet" style="max-width: 520px;">
+            <div class="success-card">
+                <div class="success-icon">✓</div>
+                <h2>Звіт успішно сформовано!</h2>
+                <p id="successFileNameDisplay">Файл завантажено на ваш пристрій.</p>
+                <div class="success-actions">
+                    <button type="button" class="btn btn-secondary" id="btnCloseSuccess">Закрити</button>
+                    <button type="button" class="btn btn-primary" id="btnNewReport">Сформувати ще один звіт</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Єдиний вбудований діалог для підтверджень та повідомлень -->
+    <div class="modal-overlay app-dialog-overlay" id="appDialog" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle">
+        <div class="modal-sheet app-dialog-sheet">
+            <div class="app-dialog-icon" id="appDialogIcon" aria-hidden="true">!</div>
+            <h2 id="appDialogTitle">Підтвердження</h2>
+            <p id="appDialogMessage"></p>
+            <div class="app-dialog-actions">
+                <button type="button" class="btn btn-secondary" id="appDialogCancel">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="appDialogConfirm">Продовжити</button>
+            </div>
+        </div>
+    </div>
+    <div class="app-notice-stack" id="appNoticeStack" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Підключення бібліотеки генерації DOCX (локально + CDN fallback) -->
+    <script src="assets/libs/docx.umd.js"></script>
+    <script>
+        // Fallback на випадок, якщо локальний файл не завантажився
+        if (typeof window.docx === "undefined") {
+            const cdnScript = document.createElement("script");
+            cdnScript.src = "https://unpkg.com/docx@8.5.0/build/index.umd.js";
+            document.head.appendChild(cdnScript);
+        }
+    </script>
+
+    <!-- Вільний конструктор блоків -->
+    <script src="delete-confirm.js"></script>
+    <script src="blocks.js"></script>
+
+    <!-- Головна логіка додатку -->
+    <script src="script.js"></script>
+    <script>
+        (() => {
+            const fab = document.getElementById('reportsSettingsFab');
+            const menu = document.getElementById('reportsSettingsMenu');
+            function closeSettings() {
+                fab.classList.remove('active');
+                menu.classList.remove('active');
+                fab.setAttribute('aria-expanded', 'false');
+                menu.setAttribute('aria-hidden', 'true');
+            }
+            fab.addEventListener('click', () => {
+                const open = menu.classList.toggle('active');
+                fab.classList.toggle('active', open);
+                fab.setAttribute('aria-expanded', String(open));
+                menu.setAttribute('aria-hidden', String(!open));
+            });
+            document.addEventListener('click', event => {
+                if (!menu.contains(event.target) && !fab.contains(event.target)) closeSettings();
+            });
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSettings(); });
+            document.getElementById('reportsTestSound').addEventListener('click', () => {
+                const sound = new Audio('sound.mp3');
+                sound.play().catch(() => {
+                    const notice = document.createElement('div');
+                    notice.className = 'app-notice visible';
+                    notice.textContent = 'Браузер заблокував звук. Спробуйте ще раз.';
+                    document.getElementById('appNoticeStack').append(notice);
+                    setTimeout(() => notice.remove(), 4000);
+                });
+            });
+        })();
+    </script>
+    <footer class="site-legal-footer" aria-label="Правова інформація">
+        <span>Навчальний простір</span>
+        <a href="/privacy.html">Політика конфіденційності</a>
+        <a href="/terms.html">Умови використання</a>
+        <a href="mailto:skweye.su@gmail.com">Зв’язок</a>
+    </footer>
+</body>
+
+</html>

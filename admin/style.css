@@ -1,0 +1,19 @@
+body[data-app="admin"] .admin-main { width: min(1240px, calc(100% - 48px)); padding: 36px 0; margin: 0 auto; }
+.admin-hero { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 32px; }
+.admin-hero h1 { margin: 8px 0 12px; font-size: clamp(30px, 4vw, 48px); line-height: 1.15; letter-spacing: -.04em; color: var(--ui-text); }
+.admin-sections { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 18px; }
+.admin-sections a { padding: 8px 12px; background: var(--ui-soft); color: var(--ui-text); border: 1px solid var(--ui-line); border-radius: 10px; text-decoration: none; font-size: 13px; }
+.admin-sections span { margin-left: auto; color: var(--ui-muted); font-size: 12px; }
+.admin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.admin-grid > div { min-width: 0; scroll-margin-top: 100px; }
+.permissions-dialog.admin-widget { position: static; display: block; inset: auto; margin: 0; width: 100%; max-height: none; overflow: visible; background: var(--ui-panel); box-shadow: var(--ui-glass-rim); border-radius: 18px; padding: 24px; }
+.admin-widget > .permissions-heading { padding-bottom: 16px; border-bottom: 1px solid var(--ui-line); margin-bottom: 16px; }
+.admin-widget .permissions-owner { font-size: 12px; }
+.admin-widget .permissions-users { max-height: 620px; overflow-y: auto; scrollbar-width: thin; padding: 3px; }
+.admin-gate { padding: 28px; border: 1px solid var(--ui-line); border-radius: 18px; background: var(--ui-panel); }
+.admin-gate h2 { font-size: 20px; color: var(--ui-text); }
+.admin-gate p { color: var(--ui-muted); margin: 12px 0 20px; }
+body[data-app="admin"] [hidden], .site-switcher-link[hidden] { display: none !important; }
+.admin-main :is(a,button,summary):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 4px; }
+@media (max-width: 850px) { .admin-grid { grid-template-columns: minmax(0,1fr); } .admin-sections span { width: 100%; margin: 2px 0 0; } }
+@media (max-width: 540px) { body[data-app="admin"] .admin-main { width: calc(100% - 24px); padding-top: 24px; } .admin-hero { align-items: start; flex-direction: column; gap: 16px; } .permissions-dialog.admin-widget { padding: 16px; } }

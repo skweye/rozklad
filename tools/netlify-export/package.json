@@ -1,0 +1,6 @@
+{
+  "name": "newrozklad-one-time-netlify-export",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@netlify/blobs": "11.1.0" }
+}

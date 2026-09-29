@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "newrozklad",
+  "main": "server/worker.mjs",
+  "compatibility_date": "2026-09-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "vars": {
+    "AUTH_SITE_ORIGIN": "https://newrozklad.pp.ua",
+    "MAIN_ADMIN_EMAIL": "ym_hryzhenko_081205@dtsepaton.ukr.education"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "newrozklad",
+    // Replace with the ID returned by: npx wrangler d1 create newrozklad
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }]
+}
