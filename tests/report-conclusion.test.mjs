@@ -6,8 +6,11 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../reports/script.js', import.meta.url), 'utf8');
 const helpers = source.slice(source.indexOf('    function conclusionFromGoal('), source.indexOf('    function bindEvents('));
 function fixture(goal, previous = '', confirmed = true) {
-    const events = [], state = { conclusionText: previous };
+    const events = [], state = { conclusionText: previous, tasks: [{ kind: 'step', text: 'Створено таблицю.' }] };
     const dom = { labGoal: { value: goal, focus: () => events.push('focus') }, conclusionText: { value: previous } };
+    for (const [key, value] of Object.entries({ conclusionActions: '', conclusionSkills: 'роботи з таблицями', conclusionOutcome: 'achieved', conclusionReason: '' })) {
+        dom[key] = { value, focus: () => events.push(`focus:${key}`) };
+    }
     const context = vm.createContext({ state, dom, showAppNotice: () => events.push('notice'),
         showAppConfirm: async () => { events.push('confirm'); return confirmed; },
         resizeTextArea: () => events.push('resize'), triggerAutoSave: () => events.push('save') });
@@ -30,8 +33,53 @@ test('button fills the editable field and saved state, resizes and requests auto
     await f.context.fillConclusionFromGoal();
     assert.equal(f.state.conclusionText, f.dom.conclusionText.value);
     assert.match(f.state.conclusionText, /набуто вміння працювати з таблицями/);
+    assert.match(f.state.conclusionText, /виконано такі дії: Створено таблицю/);
+    assert.match(f.state.conclusionText, /отримано практичні навички: роботи з таблицями/);
+    assert.match(f.state.conclusionText, /Мету лабораторної роботи досягнуто\.$/);
     assert.deepEqual(f.events, ['resize', 'save']);
     assert.match(source, /btnAutoConclusion\.addEventListener\("click", fillConclusionFromGoal\)/);
+});
+
+test('explicit action summary overrides steps and partial outcomes require a reason', async () => {
+    const f = fixture('Вивчити Windows.');
+    f.dom.conclusionActions.value = 'Налаштовано властивості файлів.';
+    f.dom.conclusionOutcome.value = 'partial';
+    await f.context.fillConclusionFromGoal();
+    assert.equal(f.state.conclusionText, '');
+    assert.deepEqual(f.events, ['notice', 'focus:conclusionReason']);
+    f.dom.conclusionReason.value = 'не завершено останнє завдання';
+    await f.context.fillConclusionFromGoal();
+    assert.match(f.state.conclusionText, /Налаштовано властивості файлів/);
+    assert.doesNotMatch(f.state.conclusionText, /Створено таблицю/);
+    assert.match(f.state.conclusionText, /Мету лабораторної роботи досягнуто частково\. Причина: не завершено останнє завдання\./);
+    const text = f.context.composeConclusion({ goal: 'Вивчити ОС.', actions: 'Перевірено систему', skills: 'перевірки системи', outcome: 'not-achieved', reason: 'бракувало доступу' });
+    assert.match(text, /Мету лабораторної роботи не досягнуто/);
+});
+
+test('generator does not invent skills, successful outcomes or actions from code and captions', async () => {
+    for (const missing of ['conclusionActions', 'conclusionSkills', 'conclusionOutcome']) {
+        const f = fixture('Вивчити ОС.');
+        if (missing === 'conclusionActions') f.state.tasks = [{ kind: 'heading', text: 'Завдання' }, { kind: 'code', text: 'print(1)' }, { kind: 'image', caption: 'Результат' }];
+        else f.dom[missing].value = '';
+        await f.context.fillConclusionFromGoal();
+        assert.equal(f.state.conclusionText, '');
+        assert.deepEqual(f.events, ['notice', `focus:${missing}`]);
+    }
+});
+
+test('conclusion inputs restore safely from new and legacy drafts', () => {
+    const f = fixture('Вивчити ОС.');
+    const details = { conclusionActions: 'Відкрито ОС', conclusionSkills: 'роботи з ОС', conclusionOutcome: 'partial', conclusionReason: 'брак часу' };
+    f.context.conclusionDetails(details);
+    for (const [key, value] of Object.entries(details)) {
+        assert.equal(f.state[key], value);
+        assert.equal(f.dom[key].value, value);
+    }
+    f.context.conclusionDetails({ conclusionOutcome: 'unsafe', conclusionSkills: { bad: true } });
+    for (const key of Object.keys(details)) assert.equal(f.dom[key].value, '');
+    assert.match(source, /conclusionDetails\(saved\)/);
+    assert.match(source, /conclusionDetails\(state\)/);
+    assert.match(source, /Object\.fromEntries\(conclusionFields\.map/);
 });
 
 test('empty goal and canceled replacement preserve an existing conclusion', async () => {

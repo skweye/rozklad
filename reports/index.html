@@ -239,14 +239,36 @@
                     <span>Висновок</span>
                 </h2>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnAutoConclusion"
-                    title="Сформувати висновок із мети роботи">
-                    Сформувати з мети
+                    title="Сформувати висновок із мети, виконаних дій та результатів">
+                    Сформувати висновок
                 </button>
             </div>
             <p class="card-subtitle" style="margin-top: 0.5rem;">
-                Заповніть мету роботи та натисніть «Сформувати з мети». Перевірте й доповніть висновок відповідно до того, що виконали.
+                За інструкцією: що виконано, що опрацьовано, які навички отримано та чи досягнуто мети. Текст формується з мети роботи й ваших даних нижче; перевірте його перед здачею.
             </p>
+            <div class="form-group">
+                <label for="conclusionActions">Що виконано:</label>
+                <textarea id="conclusionActions" class="form-control" rows="2" placeholder="Коротко опишіть дії. Якщо залишити порожнім, використаємо заповнені блоки «Пункт роботи»."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="conclusionSkills">Отримані практичні навички:</label>
+                <textarea id="conclusionSkills" class="form-control" rows="2" placeholder="Наприклад: створення каталогів, копіювання файлів та налаштування їхніх властивостей"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="conclusionOutcome">Чи досягнуто мети роботи?</label>
+                <select id="conclusionOutcome" class="form-control">
+                    <option value="">Оберіть результат</option>
+                    <option value="achieved">Мету досягнуто</option>
+                    <option value="partial">Мету досягнуто частково</option>
+                    <option value="not-achieved">Мету не досягнуто</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="conclusionReason">Пояснення, якщо мети не досягнуто повністю:</label>
+                <textarea id="conclusionReason" class="form-control" rows="1" placeholder="Що залишилося невиконаним і чому"></textarea>
+            </div>
             <div class="form-group" style="margin-top: 0.85rem;">
+                <label for="conclusionText">Текст висновку — можна редагувати вручну:</label>
                 <textarea id="conclusionText" class="form-control" rows="4"
                     placeholder="Введіть висновок до роботи..."></textarea>
             </div>
@@ -370,7 +392,7 @@
     <script src="blocks.js?v=20260929-report-layout"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="script.js?v=20260929-goal-conclusion"></script>
+    <script src="script.js?v=20260929-conclusion-guide"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

@@ -127,6 +127,7 @@ test('full report export retains A4, margins, underlined student fields and titl
     vm.runInNewContext(instrumented, { window, document, console, setTimeout() {}, clearTimeout() {}, Blob, URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} } });
     Object.assign(window.reportTest.state, { studentName: 'Test Student', studentGroup: 'GROUP', studentTeacher: 'TEACHER', discipline: 'ОПЕРАЦІЙНІ СИСТЕМИ', tasks: [b.create('step', { text: 'Відкрито Windows' })] });
     window.reportTest.state.cipher = 'ФКЗЕ. 121ООП06. 02ЛР';
+    window.reportTest.state.conclusionText = 'ВИСНОВОК:\nОпрацьовано ОС.\nМету досягнуто частково.';
     await window.reportTest.generateDocxDocument();
     assert.ok(documentModel);
     const packed = await docx.Packer.toBuffer(documentModel), xml = zipEntry(packed, 'word/document.xml');
@@ -139,12 +140,16 @@ test('full report export retains A4, margins, underlined student fields and titl
     assert.match(xml, /w:type="first"/);
     assert.doesNotMatch(xml, /Шифр роботи/);
     assert.match(xml, /ФКЗЕ\. 121ООП06\. 02ЛР/);
+    assert.equal((xml.match(/<w:t[^>]*>ВИСНОВОК<\/w:t>/g) || []).length, 1);
+    assert.match(xml, /Опрацьовано ОС\./);
+    assert.match(xml, /Мету досягнуто частково\./);
+    assert.doesNotMatch(xml, /Висновок:|ВИСНОВОК:/);
     assert.doesNotMatch(mainSource, /Шифр роботи/);
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
     const blocksAsset = 'src="blocks.js?v=20260929-report-layout"';
-    const scriptAsset = 'src="script.js?v=20260929-goal-conclusion"';
+    const scriptAsset = 'src="script.js?v=20260929-conclusion-guide"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));

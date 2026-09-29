@@ -21,7 +21,11 @@
         labEquipment: "",
         tasks: [],
         questions: [],
-        conclusionText: ""
+        conclusionText: "",
+        conclusionActions: "",
+        conclusionSkills: "",
+        conclusionOutcome: "",
+        conclusionReason: ""
     };
 
     const STORAGE_KEY = "lab_report_generator_state_v3";
@@ -48,6 +52,10 @@
         questionListInput: document.getElementById("questionListInput"),
         btnImportQuestionList: document.getElementById("btnImportQuestionList"),
         conclusionText: document.getElementById("conclusionText"),
+        conclusionActions: document.getElementById("conclusionActions"),
+        conclusionSkills: document.getElementById("conclusionSkills"),
+        conclusionOutcome: document.getElementById("conclusionOutcome"),
+        conclusionReason: document.getElementById("conclusionReason"),
         btnAddCustomTask: document.getElementById("btnAddCustomTask"),
         btnAutoConclusion: document.getElementById("btnAutoConclusion"),
         btnOpenPreview: document.getElementById("btnOpenPreview"),
@@ -236,6 +244,7 @@
         state.questions = [];
         state.conclusionText = "";
         dom.conclusionText.value = state.conclusionText;
+        for (const key of conclusionFields) { state[key] = ""; dom[key].value = ""; }
 
         renderTasks();
         renderQuestions();
@@ -435,17 +444,52 @@
             : `У ході виконання лабораторної роботи було опрацьовано тему: «${goal}».`;
     }
 
+    const conclusionFields = ["conclusionActions", "conclusionSkills", "conclusionOutcome", "conclusionReason"];
+
+    function conclusionDetails(data) {
+        for (const key of conclusionFields) state[key] = typeof data?.[key] === "string" ? data[key] : "";
+        if (!["achieved", "partial", "not-achieved"].includes(state.conclusionOutcome)) state.conclusionOutcome = "";
+        for (const key of conclusionFields) dom[key].value = state[key];
+    }
+
+    function composeConclusion({ goal, actions, skills, outcome, reason }) {
+        const clean = value => String(value || "").trim().replace(/\s+/gu, " ").replace(/[.;\s]+$/u, "");
+        const learned = conclusionFromGoal(goal).replace(/^У ході виконання лабораторної роботи/u, "Під час роботи");
+        if (!learned || !clean(actions) || !clean(skills) || !["achieved", "partial", "not-achieved"].includes(outcome)) return "";
+        if (outcome !== "achieved" && !clean(reason)) return "";
+        const ending = outcome === "achieved" ? "Мету лабораторної роботи досягнуто."
+            : `Мету лабораторної роботи ${outcome === "partial" ? "досягнуто частково" : "не досягнуто"}. Причина: ${clean(reason)}.`;
+        return `У ході виконання лабораторної роботи виконано такі дії: ${clean(actions)}. ${learned} У результаті виконання завдань отримано практичні навички: ${clean(skills)}. ${ending}`;
+    }
+
     async function fillConclusionFromGoal() {
-        const formulated = conclusionFromGoal(dom.labGoal.value);
-        if (!formulated) {
+        if (!conclusionFromGoal(dom.labGoal.value)) {
             showAppNotice("Спочатку заповніть мету роботи.", "info");
             dom.labGoal.focus();
             return;
         }
+        // Only completed-work steps are used; code, assignment headings and image captions
+        // are not evidence of actions or acquired skills.
+        const steps = (state.tasks || []).filter(block => block.kind === "step" && block.text?.trim())
+            .map(block => block.text.trim().replace(/[.;\s]+$/u, "")).join("; ");
+        const actions = dom.conclusionActions.value.trim() || steps;
+        const skills = dom.conclusionSkills.value.trim();
+        const outcome = dom.conclusionOutcome.value;
+        const reason = dom.conclusionReason.value.trim();
+        const missing = !actions ? ["conclusionActions", "Коротко вкажіть виконані дії або додайте заповнені пункти роботи."]
+            : !skills ? ["conclusionSkills", "Вкажіть, які практичні навички отримано."]
+            : !["achieved", "partial", "not-achieved"].includes(outcome) ? ["conclusionOutcome", "Оберіть, чи досягнуто мети роботи."]
+            : outcome !== "achieved" && !reason ? ["conclusionReason", "Поясніть, чому мети досягнуто лише частково або не досягнуто."] : null;
+        if (missing) {
+            showAppNotice(missing[1], "info");
+            dom[missing[0]].focus();
+            return;
+        }
+        const formulated = composeConclusion({ goal: dom.labGoal.value, actions, skills, outcome, reason });
         if (dom.conclusionText.value.trim() && dom.conclusionText.value.trim() !== formulated) {
             const confirmed = await showAppConfirm({
                 title: "Замінити висновок?",
-                message: "Поточний текст буде замінено висновком, сформованим із мети роботи.",
+                message: "Поточний текст буде замінено висновком із мети, виконаних дій та вказаних результатів.",
                 confirmLabel: "Замінити"
             });
             if (!confirmed) return;
@@ -505,6 +549,13 @@
             state.conclusionText = e.target.value;
             triggerAutoSave();
         });
+
+        for (const key of conclusionFields) {
+            dom[key].addEventListener(key === "conclusionOutcome" ? "change" : "input", e => {
+                state[key] = e.target.value;
+                triggerAutoSave();
+            });
+        }
 
         dom.btnAutoConclusion.addEventListener("click", fillConclusionFromGoal);
 
@@ -642,7 +693,8 @@
                 labEquipment: state.labEquipment,
                 tasks: state.tasks,
                 questions: state.questions,
-                conclusionText: state.conclusionText
+                conclusionText: state.conclusionText,
+                ...Object.fromEntries(conclusionFields.map(key => [key, state[key]]))
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
             return true;
@@ -675,6 +727,7 @@
             }
             state.questions = saved.questions || [];
             state.conclusionText = saved.conclusionText || "";
+            conclusionDetails(saved);
 
             dom.studentName.value = state.studentName;
             dom.studentGroup.value = state.studentGroup;
@@ -747,6 +800,7 @@
                     id: i + 1, question: typeof q.question === "string" ? q.question : "", answer: typeof q.answer === "string" ? q.answer : ""
                 })) : [];
                 delete state.includeEmblem; // Ignore this retired option in older drafts.
+                conclusionDetails(state);
 
                 dom.studentName.value = state.studentName || "";
                 dom.studentGroup.value = state.studentGroup || "";
@@ -872,8 +926,9 @@
         }
 
         html += `
-            <div class="preview-para" style="margin-top: 1.5rem;">
-                <b>Висновок:</b> ${escapeHtml(cleanConclusion || '')}
+            <h3 style="text-align: center; margin-top: 1.5rem;">ВИСНОВОК</h3>
+            <div class="preview-para">
+                ${escapeHtml(cleanConclusion || '').replace(/\r?\n/g, '<br>')}
             </div>
         `;
 
@@ -1326,23 +1381,17 @@
         }
 
         children.push(new Paragraph({
-            alignment: AlignmentType.BOTH,
-            indent: { firstLine: 720 },
+            alignment: AlignmentType.CENTER, keepNext: true,
             spacing: { line: 360, lineRule: LineRuleType.AUTO, before: 180, after: 0 },
-            children: [
-                new TextRun({
-                    text: "Висновок: ",
-                    font: "Times New Roman",
-                    size: 28,
-                    bold: true
-                }),
-                new TextRun({
-                    text: cleanConclusionDocx || " ",
-                    font: "Times New Roman",
-                    size: 28
-                })
-            ]
+            children: [new TextRun({ text: "ВИСНОВОК", font: "Times New Roman", size: 28, color: "000000", bold: true })]
         }));
+        for (const line of (cleanConclusionDocx || " ").split(/\r?\n/)) {
+            children.push(new Paragraph({
+                alignment: AlignmentType.BOTH, indent: { firstLine: 720 },
+                spacing: { line: 360, lineRule: LineRuleType.AUTO, after: 0 },
+                children: [new TextRun({ text: line || " ", font: "Times New Roman", size: 28, color: "000000" })]
+            }));
+        }
 
         const doc = new Document({
             sections: [
