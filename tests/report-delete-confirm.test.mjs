@@ -103,7 +103,9 @@ test('report deletion passes the exact anchor and Shift flag; production include
     for (const anchor of ['btn', 'dom.btnNewReport', 'dom.btnClearForm']) assert.ok(main.includes(`anchor: ${anchor}, skipConfirmation: event.shiftKey`));
     assert.match(main, /const currentIndex = state\.questions\.indexOf\(question\)/);
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    assert.ok(html.indexOf('src="delete-confirm.js"') < html.indexOf('src="blocks.js"'));
+    const blocksPosition = html.indexOf('src="blocks.js?v=20260929-report-layout"');
+    assert.ok(blocksPosition >= 0);
+    assert.ok(html.indexOf('src="delete-confirm.js"') < blocksPosition);
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
     assert.match(build, /'reports\/delete-confirm\.js'/);
 });

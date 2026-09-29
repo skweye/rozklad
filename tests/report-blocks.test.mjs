@@ -126,6 +126,7 @@ test('full report export retains A4, margins, underlined student fields and titl
     const instrumented = mainSource.replace('    if (document.readyState === "loading")', '    window.reportTest = { state, generateDocxDocument };\n    if (document.readyState === "loading")');
     vm.runInNewContext(instrumented, { window, document, console, setTimeout() {}, clearTimeout() {}, Blob, URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} } });
     Object.assign(window.reportTest.state, { studentName: 'Test Student', studentGroup: 'GROUP', studentTeacher: 'TEACHER', discipline: 'ОПЕРАЦІЙНІ СИСТЕМИ', tasks: [b.create('step', { text: 'Відкрито Windows' })] });
+    window.reportTest.state.cipher = 'ФКЗЕ. 121ООП06. 02ЛР';
     await window.reportTest.generateDocxDocument();
     assert.ok(documentModel);
     const packed = await docx.Packer.toBuffer(documentModel), xml = zipEntry(packed, 'word/document.xml');
@@ -137,11 +138,16 @@ test('full report export retains A4, margins, underlined student fields and titl
     assert.doesNotMatch(xml, /Код програми|Блок-схема/);
     assert.match(xml, /w:type="first"/);
     assert.doesNotMatch(xml, /Шифр роботи/);
+    assert.match(xml, /ФКЗЕ\. 121ООП06\. 02ЛР/);
     assert.doesNotMatch(mainSource, /Шифр роботи/);
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    assert.ok(html.indexOf('src="blocks.js"') < html.indexOf('src="script.js"'));
+    const blocksAsset = 'src="blocks.js?v=20260929-report-layout"';
+    const scriptAsset = 'src="script.js?v=20260929-report-layout"';
+    assert.ok(html.includes(blocksAsset));
+    assert.ok(html.includes(scriptAsset));
+    assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));
     assert.match(html, /Додати блок/);
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
     for (const asset of ['reports/blocks.js', 'reports/blocks.css', 'neumorphism.css']) {
