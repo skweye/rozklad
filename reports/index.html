@@ -239,13 +239,12 @@
                     <span>Висновок</span>
                 </h2>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnAutoConclusion"
-                    title="Сформувати структуру висновку згідно інструкції">
-                    Заповнити за методичкою
+                    title="Сформувати висновок із мети роботи">
+                    Сформувати з мети
                 </button>
             </div>
             <p class="card-subtitle" style="margin-top: 0.5rem;">
-                Орієнтовна структура: «У ході виконання лабораторної роботи було... Під час роботи було опрацьовано... У
-                результаті виконання завдань отримано практичні навички... Мету лабораторної роботи досягнуто.»
+                Заповніть мету роботи та натисніть «Сформувати з мети». Перевірте й доповніть висновок відповідно до того, що виконали.
             </p>
             <div class="form-group" style="margin-top: 0.85rem;">
                 <textarea id="conclusionText" class="form-control" rows="4"
@@ -371,7 +370,7 @@
     <script src="blocks.js?v=20260929-report-layout"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="script.js?v=20260929-report-layout"></script>
+    <script src="script.js?v=20260929-goal-conclusion"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

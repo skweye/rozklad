@@ -409,6 +409,53 @@
         triggerLivePreview();
     }
 
+    function conclusionFromGoal(value) {
+        const goal = String(value || "").trim()
+            .replace(/^мета(?:\s+(?:лабораторної\s+)?роботи)?\s*[:—–-]\s*/iu, "")
+            .replace(/\r\n?/g, "\n").split(/\n+/)
+            .map(line => line.trim().replace(/^(?:[-•]|\d+[.)])\s+/u, "").replace(/[.;\s]+$/u, ""))
+            .filter(Boolean).join("; ");
+        if (!goal) return "";
+        const forms = {
+            "навчитися": "набуто вміння", "навчитись": "набуто вміння",
+            "ознайомитися": "проведено ознайомлення", "ознайомитись": "проведено ознайомлення",
+            "вивчити": "вивчено", "дослідити": "досліджено", "опанувати": "опановано",
+            "освоїти": "освоєно", "закріпити": "закріплено", "отримати": "отримано",
+            "набути": "набуто", "сформувати": "сформовано", "удосконалити": "удосконалено",
+            "поглибити": "поглиблено", "розглянути": "розглянуто", "засвоїти": "засвоєно",
+            "перевірити": "перевірено", "визначити": "визначено", "виконати": "виконано",
+            "розробити": "розроблено", "реалізувати": "реалізовано", "створити": "створено"
+        };
+        // Convert goal clauses, not dependent infinitives ("навчитися створити програму").
+        const starts = new RegExp(`(^|[;.!?]\\s+|,\\s+|\\s+(?:і|й|та|а також)\\s+)(${Object.keys(forms).join("|")})(?![\\p{L}\\p{N}_])`, "giu");
+        const text = goal.replace(starts, (_, prefix, verb) => `${prefix}${forms[verb.toLocaleLowerCase("uk-UA")]}`);
+        const beginsWithResult = Object.values(forms).some(form => text.startsWith(form));
+        return beginsWithResult
+            ? `У ході виконання лабораторної роботи було ${text}.`
+            : `У ході виконання лабораторної роботи було опрацьовано тему: «${goal}».`;
+    }
+
+    async function fillConclusionFromGoal() {
+        const formulated = conclusionFromGoal(dom.labGoal.value);
+        if (!formulated) {
+            showAppNotice("Спочатку заповніть мету роботи.", "info");
+            dom.labGoal.focus();
+            return;
+        }
+        if (dom.conclusionText.value.trim() && dom.conclusionText.value.trim() !== formulated) {
+            const confirmed = await showAppConfirm({
+                title: "Замінити висновок?",
+                message: "Поточний текст буде замінено висновком, сформованим із мети роботи.",
+                confirmLabel: "Замінити"
+            });
+            if (!confirmed) return;
+        }
+        dom.conclusionText.value = formulated;
+        state.conclusionText = formulated;
+        resizeTextArea(dom.conclusionText);
+        triggerAutoSave();
+    }
+
     function bindEvents() {
         dom.studentName.addEventListener("input", (e) => {
             state.studentName = e.target.value;
@@ -459,18 +506,7 @@
             triggerAutoSave();
         });
 
-        dom.btnAutoConclusion.addEventListener("click", () => {
-            const goal = (dom.labGoal.value || "").trim();
-            let goalText = goal;
-            if (goalText.startsWith("навчитися ")) {
-                goalText = goalText.substring("навчитися ".length);
-            }
-            const formulated = `У ході виконання лабораторної роботи було опрацьовано: ${goalText || "[тема роботи]"}. Виконано [конкретні дії]. Отримано [результати та набуті навички]. Мету роботи [досягнуто / досягнуто частково — поясніть].`;
-            dom.conclusionText.value = formulated;
-            resizeTextArea(dom.conclusionText);
-            state.conclusionText = formulated;
-            triggerAutoSave();
-        });
+        dom.btnAutoConclusion.addEventListener("click", fillConclusionFromGoal);
 
         dom.btnAddCustomTask.addEventListener("click", () => blockEditor.open());
 
