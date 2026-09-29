@@ -21,6 +21,12 @@ try {
     const invalid = await googleRuntime.fetch('https://fixture.example/invalid');
     assert.equal(invalid.status, 401);
     assert.deepEqual(await invalid.json(), { status: 400, error: 'invalid_token' });
+    const profile = await googleRuntime.fetch('https://fixture.example/profile');
+    assert.equal(profile.status, 200, 'Google profile request must use a Workers-supported redirect mode');
+    assert.deepEqual(await profile.json(), { sub: 'student', email: 'student@example.com', email_verified: true });
+    const redirect = await googleRuntime.fetch('https://fixture.example/profile-redirect');
+    assert.equal(redirect.status, 502);
+    assert.deepEqual(await redirect.json(), { status: 302 });
     await handle.applyD1Migrations('DB');
     const env = await handle.getEnv();
     const store = createD1Store(env.DB, 'site-permissions');

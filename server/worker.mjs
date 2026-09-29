@@ -1,4 +1,4 @@
-import { createGoogleClient } from './google-client.mjs';
+import { createGoogleClient, loadGoogleProfile } from './google-client.mjs';
 import { createAuthHandler } from './lib/auth.mjs';
 import { loadClassroom } from './lib/classroom.mjs';
 import { createReplacementService } from './lib/replacements.mjs';
@@ -17,19 +17,7 @@ export function createWorkerHandler(env) {
         permissions: createPermissionsService({ getStore: store('site-permissions'), env }),
         replacements: createReplacementService({ schedule, getStore: store('schedule-replacements') }),
         verifyAccessToken: token => google.getTokenInfo(token),
-        getGoogleProfile: async token => {
-            const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-                headers: { Authorization: `Bearer ${token}` },
-                signal: AbortSignal.timeout(10000), redirect: 'error'
-            });
-            if (!response.ok) {
-                const error = new Error('google_profile_unavailable');
-                // Keep only the HTTP status, never the Google response body or headers.
-                error.response = { status: response.status };
-                throw error;
-            }
-            return response.json();
-        },
+        getGoogleProfile: loadGoogleProfile,
         getClassroom: token => loadClassroom(token),
         verifyGoogle: async (credential, clientId) => {
             const ticket = await google.verifyIdToken({ idToken: credential, audience: clientId });
