@@ -5,6 +5,19 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
 const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee'];
+test('report input carets follow readable field text rather than a fixed dark or accent color', async () => {
+    const css = await readFile(new URL('../reports/style.css', import.meta.url), 'utf8');
+    const caretRules = [...css.matchAll(/caret-color:\s*([^;]+);/g)].map(match => match[1]);
+    assert.deepEqual(caretRules, ['currentColor !important']);
+    assert.match(css, /textarea,\s*\.form-control:not\(select\)\s*\{[^}]*caret-color:\s*currentColor/);
+    const f = fixture();
+    const color = () => f.body.style.values.get('--ui-text');
+    f.theme('coffee'); assert.equal(color(), '#f2e8dd');
+    f.theme('minimal'); assert.equal(color(), '#202835');
+    f.theme('neumorphism-dark'); assert.equal(color(), '#edf1f5');
+    const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
+    assert.match(html, /style\.css\?v=20260930-visible-caret/);
+});
 function fixture({ saved = new Map(), blocked = false, quietMode = false, cores = 8, early = false } = {}) {
     class Classes extends Set { remove(...names) { names.forEach(name => this.delete(name)); } toggle(name, active) { if (active) this.add(name); else this.delete(name); } }
     class Element {
