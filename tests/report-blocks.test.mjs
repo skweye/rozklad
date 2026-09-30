@@ -84,12 +84,12 @@ test('each nonempty code block has a program heading in preview and Word, withou
     const html = b.preview(items), xml = await xmlFor(items);
     assert.equal((html.match(/Код програми/g) || []).length, 2);
     assert.equal((xml.match(/Код програми/g) || []).length, 2);
-    assert.match(html, /Код програми<\/div><pre class="rb-preview-code">  first\(\);\n\tsecond\(\);<\/pre>/);
+    assert.match(html, /style="text-align:left;font-weight:bold">Код програми<\/div><pre class="rb-preview-code">  first\(\);\n\tsecond\(\);<\/pre>/);
     const paragraphs = [...xml.matchAll(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g)].map(match => match[0]);
     const headings = paragraphs.map((paragraph, index) => paragraph.includes('Код програми') ? index : -1).filter(index => index >= 0);
     for (const index of headings) {
         assert.match(paragraphs[index], /<w:keepNext/);
-        assert.match(paragraphs[index], /w:jc w:val="center"/);
+        assert.match(paragraphs[index], /w:jc w:val="left"/);
         assert.match(paragraphs[index], /<w:b\/>/);
         assert.match(paragraphs[index], /w:ascii="Times New Roman"/);
         assert.match(paragraphs[index + 1], /w:ascii="Consolas"/);
@@ -246,7 +246,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20260930-code-heading"';
+    const blocksAsset = 'src="blocks.js?v=20260930-code-heading-left"';
     const scriptAsset = 'src="script.js?v=20260929-auto-conclusion"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
