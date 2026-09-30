@@ -50,6 +50,26 @@ test('document paragraphs number even blank questions and retain their answers',
     assert.equal(children.length, 6);
     assert.equal(children[0].children[0].text, '1 Перше?');
     assert.equal(children[2].children[0].text, '2 (Запитання не заповнено)');
-    assert.equal(children[3].children[1].text, 'Збережена відповідь');
+    assert.equal(children[1].children.length, 1);
+    assert.equal(children[1].children[0].text, 'Відповідь один');
+    assert.equal(children[3].children[0].text, 'Збережена відповідь');
+    assert.equal(children[5].children[0].text, ' ');
+    assert.ok(children.every(paragraph => paragraph.children.every(run => run.text !== 'Відповідь: ')));
     assert.equal(children[4].children[0].text, '3 Третє?');
+});
+
+test('preview shows answer content without a prefix or empty-answer placeholder', () => {
+    const section = source.indexOf('// Відповіді на контрольні питання');
+    const start = source.indexOf('            state.questions.forEach((q, index) => {', section);
+    const end = source.indexOf('\n            });', start) + '\n            });'.length;
+    const output = vm.createContext({
+        html: '', numberedQuestion,
+        escapeHtml: text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+        state: { questions: [{ question: 'Перше?', answer: 'Текст <приклад>' }, { question: 'Друге?', answer: '' }] }
+    });
+    vm.runInContext(source.slice(start, end), output);
+    assert.match(output.html, /1 Перше\?/);
+    assert.match(output.html, /2 Друге\?/);
+    assert.match(output.html, /Текст &lt;приклад&gt;/);
+    assert.doesNotMatch(output.html, /Відповідь:|Відповідь не заповнено/);
 });

@@ -891,7 +891,7 @@
                         ${escapeHtml(numberedQuestion(q.question, index))}
                     </div>
                     <div class="preview-para">
-                        <b>Відповідь:</b> ${escapeHtml(q.answer || "(Відповідь не заповнено)")}
+                        ${escapeHtml(q.answer || "")}
                     </div>
                 `;
             });
@@ -1344,7 +1344,6 @@
                     indent: { firstLine: 720 },
                     spacing: { line: 360, lineRule: LineRuleType.AUTO, after: 0 },
                     children: [
-                        new TextRun({ text: "Відповідь: ", font: "Times New Roman", size: 28, bold: true }),
                         new TextRun({ text: ansText || " ", font: "Times New Roman", size: 28 })
                     ]
                 }));
