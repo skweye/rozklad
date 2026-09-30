@@ -138,7 +138,7 @@
                 return tableParts(b, number).map((part, index) => `<div class="rb-table-part${index ? " rb-table-continuation" : ""}"><table class="rb-preview-table"><thead><tr><td colspan="${b.rows[0].length}" class="rb-table-caption">${escape(index ? `Продовження таблиці №${number}` : tableTitle(b, number))}</td></tr></thead><tbody>${part.map(row => `<tr>${row.map(cell => `<td>${escape(cell).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join("");
             }
             if (!b.text.trim()) return "";
-            if (b.kind === "code") return `<pre class="rb-preview-code">${escape(b.text)}</pre>`;
+            if (b.kind === "code") return `<div class="rb-preview-text rb-preview-heading" style="text-align:center;font-weight:bold">Код програми</div><pre class="rb-preview-code">${escape(b.text)}</pre>`;
             if (b.kind === "list") {
                 const tag = b.ordered ? "ol" : "ul";
                 return `<${tag} class="rb-preview-list">${lines(b.text).filter(s => s.trim()).map(s => `<li>${escape(s)}</li>`).join("")}</${tag}>`;
@@ -193,6 +193,7 @@
             }
             if (!b.text.trim()) continue;
             if (b.kind === "code") {
+                out.push(paragraph("Код програми", { alignment: d.AlignmentType.CENTER, keepNext: true, spacing: { line: 360, before: 180, after: 120 } }, { bold: true }));
                 for (const line of lines(b.text)) out.push(paragraph(line, { alignment: d.AlignmentType.LEFT, spacing: { line: 240, lineRule: d.LineRuleType.AUTO, after: 0 } }, { font: "Consolas", size: 22 }));
             } else if (b.kind === "list") {
                 lines(b.text).filter(s => s.trim()).forEach((line, i) => out.push(paragraph(`${b.ordered ? `${i + 1}.` : "•"} ${line}`, { alignment: d.AlignmentType.LEFT, indent: { left: 360, hanging: 360 } })));
