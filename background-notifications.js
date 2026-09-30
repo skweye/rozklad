@@ -1,7 +1,7 @@
 /* Opt-in system notifications while a page is open. No Push API or server subscription. */
 (() => {
     'use strict';
-    const preferenceKey = 'study-background-notifications-v1';
+    const preferenceKey = 'study-background-notifications-v2';
     const deliveredKey = 'study-background-notifications-delivered-v1';
     const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
     const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* session-only fallback */ } };
@@ -10,15 +10,17 @@
     const memoryDelivered = new Set();
     const inFlight = new Set();
     const enabled = () => Boolean(supported && optedIn && Notification.permission === 'granted');
-    const mount = document.querySelector('[data-appearance-settings]');
     const section = document.createElement('fieldset'); section.className = 'appearance-section background-notification-settings';
     const legend = document.createElement('legend'); legend.textContent = 'Фонові сповіщення';
     const button = document.createElement('button'); button.type = 'button';
     const hint = document.createElement('p'); hint.className = 'appearance-hint'; hint.setAttribute('role', 'status');
-    section.append(legend, button, hint); mount?.append(section);
+    section.append(legend, button, hint);
+    const mount = () => (document.querySelector('[data-notification-settings]') || document.querySelector('[data-appearance-settings]'))?.append(section);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
+    else mount();
     function paint(message) {
         button.disabled = !supported || working;
-        button.textContent = working ? 'Підключаємо…' : enabled() ? 'Вимкнути сповіщення' : 'Увімкнути сповіщення';
+        button.textContent = working ? 'Підключаємо…' : enabled() ? 'Вимкнути фонові сповіщення' : 'Увімкнути фонові сповіщення';
         button.setAttribute('aria-pressed', String(enabled()));
         hint.textContent = message || (!supported ? 'Цей браузер не підтримує системні сповіщення. Відкрийте сайт через HTTPS у підтримуваному браузері.' : Notification.permission === 'denied' ? 'Сповіщення заблоковано. Дозвольте їх у налаштуваннях цього сайту в браузері.' : enabled() ? 'Увімкнено для відкритої фонової вкладки. Закрита або призупинена браузером вкладка не перевіряє зміни. Звук залежить від налаштувань системи.' : 'Отримуйте сповіщення про заміни, коли вкладка відкрита у фоні. Браузер може затримувати перевірки. Після закриття вкладки сповіщень не буде.');
     }
@@ -35,7 +37,7 @@
     }
     button.addEventListener('click', async () => {
         if (!supported || working) return;
-        if (enabled()) { optedIn = false; write(preferenceKey, 'false'); changed(); return; }
+        if (optedIn) { optedIn = false; write(preferenceKey, 'false'); changed(); return; }
         working = true; paint();
         try {
             // Permission is requested synchronously from this explicit user click only.
@@ -69,6 +71,7 @@
                     await worker.showNotification(item.removed ? 'Заміну скасовано' : 'Заміна в розкладі', {
                         body: `${item.date} · ${item.index + 1} пара\n${item.removed ? 'Діє основний розклад' : subjects}`,
                         icon: '/icon.png', tag: `study-schedule-${item.date}-${item.index}`, renotify: false,
+                        silent: !window.studyNotifications?.enabled('sound'),
                         data: { url: '/index.html#weeklySchedule' }
                     });
                     sent.add(item.id); memoryDelivered.add(item.id);
@@ -82,7 +85,8 @@
         try { if (navigator.locks?.request) await navigator.locks.request('study-schedule-notification-delivery', send); else await send(); }
         catch { /* In-page notifications remain available if system delivery fails. */ }
     }
-    window.addEventListener('storage', event => { if (event.key === preferenceKey) { optedIn = read(preferenceKey) === 'true'; changed(); } });
+    window.addEventListener('storage', event => { if (event.key === preferenceKey || event.key === null) { optedIn = read(preferenceKey) === 'true'; changed(); } });
+    window.addEventListener('pageshow', () => { optedIn = read(preferenceKey) === 'true'; changed(); });
     window.addEventListener('focus', () => changed());
     window.studyBackgroundNotifications = { enabled, show };
     paint();

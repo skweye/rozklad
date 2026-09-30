@@ -28,7 +28,7 @@ test('background permission is explicit, opt-in persists, and disabling stops sy
     await f.click();
     assert.equal(f.permissionCalls, 1); assert.equal(f.api.enabled(), true);
     assert.equal(f.button.attrs['aria-pressed'], 'true');
-    assert.equal(f.storage.get('study-background-notifications-v1'), 'true');
+    assert.equal(f.storage.get('study-background-notifications-v2'), 'true');
     await f.api.show([item]); assert.equal(f.notifications.length, 0);
     f.document.hidden = true; await f.api.show([item]);
     assert.equal(f.notifications.length, 1);
@@ -45,18 +45,27 @@ test('background notification explicitly describes a window replacement', async 
     assert.match(f.notifications[0].options.body, /Вікно — пари немає/);
 });
 
+test('old opt-in does not enable the new defaults; system sound follows the shared switch', async () => {
+    const f = fixture({ permission: 'granted', storage: new Map([['study-background-notifications-v1', 'true']]) });
+    assert.equal(f.api.enabled(), false); assert.equal(f.registers, 0);
+    await f.click(); f.document.hidden = true;
+    await f.api.show([item]); assert.equal(f.notifications[0].options.silent, true);
+    f.window.studyNotifications = { enabled: kind => kind === 'sound' };
+    await f.api.show([{ ...item, id: 'b' }]); assert.equal(f.notifications[1].options.silent, false);
+});
+
 test('denied, dismissed and unsupported permissions leave usable settings and never register automatically', async () => {
     for (const answer of ['denied', 'default']) {
         const f = fixture({ answer }); await f.click();
         assert.equal(f.api.enabled(), false); assert.equal(f.button.disabled, false); assert.equal(f.registers, 0);
-        assert.equal(f.storage.get('study-background-notifications-v1'), 'false');
+        assert.equal(f.storage.get('study-background-notifications-v2'), 'false');
     }
     const f = fixture({ supported: false }); assert.equal(f.button.disabled, true);
     await f.click(); assert.equal(f.permissionCalls, 0);
 });
 
 test('read receipts prevent re-alerting on polls, reload and other tabs; newer versions still notify', async () => {
-    const storage = new Map([['study-background-notifications-v1', 'true']]);
+    const storage = new Map([['study-background-notifications-v2', 'true']]);
     const first = fixture({ storage, permission: 'granted' }); first.document.hidden = true;
     await first.api.show([item]); await first.api.show([item]); assert.equal(first.notifications.length, 1);
     const second = fixture({ storage, permission: 'granted' }); second.document.hidden = true;

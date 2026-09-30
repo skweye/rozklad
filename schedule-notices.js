@@ -44,7 +44,7 @@
     let audio, playing = false;
     const sounded = new Set();
     function playSound() {
-        if (document.hidden || playing) return;
+        if (!window.studyNotifications?.enabled('replacements') || !window.studyNotifications?.enabled('sound') || document.hidden || playing) return;
         const batch = [...pending.values()].map(item => item.id).filter(id => shouldNotify(id) && !sounded.has(id));
         if (!batch.length) return;
         try {
@@ -69,8 +69,10 @@
     function render() {
         for (const [id, notice] of pending) if (!shouldNotify(notice.id) || notice.date < today()) pending.delete(id);
         const notices = [...pending.values()].sort((a, b) => a.date.localeCompare(b.date) || a.index - b.index);
-        root.hidden = !notices.length;
+        root.hidden = !notices.length || !window.studyNotifications?.enabled('replacements');
         positionNotice();
+        window.studyBackgroundNotifications?.show(notices);
+        if (root.hidden) { announcement.textContent = ''; audio?.pause(); return; }
         if (!notices.length) { announcement.textContent = ''; audio?.pause(); return; }
         announcement.textContent = notices.length === 1 ? 'Розклад змінено · є нове сповіщення' : `Розклад змінено · нових сповіщень: ${notices.length}`;
         list.replaceChildren();
@@ -83,7 +85,6 @@
             row.append(date, text); list.append(row);
         }
         playSound();
-        window.studyBackgroundNotifications?.show(notices);
     }
     function update(records, suppressedIds = []) {
         const previouslySuppressed = suppressed;
@@ -110,6 +111,10 @@
     });
     window.addEventListener('storage', event => { if (event.key === storageKey) { seen = readSeen(); render(); } });
     window.studyScheduleNotices = { update, shouldNotify };
+    window.addEventListener('study-notifications-change', () => {
+        if (!window.studyNotifications?.enabled('sound')) audio?.pause();
+        render();
+    });
     window.addEventListener('study-background-notifications-change', () => render());
     // Schedule already fetches this endpoint for its cards; reports share only the notice feed.
     if (document.body.dataset.app === 'schedule') return;

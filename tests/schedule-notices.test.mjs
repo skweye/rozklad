@@ -6,7 +6,22 @@ const source = await readFile(new URL('../schedule-notices.js', import.meta.url)
 const clock = await readFile(new URL('../schedule-time.js', import.meta.url), 'utf8');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const record = (extra = {}) => ({ date: '2026-09-24', index: 0, revision: 'a', lesson: { s: 'Бази даних' }, ...extra });
-function fixture({ app = 'schedule', storage = new Map(), storageFails = false, autoplayBlocked = false, popover = true } = {}) {
+test('replacement popup and sound require independent opt-ins; background delivery stays independent', async () => {
+    const f = fixture({ preferences: {} });
+    const sent = [];
+    f.window.studyBackgroundNotifications = { show: notices => sent.push(...notices) };
+    f.update([record()]); await settle();
+    assert.equal(f.root.hidden, true); assert.equal(f.sounds.length, 0);
+    assert.equal(sent.length, 1);
+    f.preference('replacements', true); await settle();
+    assert.equal(f.root.hidden, false); assert.equal(f.sounds.length, 0);
+    f.preference('sound', true); await settle(); assert.equal(f.sounds[0].plays, 1);
+    f.preference('sound', false); assert.ok(f.sounds[0].pauses > 0);
+    f.preference('replacements', false); assert.equal(f.root.hidden, true);
+    f.update([record({ revision: 'b' })]); await settle(); assert.equal(f.sounds[0].plays, 1);
+    f.preference('sound', true); await settle(); assert.equal(f.sounds[0].plays, 1);
+});
+function fixture({ app = 'schedule', storage = new Map(), storageFails = false, autoplayBlocked = false, popover = true, preferences = { replacements: true, sound: true } } = {}) {
     let timestamp = Date.parse('2026-09-24T07:00:00Z'), records = [], failed = false, reads = 0;
     class ClockDate extends Date { constructor(...args) { super(...(args.length ? args : [timestamp])); } }
     class Element {
@@ -24,7 +39,7 @@ function fixture({ app = 'schedule', storage = new Map(), storageFails = false, 
     const header = new Element(), body = new Element(); body.dataset = { app };
     let dialogs = [], observer;
     const document = { body, hidden: false, listeners: {}, createElement: () => new Element(), querySelector: () => header, querySelectorAll: () => dialogs, addEventListener(key, value) { const old = this.listeners[key]; this.listeners[key] = old ? (...args) => { old(...args); value(...args); } : value; } };
-    const window = { listeners: {}, addEventListener(key, value) { this.listeners[key] = value; } };
+    const window = { studyNotifications: { enabled: kind => preferences[kind] === true }, listeners: {}, addEventListener(key, value) { this.listeners[key] = value; } };
     const timers = new Set();
     const sounds = [];
     class Audio {
@@ -40,6 +55,7 @@ function fixture({ app = 'schedule', storage = new Map(), storageFails = false, 
     vm.runInContext(clock, context); vm.runInContext(source, context);
     const root = body.children[0];
     return { root, window, document, timers, storage, sounds, get reads() { return reads; },
+        preference(kind, value) { preferences[kind] = value; window.listeners['study-notifications-change'](); },
         background(value) { window.studyBackgroundNotifications = { enabled: () => value, show() {} }; },
         allowSound() { autoplayBlocked = false; document.listeners.click(); },
         modal(open) { const dialog = new Element(); dialog.tagName = 'DIALOG'; dialogs = open ? [dialog] : []; observer([{ target: dialog }]); return dialog; },
@@ -51,7 +67,7 @@ function fixture({ app = 'schedule', storage = new Map(), storageFails = false, 
     };
 }
 
-test('anonymous visitors get date, pair and subject notices with no duplicate schedule fetch', () => {
+test('opted-in anonymous visitors get date, pair and subject notices with no duplicate schedule fetch', () => {
     const f = fixture();
     assert.equal(f.root.hidden, true); assert.equal(f.reads, 0);
     f.update([record()]);

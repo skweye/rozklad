@@ -39,6 +39,13 @@ body[data-app][data-theme] .appearance-transparency button, body[data-app][data-
 .appearance-wallpaper-actions { margin-bottom: 18px; }
 .appearance-notice { font-size: 12px; color: var(--ui-text); overflow-wrap: anywhere; }
 .appearance-notice:empty { display: none; }
+.notification-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 8px 0; color: var(--ui-text); font-size: 13px; cursor: pointer; }
+.notification-setting input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
+.notification-setting input:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+body[data-app][data-theme] [data-notification-settings] button { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 12px; font: inherit; font-size: 12px; color: var(--ui-text); background: var(--ui-soft); border: 1px solid var(--ui-line); border-radius: 9px; cursor: pointer; }
+body[data-app][data-theme] [data-notification-settings] button[aria-pressed="true"] { border-color: var(--ui-accent); }
+[data-notification-settings] button:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+[data-notification-settings] button:disabled { opacity: .55; cursor: not-allowed; }
 body[data-app] [data-appearance-settings] [hidden] { display: none !important; }
 body[data-app][data-theme] :is(.settings-menu,.reports-settings-menu,.modal-sheet,.auth-dialog) { background: var(--ui-ground) !important; }
 body[data-app][data-theme] :is(.card,.card:hover,.links-grid,.classroom-list,.live-preview-card,.task-block,.question-item,.sequence-box,.flowchart-section,.upload-zone,.image-thumb-card,.header-inner) { background: var(--ui-panel) !important; }

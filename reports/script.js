@@ -111,6 +111,7 @@
     }
 
     function showAppNotice(message, type = "info") {
+        if (type === "success" && !window.studyNotifications?.enabled('success')) return;
         if (!dom.appNoticeStack) return;
 
         const icons = { success: "✓", error: "!", info: "i" };

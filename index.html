@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="site-appearance.js"></script>
+    <script src="site-notifications.js"></script>
     <link rel="icon" id="siteFavicon" href="brand-icon.svg" type="image/svg+xml">
     <title>Розклад ПЗ-24-1/9</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,15 +70,6 @@
                     <h3 class="settings-menu-title">Функції</h3>
                     <div class="settings-card">
 
-                        <div class="settings-toggle-item">
-                            <span class="toggle-label" id="nextLessonRemindersLabel">Нагадування про наступну пару</span>
-                            <label class="switch">
-                                <input type="checkbox" id="nextLessonRemindersToggle" aria-labelledby="nextLessonRemindersLabel" aria-describedby="nextLessonRemindersHint">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <p class="appearance-hint" id="nextLessonRemindersHint">За 10 хв до першої пари та за 5 хв до наступної. Сповіщення про заміни працюють окремо.</p>
-                        <p class="appearance-notice" id="nextLessonRemindersStatus" role="status"></p>
                         <div class="settings-toggle-item">
                             <div class="info-wrapper">
                                 <span class="info-icon" data-tooltip="Автоматично відкриває посилання на урок у новій вкладці за 2 хвилини до початку пари.">i</span>
@@ -223,7 +215,8 @@
                 notifyAudio.volume = 0.7;
             } catch (e) {}
         }
-        function playNotifySound() {
+        function playNotifySound(test = false) {
+            if (!test && !window.studyNotifications?.enabled('sound')) return;
             if (!notifyAudio) initNotifyAudio();
             if (notifyAudio) {
                 try {
@@ -234,6 +227,7 @@
         }
         let lastAnnouncementId = localStorage.getItem('lastAnnouncementId') || null;
         function fetchAnnouncement() {
+            if (!window.studyNotifications?.enabled('announcements')) return;
             fetch('announcement.json', { cache: 'no-cache' })
                 .then(r => r.ok ? r.json() : null)
                 .then(obj => {
@@ -241,7 +235,7 @@
                     if (obj.expiresAt && new Date(obj.expiresAt) < new Date()) return;
                     const id = obj.id || obj.message;
                     if (lastAnnouncementId === id) return;
-                    if (hasInteracted) showToast(obj.message, '', obj.type || 'info', 8000);
+                    if (hasInteracted) showToast(obj.message, '', obj.type || 'info', 8000, 'announcements');
                     lastAnnouncementId = id;
                     localStorage.setItem('lastAnnouncementId', id);
                 })
@@ -638,7 +632,9 @@
             if (h > 0) return `${h}год ${m}хв`;
             return `${m}хв`;
         }
-        function showToast(title, meta, type = 'info', timeout = 6000) {
+        function showToast(title, meta, type = 'info', timeout = 6000, category = 'success') {
+            const critical = category === 'success' && (type === 'warning' || type === 'error');
+            if (category !== 'test' && !critical && !window.studyNotifications?.enabled(category)) return;
             const c = document.getElementById('toastContainer');
             if (!c) return;
             const el = document.createElement('div');
@@ -660,7 +656,7 @@
             el.appendChild(content);
             el.appendChild(close);
             c.appendChild(el);
-            playNotifySound();
+            if (category !== 'test') playNotifySound();
             let timer = null;
             function dismiss() {
                 el.style.animation = 'toast-out 160ms ease-in both';
@@ -730,21 +726,12 @@
 
         let nextLessonRemindersEnabled = false;
         function initLessonReminderSettings() {
-            const toggle = document.getElementById('nextLessonRemindersToggle');
-            try { nextLessonRemindersEnabled = localStorage.getItem('nextLessonRemindersEnabled') === 'true'; }
-            catch { nextLessonRemindersEnabled = false; }
-            toggle.checked = nextLessonRemindersEnabled;
-            toggle.addEventListener('change', () => {
-                nextLessonRemindersEnabled = toggle.checked;
-                const message = document.getElementById('nextLessonRemindersStatus');
-                message.textContent = '';
-                try { localStorage.setItem('nextLessonRemindersEnabled', String(nextLessonRemindersEnabled)); }
-                catch { message.textContent = 'Налаштування діє в цій вкладці; браузер не дозволив його зберегти.'; }
-            });
-            window.addEventListener('storage', event => {
-                if (event.key !== 'nextLessonRemindersEnabled' && event.key !== null) return;
-                nextLessonRemindersEnabled = event.key !== null && event.newValue === 'true';
-                toggle.checked = nextLessonRemindersEnabled;
+            const sync = () => { nextLessonRemindersEnabled = window.studyNotifications?.enabled('nextLesson') === true; };
+            sync();
+            window.addEventListener('study-notifications-change', () => {
+                sync();
+                if (!window.studyNotifications?.enabled('sound')) notifyAudio?.pause();
+                document.getElementById('toastContainer')?.replaceChildren();
             });
         }
 
@@ -762,18 +749,18 @@
             if (status.type === 'in_class' && prevStatus.type !== 'in_class') {
                 const lesson = getLesson(day, status.index, currentWeekType);
                 const meta = lesson ? formatLessonString(lesson) : '';
-                if (hasInteracted && lesson) showToast('Пара началась', meta, 'success', 6000);
+                if (hasInteracted && lesson && window.studyNotifications?.enabled('lessonStart')) showToast('Пара почалась', meta, 'success', 6000, 'lessonStart');
                 warnedNextIndex = null;
             }
             if (prevStatus.type === 'in_class' && status.type !== 'in_class') {
-                if (hasInteracted && getLesson(day, prevStatus.index, currentWeekType)) showToast('Пара закончилась', '', 'info', 5000);
+                if (hasInteracted && window.studyNotifications?.enabled('lessonEnd') && getLesson(day, prevStatus.index, currentWeekType)) showToast('Пара завершилась', '', 'info', 5000, 'lessonEnd');
             }
             if (nextLessonRemindersEnabled && status.type === 'before_start' && status.diff <= 10) {
                 const key = now.toDateString() + '-first';
                 if (warnedFirstKey !== key) {
                     const next = getLesson(day, 0, currentWeekType);
                     const meta = next ? formatLessonString(next) : '';
-                    if (hasInteracted && next) showToast(`Через ${status.diff} мин начнется пара`, meta, 'warning', 6000);
+                    if (hasInteracted && next) showToast(`Через ${status.diff} хв почнеться пара`, meta, 'warning', 6000, 'nextLesson');
                     warnedFirstKey = key;
                 }
             }
@@ -782,7 +769,7 @@
                 if (warnedNextIndex !== key2) {
                     const next = getLesson(day, status.nextIndex, currentWeekType);
                     const meta2 = next ? formatLessonString(next) : '';
-                    if (hasInteracted && next) showToast(`Через ${status.diff} мин начнется пара`, meta2, 'warning', 6000);
+                    if (hasInteracted && next) showToast(`Через ${status.diff} хв почнеться пара`, meta2, 'warning', 6000, 'nextLesson');
                     warnedNextIndex = key2;
                 }
             }
@@ -852,8 +839,8 @@
             });
 
             document.getElementById('fabTestSound').addEventListener('click', () => {
-                playNotifySound();
-                showToast('Тест звуку', 'Сповіщення працюють коректно', 'info', 3000);
+                playNotifySound(true);
+                showToast('Тест звуку', 'Перевірка не вмикає сповіщення', 'info', 3000, 'test');
             });
 
             // Auto-open persistence
@@ -907,13 +894,6 @@
             });
             const enableAudio = () => {
                 hasInteracted = true;
-                if (!notifyAudio) initNotifyAudio();
-                if (notifyAudio) {
-                    notifyAudio.play().then(() => {
-                        notifyAudio.pause();
-                        notifyAudio.currentTime = 0;
-                    }).catch(() => {});
-                }
                 ['click', 'keydown', 'touchstart'].forEach(evt => 
                     document.removeEventListener(evt, enableAudio)
                 );
