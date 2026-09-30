@@ -39,6 +39,18 @@ body[data-app][data-theme] .appearance-transparency button, body[data-app][data-
 .appearance-wallpaper-actions { margin-bottom: 18px; }
 .appearance-notice { font-size: 12px; color: var(--ui-text); overflow-wrap: anywhere; }
 .appearance-notice:empty { display: none; }
+.custom-theme-editor { border-top: 1px solid var(--ui-line); padding-top: 12px; }
+.custom-theme-group { margin-bottom: 18px; }
+.custom-theme-group > summary { padding: 10px 0; cursor: pointer; color: var(--ui-text); font-size: 13px; }
+.custom-theme-color { display: block; margin: 12px 0; color: var(--ui-muted); font-size: 12px; }
+.custom-theme-color > span { display: block; margin-bottom: 6px; }
+.custom-theme-range { display: block; margin: 14px 0; font-size: 12px; color: var(--ui-text); }
+.custom-theme-range > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.custom-theme-range output { color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+body[data-app][data-theme] [data-appearance-settings] .custom-theme-range input { width: 100%; padding: 0; accent-color: var(--ui-accent); background: transparent; border: 0; }
+.custom-theme-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; color: var(--ui-text); cursor: pointer; }
+body[data-app][data-theme] [data-appearance-settings] .custom-theme-check input { width: 18px; height: 18px; min-height: 18px; flex: 0 0 auto; accent-color: var(--ui-accent); }
+
 .notification-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 8px 0; color: var(--ui-text); font-size: 13px; cursor: pointer; }
 .notification-setting input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
 .notification-setting input:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
@@ -75,3 +87,26 @@ body[data-page-hidden="true"] .lesson-item.is-current-lesson::before { animation
 @media (prefers-reduced-motion: reduce), (pointer: coarse) { .lesson-item.is-current-lesson::before { animation: none; } }
 @media (prefers-reduced-motion: reduce), (max-width: 768px), (pointer: coarse) { body[data-app][data-theme] :is(.bg-video,.reports-bg-video) { display: none; } }
 @media (max-width: 640px) { body[data-app][data-theme] [data-appearance-settings] :is(input,select) { font-size: 16px; } }
+
+/* Custom surfaces do not reach the white print preview or exported document. */
+body[data-app][data-theme="custom"] { font-family: var(--custom-font); --font-main: var(--custom-font); --ui-radius: var(--custom-radius); }
+body[data-app][data-theme="custom"] :is(.card,.links-grid,.classroom-list,.header-inner,.live-preview-card,.task-block,.question-item,.sequence-box,.flowchart-section,.upload-zone,.image-thumb-card,.actions-footer,.settings-menu,.reports-settings-menu,.auth-dialog,.replacement-dialog,.permissions-dialog,.site-switcher-menu,.schedule-notices) {
+    background: var(--ui-panel) !important; color: var(--ui-text);
+    border: var(--custom-border-width) solid var(--ui-line) !important; border-radius: var(--custom-radius) !important;
+    box-shadow: var(--custom-shadow) !important; backdrop-filter: var(--custom-blur) !important; -webkit-backdrop-filter: var(--custom-blur) !important;
+}
+body[data-app][data-theme="custom"] .card.day-card:hover { border: var(--custom-border-width) solid var(--ui-line) !important; }
+body[data-app][data-theme="custom"] :is(.btn,.btn-primary,.btn-secondary,.btn-icon,.settings-fab,.reports-settings-fab,.classroom-more,.auth-close,.auth-logout,.auth-retry,.replacement-actions button,.permissions-dialog button,[data-appearance-settings] button,[data-notification-settings] button) {
+    border-radius: var(--custom-button-radius) !important; border-width: var(--custom-border-width) !important;
+    box-shadow: var(--custom-shadow); font-family: var(--custom-font);
+}
+body[data-app][data-theme="custom"] :is(.settings-menu,.reports-settings-menu,.auth-dialog,.replacement-dialog,.permissions-dialog,.site-switcher-menu,.schedule-notices) { background: var(--ui-ground) !important; }
+body[data-app][data-theme="custom"] :is(.btn-tool,.upload-btn,.settings-action-btn,.reports-settings-action-btn,.floating-preview-btn,.modal-close-btn,.btn-remove-img) { border-radius: var(--custom-button-radius) !important; box-shadow: var(--custom-shadow) !important; }
+body[data-app][data-theme="custom"] :is(.form-control,.classroom-tools input,.classroom-tools select,.auth-dialog input,.permissions-dialog input) {
+    color: var(--ui-text); background: var(--ui-inset); border-color: var(--ui-line);
+    border-width: var(--custom-border-width); border-radius: var(--custom-button-radius); font-family: var(--custom-font);
+}
+body[data-app][data-theme="custom"][data-custom-particles="false"] > .background-particles { display: none !important; }
+body[data-app][data-theme="custom"][data-custom-motion="false"] *,
+body[data-app][data-theme="custom"][data-custom-motion="false"] *::before,
+body[data-app][data-theme="custom"][data-custom-motion="false"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; scroll-behavior: auto !important; }

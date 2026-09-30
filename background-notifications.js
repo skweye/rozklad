@@ -16,7 +16,7 @@
     const hint = document.createElement('p'); hint.className = 'appearance-hint'; hint.setAttribute('role', 'status');
     section.append(legend, button, hint);
     const mount = () => (document.querySelector('[data-notification-settings]') || document.querySelector('[data-appearance-settings]'))?.append(section);
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
+    if (document.readyState === 'loading' || document.readyState === 'interactive') document.addEventListener('DOMContentLoaded', mount, { once: true });
     else mount();
     function paint(message) {
         button.disabled = !supported || working;
@@ -86,7 +86,7 @@
         catch { /* In-page notifications remain available if system delivery fails. */ }
     }
     window.addEventListener('storage', event => { if (event.key === preferenceKey || event.key === null) { optedIn = read(preferenceKey) === 'true'; changed(); } });
-    window.addEventListener('pageshow', () => { optedIn = read(preferenceKey) === 'true'; changed(); });
+    window.addEventListener('pageshow', () => { mount(); optedIn = read(preferenceKey) === 'true'; changed(); });
     window.addEventListener('focus', () => changed());
     window.studyBackgroundNotifications = { enabled, show };
     paint();

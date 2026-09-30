@@ -137,9 +137,10 @@
         lastTime = performance.now();
         pointer.active = false;
         pointer.strength = 0;
-        if (!document.hidden && !suspended) {
+        const custom = document.body.dataset.theme === 'custom';
+        if (!document.hidden && !suspended && !(custom && document.body.dataset.customParticles === 'false')) {
             draw();
-            if (!reducedMotion.matches) frameId = requestAnimationFrame(tick);
+            if (!reducedMotion.matches && !(custom && document.body.dataset.customMotion === 'false')) frameId = requestAnimationFrame(tick);
         }
     }
 
@@ -159,8 +160,8 @@
     window.addEventListener('pageshow', () => { suspended = false; syncMotion(); });
     reducedMotion.addEventListener('change', syncMotion);
     coarsePointer.addEventListener('change', resize);
-    const themeObserver = new MutationObserver(updateColor);
-    const themeAttributes = { attributes: true, attributeFilter: ['class', 'style'] };
+    const themeObserver = new MutationObserver(() => { updateColor(); syncMotion(); });
+    const themeAttributes = { attributes: true, attributeFilter: ['class', 'style', 'data-theme', 'data-custom-motion', 'data-custom-particles'] };
     themeObserver.observe(document.body, themeAttributes);
     // Custom colour sliders update variables on <html> without changing the body class.
     themeObserver.observe(document.documentElement, themeAttributes);
