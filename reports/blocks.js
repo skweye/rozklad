@@ -75,12 +75,68 @@
         items.splice(target, 0, items.splice(index, 1)[0]); return true;
     }
     const lines = text => str(text).replace(/\r\n?/g, "\n").split("\n");
+    const hasTableContent = b => b.rows.some(row => row.some(cell => cell.trim()));
+    const tableTitle = (b, number) => `Таблиця ${number}${b.caption.trim() ? ` – ${b.caption.trim()}` : ""}`;
+    // A4 with the report's 25/10 mm horizontal margins (twips).
+    const tableWidth = 11906 - 1418 - 567;
+    let textMeasure;
+    function measureText(text) {
+        if (textMeasure === undefined) {
+            try { textMeasure = root.document?.createElement("canvas").getContext("2d") || null; }
+            catch { textMeasure = null; }
+            // A 14px canvas font gives point-sized measurements for 14pt Word text.
+            if (textMeasure) textMeasure.font = '14px "Times New Roman"';
+        }
+        return textMeasure ? textMeasure.measureText(text).width : Array.from(text).length * 14;
+    }
+    function wrapTableText(text, width) {
+        const result = [];
+        for (const line of lines(text)) {
+            let current = "";
+            for (const token of line.match(/\s+|\S+/gu) || []) {
+                if (current && measureText(current + token) > width) { result.push(current); current = ""; }
+                // Also wrap unbroken URLs/identifiers; never discard cell content.
+                for (const char of token) {
+                    if (current && measureText(current + char) > width) { result.push(current); current = ""; }
+                    current += char;
+                }
+            }
+            result.push(current);
+        }
+        return result;
+    }
+    function tableParts(b, number) {
+        const columns = b.rows[0].length;
+        // Padding + a font-substitution allowance. Explicit soft line breaks keep
+        // the first part within one page without fixed/clipping row heights.
+        const width = tableWidth / 20 / columns - 20;
+        const rows = b.rows.map(row => row.map(cell => wrapTableText(cell, width)));
+        const captionHeight = wrapTableText(tableTitle(b, number), tableWidth / 20 - 20).length * 21;
+        const budget = Math.max(29, 640 - captionHeight);
+        const first = [], rest = [];
+        let used = 0;
+        for (const row of rows) {
+            const height = Math.max(...row.map(cell => cell.length)) * 21 + 8;
+            if (!rest.length && used + height <= budget) { first.push(row); used += height; }
+            else if (!first.length) {
+                // Even a single cell taller than a page must have a continuation.
+                const count = Math.max(1, Math.floor((budget - 8) / 21));
+                first.push(row.map(cell => cell.slice(0, count)));
+                rest.push(row.map(cell => cell.slice(count)));
+            } else rest.push(row);
+        }
+        return [first, ...(rest.length ? [rest] : [])].map(part => part.map(row => row.map(cell => cell.join("\n"))));
+    }
     function preview(items) {
-        let step = 0, figure = 0;
+        let step = 0, figure = 0, table = 0;
         return items.map(b => {
             if (b.kind === "pageBreak") return '<div class="rb-page-break" aria-label="Нова сторінка"></div>';
             if (b.kind === "image") return safeImage(b.dataUrl) ? `<figure class="rb-figure"><img src="${escape(b.dataUrl)}" style="max-width:${b.width}%" alt="${escape(b.caption)}"><figcaption>Рисунок ${++figure}${b.caption ? ` – ${escape(b.caption)}` : ""}</figcaption></figure>` : "";
-            if (b.kind === "table") return b.rows.some(row => row.some(cell => cell.trim())) ? `<table class="rb-preview-table"><tbody>${b.rows.map(row => `<tr>${row.map(cell => `<td>${escape(cell).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : "";
+            if (b.kind === "table") {
+                if (!hasTableContent(b)) return "";
+                const number = ++table;
+                return tableParts(b, number).map((part, index) => `<div class="rb-table-part${index ? " rb-table-continuation" : ""}"><table class="rb-preview-table"><thead><tr><td colspan="${b.rows[0].length}" class="rb-table-caption">${escape(index ? `Продовження таблиці №${number}` : tableTitle(b, number))}</td></tr></thead><tbody>${part.map(row => `<tr>${row.map(cell => `<td>${escape(cell).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join("");
+            }
             if (!b.text.trim()) return "";
             if (b.kind === "code") return `<pre class="rb-preview-code">${escape(b.text)}</pre>`;
             if (b.kind === "list") {
@@ -92,7 +148,7 @@
         }).join("");
     }
     async function toDocx(items, d, processImage) {
-        const out = []; let step = 0, figure = 0;
+        const out = []; let step = 0, figure = 0, table = 0;
         const align = { left: d.AlignmentType.LEFT, right: d.AlignmentType.RIGHT, center: d.AlignmentType.CENTER, justify: d.AlignmentType.BOTH };
         const paragraph = (text, options = {}, runOptions = {}) => new d.Paragraph({
             alignment: d.AlignmentType.BOTH, spacing: { line: 360, lineRule: d.LineRuleType.AUTO, after: 0 },
@@ -105,13 +161,34 @@
                 const image = await processImage(b.dataUrl, 660 * b.width / 100, 760);
                 if (!image) throw new Error("Не вдалося обробити зображення. Замініть його та повторіть експорт.");
                 out.push(new d.Paragraph({ alignment: d.AlignmentType.CENTER, keepNext: true, children: [new d.ImageRun({ data: image.buffer, transformation: { width: image.width, height: image.height } })] }));
+                out.push(paragraph("", { keepNext: true }));
                 out.push(paragraph(`Рисунок ${++figure}${b.caption ? ` – ${b.caption}` : ""}`, { alignment: d.AlignmentType.CENTER }));
+                out.push(paragraph(""));
                 continue;
             }
             if (b.kind === "table") {
-                if (!b.rows.some(row => row.some(cell => cell.trim()))) continue;
-                out.push(new d.Table({ width: { size: 100, type: d.WidthType.PERCENTAGE }, layout: d.TableLayoutType.FIXED,
-                    rows: b.rows.map(row => new d.TableRow({ children: row.map(cell => new d.TableCell({ width: { size: 100 / row.length, type: d.WidthType.PERCENTAGE }, children: [paragraph(cell, { alignment: d.AlignmentType.LEFT })] })) })) }));
+                if (!hasTableContent(b)) continue;
+                const number = ++table, columns = b.rows[0].length;
+                const cellWidth = Math.floor(tableWidth / columns);
+                const cellSpacing = { before: 0, after: 0, line: 420, lineRule: d.LineRuleType.EXACT };
+                const none = { style: d.BorderStyle.NIL, size: 0, color: "FFFFFF" };
+                tableParts(b, number).forEach((part, index) => {
+                    if (index) out.push(paragraph("", { pageBreakBefore: true, keepNext: true, spacing: { before: 0, after: 0, line: 1, lineRule: d.LineRuleType.EXACT } }));
+                    // Only continuation parts have a repeated caption. A PAGE field
+                    // in a repeated table row is cached by Word, not recalculated.
+                    const caption = new d.TableRow({ tableHeader: index > 0, cantSplit: true, children: [new d.TableCell({
+                        columnSpan: columns, width: { size: tableWidth, type: d.WidthType.DXA },
+                        borders: { top: none, bottom: none, left: none, right: none },
+                        margins: { top: 0, bottom: 80, left: 0, right: 0 },
+                        children: [paragraph(index ? `Продовження таблиці №${number}` : tableTitle(b, number), { alignment: d.AlignmentType.LEFT, keepNext: true, spacing: cellSpacing })]
+                    })] });
+                    out.push(new d.Table({ width: { size: tableWidth, type: d.WidthType.DXA }, columnWidths: Array(columns).fill(cellWidth), layout: d.TableLayoutType.FIXED,
+                        margins: { top: 80, bottom: 80, left: 108, right: 108 },
+                        rows: [caption, ...part.map((row, rowIndex) => new d.TableRow({ cantSplit: index === 0,
+                            children: row.map(cell => new d.TableCell({ width: { size: cellWidth, type: d.WidthType.DXA },
+                                children: [paragraph(cell, { alignment: d.AlignmentType.LEFT, keepNext: index === 0 && rowIndex < part.length - 1, spacing: cellSpacing })]
+                            })) }))] }));
+                });
                 out.push(paragraph("")); continue;
             }
             if (!b.text.trim()) continue;
@@ -153,7 +230,8 @@
                 if (b.kind === "image") {
                     body = `<div class="rb-image-drop" tabindex="0" role="group" aria-label="Зображення: вставте з буфера Ctrl+V або завантажте файл">${safeImage(b.dataUrl) ? `<img src="${escape(b.dataUrl)}" alt="${escape(b.caption)}">` : `<div class="rb-image-placeholder">${icon("image")}<span>Перетягніть зображення або вставте Ctrl+V</span></div>`}<label class="btn btn-secondary rb-upload">${b.dataUrl ? "Замінити зображення" : "Обрати файл"}<input type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif" data-image-file></label></div><label class="rb-field">Підпис рисунка <span class="rb-hint">Кожне фото має окремий номер і підпис</span><textarea class="form-control" rows="1" data-field="caption">${escape(b.caption)}</textarea></label><label class="rb-field">Ширина у документі<select class="form-control" data-field="width">${[50, 75, 100].map(n => `<option value="${n}" ${n === b.width ? "selected" : ""}>${n}%</option>`).join("")}</select></label>`;
                 } else if (b.kind === "table") {
-                    body = `<div class="rb-table-scroll"><table class="rb-edit-table"><tbody>${b.rows.map((row, r) => `<tr>${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="rb-table-tools"><button type="button" class="btn btn-sm" data-action="add-row">+ Рядок</button><button type="button" class="btn btn-sm" data-action="add-column" ${b.rows[0].length >= 6 ? "disabled" : ""}>+ Стовпець</button><button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button><button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button></div>`;
+                    body = `<label class="rb-field">Назва таблиці <span class="rb-hint">Наприклад: Результат. Номер додається автоматично.</span><textarea class="form-control" rows="1" data-field="caption" placeholder="Результат">${escape(b.caption)}</textarea></label>`;
+                    body += `<div class="rb-table-scroll"><table class="rb-edit-table"><tbody>${b.rows.map((row, r) => `<tr>${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="rb-table-tools"><button type="button" class="btn btn-sm" data-action="add-row">+ Рядок</button><button type="button" class="btn btn-sm" data-action="add-column" ${b.rows[0].length >= 6 ? "disabled" : ""}>+ Стовпець</button><button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button><button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button></div><p class="rb-hint">У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
                 } else if (b.kind === "pageBreak") {
                     body = '<p class="rb-hint">Наступний блок почнеться з нової сторінки у Word.</p>';
                 } else {
@@ -247,5 +325,5 @@
         });
         return { render, open };
     }
-    root.ReportBlocks = { create, normalize, preset, move, preview, toDocx, editor };
+    root.ReportBlocks = { create, normalize, preset, move, preview, toDocx, editor, tableParts };
 })(typeof window === "undefined" ? globalThis : window);

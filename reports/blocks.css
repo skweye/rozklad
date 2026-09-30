@@ -50,9 +50,14 @@
 .preview-page .rb-preview-code { color: #000; background: transparent; font-family: Consolas, monospace; font-size: 11pt; line-height: 1; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
 .preview-page .rb-figure { margin: 10px 0; text-align: center; color: #000; break-inside: avoid; }
 .preview-page .rb-figure img { max-height: 760px; height: auto; object-fit: contain; }
-.preview-page .rb-figure figcaption { font: 14pt/1.5 'Times New Roman', serif; overflow-wrap: anywhere; }
+.preview-page .rb-figure figcaption { font: 14pt/1.5 'Times New Roman', serif; overflow-wrap: anywhere; padding: 21pt 0; }
 .preview-page .rb-preview-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 8px 0; color: #000; font: 14pt/1.5 'Times New Roman', serif; }
 .preview-page .rb-preview-table td { border: 1px solid #000; padding: 4px 6px; overflow-wrap: anywhere; vertical-align: top; }
+.preview-page .rb-preview-table .rb-table-caption { border: 0; padding: 0 0 4pt; text-align: left; white-space: pre-wrap; }
+.preview-page .rb-table-part:not(.rb-table-continuation) { break-inside: avoid; }
+.preview-page .rb-table-continuation { margin-top: 24pt; break-before: page; }
+.preview-page .rb-preview-table thead { display: table-header-group; }
+.preview-page .rb-preview-table tbody td { line-height: 21pt; white-space: pre-wrap; }
 .preview-page .rb-preview-list { padding-left: 24px; color: #000; font: 14pt/1.5 'Times New Roman', serif; }
 .rb-page-break { border-top: 1px dashed #888; margin: 24px 0; text-align: center; break-after: page; }
 .rb-page-break::after { content: 'Нова сторінка'; font: 11px/1.5 sans-serif; color: #666; }

@@ -79,6 +79,82 @@ test('invalid image decoding fails visibly instead of silently losing a picture 
     await assert.rejects(b.toDocx([b.create('image', { dataUrl: png })], docx, async () => null), /зображення/);
 });
 
+test('photo captions have actual empty paragraphs above and below, kept with their image', async () => {
+    const xml = await xmlFor([b.create('image', { dataUrl: png, caption: 'Фото' }), b.create('text', { text: 'Після фото' })]);
+    const paragraphs = [...xml.matchAll(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g)].map(match => match[0]);
+    const index = paragraphs.findIndex(p => p.includes('Рисунок 1 – Фото'));
+    assert.ok(index >= 2);
+    assert.match(paragraphs[index - 2], /<w:drawing>/);
+    for (const gap of [paragraphs[index - 1], paragraphs[index + 1]]) {
+        assert.doesNotMatch(gap, /<w:t\b[^>]*>[^<]+<\/w:t>|<w:drawing>/);
+        assert.match(gap, /w:line="360"/);
+    }
+    assert.match(paragraphs[index - 2], /<w:keepNext/);
+    assert.match(paragraphs[index - 1], /<w:keepNext/);
+    assert.match(paragraphs[index + 2], /Після фото/);
+});
+
+test('table captions are escaped, saved and independently renumbered on reorder/deletion', async () => {
+    const blocks = b.normalize([
+        b.create('table', { caption: 'Empty' }),
+        b.create('image', { dataUrl: png, caption: 'Photo' }),
+        b.create('table', { caption: 'Результат <1>', rows: [['A', 'B']] }),
+        b.create('table', { caption: 'Перевірка', rows: [['C']] })
+    ]);
+    assert.equal(blocks[2].caption, 'Результат <1>');
+    let html = b.preview(blocks);
+    assert.match(html, /Таблиця 1 – Результат &lt;1&gt;/);
+    assert.match(html, /Таблиця 2 – Перевірка/);
+    assert.match(html, /Рисунок 1 – Photo/);
+    assert.doesNotMatch(html, /Empty|Продовження таблиці/);
+    b.move(blocks, blocks[3].id, -1);
+    assert.match(b.preview(blocks), /Таблиця 1 – Перевірка/);
+    blocks.splice(2, 1);
+    const xml = await xmlFor(blocks);
+    assert.match(xml, /Таблиця 1 – Результат &lt;1&gt;/);
+    assert.doesNotMatch(xml, /Таблиця 2|Продовження таблиці/);
+    assert.match(source, /Назва таблиці[\s\S]*?data-field="caption"/);
+});
+
+test('long tables start continuation on a new page and repeat its caption on further pages', async () => {
+    const rows = Array.from({ length: 100 }, (_, index) => [`R${index}`, `V${index}`]);
+    const table = b.create('table', { caption: 'Результат', rows });
+    const before = JSON.stringify(table);
+    const parts = b.tableParts(table, 1);
+    assert.equal(parts.length, 2);
+    assert.ok(parts[0].length > 1 && parts[0].length < rows.length);
+    assert.deepEqual(plain(parts.flat()), rows);
+    assert.equal(JSON.stringify(table), before);
+    const xml = await xmlFor([table, b.create('text', { text: 'AFTER' })]);
+    const tables = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)].map(match => match[0]);
+    assert.equal(tables.length, 2);
+    assert.match(tables[0], /Таблиця 1 – Результат/);
+    assert.doesNotMatch(tables[0], /Продовження/);
+    assert.match(tables[1], /Продовження таблиці №1/);
+    const header = tables[1].match(/<w:tr>[\s\S]*?<\/w:tr>/)[0];
+    assert.match(header, /<w:tblHeader(?:\s+w:val="true")?\/>/);
+    assert.match(header, /w:gridSpan w:val="2"/);
+    assert.match(xml.slice(xml.indexOf('</w:tbl>'), xml.indexOf(tables[1])), /<w:pageBreakBefore/);
+    assert.match(tables[0], /<w:keepNext/);
+    assert.match(tables[0], /w:lineRule="exact"/);
+    assert.ok(xml.indexOf('AFTER') > xml.indexOf('V99'));
+    for (let index = 0; index < 100; index++) assert.equal((xml.match(new RegExp(`>R${index}<`, 'g')) || []).length, 1);
+    assert.match(b.preview([table]), /rb-table-continuation[\s\S]*?<thead>[\s\S]*?Продовження таблиці №1/);
+});
+
+test('a page-sized cell is split without dropping text or changing the saved row', async () => {
+    const text = 'Дуже довгий результат перевірки. '.repeat(150);
+    const table = b.create('table', { rows: [[text, 'Сусідня клітинка']], caption: 'Довга клітинка' });
+    const parts = b.tableParts(table, 1);
+    assert.equal(parts.length, 2);
+    assert.equal(parts.map(part => part[0][0]).join('').replace(/\n/g, ''), text);
+    assert.equal(parts.map(part => part[0][1]).join('').replace(/\n/g, ''), 'Сусідня клітинка');
+    assert.equal(table.rows[0][0], text);
+    const xml = await xmlFor([table]);
+    assert.match(xml, /Продовження таблиці №1/);
+    assert.doesNotMatch(xml, /w:hRule="exact"/); // No row height that could crop text.
+});
+
 test('every photo has its own figure and caption after reorder, deletion and legacy import', async () => {
     const blocks = b.normalize([{ resultImages: [{ dataUrl: png, caption: 'FIRST' }, { dataUrl: png, caption: 'SECOND' }] }]);
     blocks.push(b.create('image'), b.create('pageBreak'), b.create('image', { dataUrl: png, caption: 'THIRD' }));
@@ -151,7 +227,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20260929-report-layout"';
+    const blocksAsset = 'src="blocks.js?v=20260930-table-captions"';
     const scriptAsset = 'src="script.js?v=20260929-auto-conclusion"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
