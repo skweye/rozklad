@@ -25,7 +25,7 @@
     const uid = () => root.crypto?.randomUUID?.() || `block-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const safeImage = value => /^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+/=\r\n]+$/i.test(str(value));
     function create(kind, values = {}) {
-        return { id: uid(), kind, text: "", caption: "", alignment: kind === "heading" ? "center" : "justify", bold: false, italic: false, ordered: false, dataUrl: "", width: 100, rows: [["", ""], ["", ""]], ...values };
+        return { id: uid(), kind, text: "", caption: "", alignment: kind === "heading" ? "center" : "justify", taskHeading: false, bold: false, italic: false, ordered: false, dataUrl: "", width: 100, rows: [["", ""], ["", ""]], ...values };
     }
     function normalize(items) {
         if (!Array.isArray(items)) return [];
@@ -37,6 +37,7 @@
                 for (const key of ["text", "caption"]) b[key] = str(item[key]);
                 b.id = typeof item.id === "string" && /^[\w-]+$/.test(item.id) ? item.id : uid();
                 b.alignment = ["left", "center", "right", "justify"].includes(item.alignment) ? item.alignment : b.alignment;
+                b.taskHeading = item.taskHeading === true;
                 b.bold = item.bold === true; b.italic = item.italic === true; b.ordered = item.ordered === true;
                 b.dataUrl = safeImage(item.dataUrl) ? item.dataUrl : "";
                 b.width = [50, 75, 100].includes(item.width) ? item.width : 100;
@@ -48,7 +49,7 @@
                 result.push(b);
             } else if (!item.kind) {
                 // v3 drafts: keep content in its original order, without mandatory empty sections.
-                if (item.title) result.push(create("heading", { text: str(item.title), alignment: "left" }));
+                if (item.title) result.push(create("heading", { text: str(item.title), alignment: "left", taskHeading: true }));
                 if (item.conditionDescription) result.push(create("text", { text: str(item.conditionDescription) }));
                 const addImages = (images, caption) => {
                     if (Array.isArray(images)) for (const img of images) {
@@ -67,7 +68,7 @@
     }
     function preset(kind) {
         if (kind !== "programming") return [create(kind)];
-        return [create("heading", { text: "Завдання", alignment: "left" }), create("text"), create("code"), create("image", { caption: "Результат виконання завдання" })];
+        return [create("heading", { text: "Завдання", alignment: "left", taskHeading: true }), create("text"), create("code"), create("image", { caption: "Результат виконання завдання" })];
     }
     function move(items, id, offset) {
         const index = items.findIndex(b => b.id === id), target = index + offset;
@@ -75,6 +76,8 @@
         items.splice(target, 0, items.splice(index, 1)[0]); return true;
     }
     const lines = text => str(text).replace(/\r\n?/g, "\n").split("\n");
+    // Recognize saved task headings from before the template stored this flag.
+    const indentTaskHeading = b => b.kind === "heading" && b.alignment === "left" && (b.taskHeading || /^Завдання(?:$|[\s:№])/i.test(b.text.trim()));
     const hasTableContent = b => b.rows.some(row => row.some(cell => cell.trim()));
     const tableTitle = (b, number) => `Таблиця ${number}${b.caption.trim() ? ` – ${b.caption.trim()}` : ""}`;
     // A4 with the report's 25/10 mm horizontal margins (twips).
@@ -144,7 +147,7 @@
                 return `<${tag} class="rb-preview-list">${lines(b.text).filter(s => s.trim()).map(s => `<li>${escape(s)}</li>`).join("")}</${tag}>`;
             }
             const text = `${b.kind === "step" ? `${++step}. ` : ""}${escape(b.text).replace(/\n/g, "<br>")}`;
-            return `<div class="rb-preview-text${b.kind === "heading" ? " rb-preview-heading" : ""}" style="text-align:${b.alignment};font-weight:${b.bold || b.kind === "heading" ? "bold" : "normal"};font-style:${b.italic ? "italic" : "normal"}">${text}</div>`;
+            return `<div class="rb-preview-text${b.kind === "heading" ? " rb-preview-heading" : ""}" style="text-align:${b.alignment};${indentTaskHeading(b) ? "text-indent:1.25cm;" : ""}font-weight:${b.bold || b.kind === "heading" ? "bold" : "normal"};font-style:${b.italic ? "italic" : "normal"}">${text}</div>`;
         }).join("");
     }
     async function toDocx(items, d, processImage) {
@@ -198,7 +201,7 @@
             } else if (b.kind === "list") {
                 lines(b.text).filter(s => s.trim()).forEach((line, i) => out.push(paragraph(`${b.ordered ? `${i + 1}.` : "•"} ${line}`, { alignment: d.AlignmentType.LEFT, indent: { left: 360, hanging: 360 } })));
             } else {
-                out.push(paragraph(`${b.kind === "step" ? `${++step}. ` : ""}${b.text}`, { alignment: align[b.alignment], ...(b.kind === "heading" ? { keepNext: true, spacing: { line: 360, before: 180, after: 120 } } : { indent: { firstLine: 720 } }) }, { bold: b.bold || b.kind === "heading", italics: b.italic }));
+                out.push(paragraph(`${b.kind === "step" ? `${++step}. ` : ""}${b.text}`, { alignment: align[b.alignment], ...(b.kind === "heading" ? { keepNext: true, spacing: { line: 360, before: 180, after: 120 }, ...(indentTaskHeading(b) ? { indent: { firstLine: 709 } } : {}) } : { indent: { firstLine: 720 } }) }, { bold: b.bold || b.kind === "heading", italics: b.italic }));
             }
         }
         return out;

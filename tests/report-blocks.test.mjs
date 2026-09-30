@@ -61,6 +61,24 @@ test('programming is an optional editable starter, not a mandatory report templa
     assert.match(mainSource, /state\.tasks = \[\];/);
     assert.doesNotMatch(mainSource, /oopLab1Template|Код не додано|attachTaskListeners/);
 });
+
+test('task template headings retain the 1.25cm indent after editing, saving and legacy import', async () => {
+    const heading = b.preset('programming')[0];
+    assert.match(b.preview([heading]), /text-align:left;text-indent:1.25cm;[^>]*>Завдання<\/div>/);
+    heading.text = 'Робота з масивом';
+    const cases = [b.normalize([heading])[0], b.create('heading', { text: 'Завдання №2', alignment: 'left' }), b.normalize([{ title: 'Старий пункт' }])[0]];
+    for (const item of cases) {
+        assert.match(b.preview([item]), /text-indent:1.25cm/);
+        const xml = await xmlFor([item]);
+        assert.match(xml, /w:firstLine="709"/);
+        assert.match(xml, /w:jc w:val="left"/);
+        assert.match(xml, /<w:keepNext/);
+    }
+    for (const item of [b.create('heading', { text: 'Інший розділ', alignment: 'left' }), { ...heading, alignment: 'center' }]) {
+        assert.doesNotMatch(b.preview([item]), /text-indent:1.25cm/);
+        assert.doesNotMatch(await xmlFor([item]), /w:firstLine=/);
+    }
+});
 test('DOCX preserves block order, typography, multiline text, tables, captions and page breaks', async () => {
     const xml = await xmlFor([
         b.create('heading', { text: 'SECTION', alignment: 'center' }),
@@ -249,7 +267,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20260930-code-heading-indent"';
+    const blocksAsset = 'src="blocks.js?v=20260930-task-heading-indent"';
     const scriptAsset = 'src="script.js?v=20260929-auto-conclusion"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
