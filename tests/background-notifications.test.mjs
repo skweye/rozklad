@@ -5,9 +5,9 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../background-notifications.js', import.meta.url), 'utf8');
 const workerSource = await readFile(new URL('../schedule-notification-sw.js', import.meta.url), 'utf8');
 const item = { id: '2026-09-24/0@a', date: '2026-09-24', index: 0, revision: 'a', lesson: { s: 'Бази даних' } };
-function fixture({ permission = 'default', answer = 'granted', supported = true, storage = new Map(), failRegister = false, failShow = false } = {}) {
+function fixture({ permission = 'default', answer = 'granted', supported = true, storage = new Map(), failRegister = false, failShow = false, readyState = 'complete' } = {}) {
     class Element { children = []; listeners = {}; attrs = {}; textContent = ''; append(...items) { this.children.push(...items); } setAttribute(k, v) { this.attrs[k] = v; } addEventListener(k, fn) { this.listeners[k] = fn; } }
-    const mount = new Element(), document = { hidden: false, querySelector: () => mount, createElement: () => new Element() };
+    const mount = new Element(), document = { readyState, listeners: {}, addEventListener(name, fn) { this.listeners[name] = fn; }, hidden: false, querySelector: () => mount, createElement: () => new Element() };
     let permissionCalls = 0, registers = 0;
     const notifications = [];
     const worker = { async showNotification(title, options) { if (failShow) throw Error('failed'); notifications.push({ title, options }); } };
@@ -16,11 +16,20 @@ function fixture({ permission = 'default', answer = 'granted', supported = true,
     const navigator = { serviceWorker: { ready: Promise.resolve(worker), async register(path, options) { registers++; assert.equal(path, '/schedule-notification-sw.js'); assert.equal(options.scope, '/'); if (failRegister) throw Error('failed'); return worker; } }, locks: { request: async (name, callback) => callback() } };
     vm.runInNewContext(source, { window, document, navigator, Notification, Event, setTimeout, clearTimeout,
         localStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) } });
+    if (readyState !== 'complete') { assert.equal(mount.children.length, 0); document.listeners.DOMContentLoaded(); }
     const [legend, button, hint] = mount.children[0].children;
     return { api: window.studyBackgroundNotifications, window, document, Notification, notifications, storage, button, hint,
         get permissionCalls() { return permissionCalls; }, get registers() { return registers; },
         click: () => button.listeners.click() };
 }
+
+test('deferred script waits for the appearance editor before mounting background controls', () => {
+    for (const readyState of ['loading', 'interactive']) {
+        const f = fixture({ readyState });
+        assert.match(f.button.textContent, /Увімкнути фонові/);
+        assert.equal(f.api.enabled(), false); assert.equal(f.registers, 0);
+    }
+});
 
 test('background permission is explicit, opt-in persists, and disabling stops system delivery', async () => {
     const f = fixture();
@@ -43,6 +52,15 @@ test('background notification explicitly describes a window replacement', async 
     await f.api.show([{ ...item, lesson: null, source: { kind: 'window' } }]);
     assert.equal(f.notifications.length, 1);
     assert.match(f.notifications[0].options.body, /Вікно — пари немає/);
+});
+
+test('disable-all cancels an in-flight opt-in without granting background notifications again', async () => {
+    const f = fixture(); let resolve;
+    f.Notification.requestPermission = () => new Promise(done => { resolve = done; });
+    const task = f.click(); f.api.disable(); resolve('granted'); await task;
+    assert.equal(f.api.enabled(), false); assert.equal(f.registers, 0);
+    assert.equal(f.storage.get('study-background-notifications-v2'), 'false');
+    assert.equal(f.button.disabled, false);
 });
 
 test('old opt-in does not enable the new defaults; system sound follows the shared switch', async () => {

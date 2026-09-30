@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
-const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass'];
+const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee'];
 function fixture({ saved = new Map(), blocked = false, quietMode = false, cores = 8, early = false } = {}) {
     class Classes extends Set { remove(...names) { names.forEach(name => this.delete(name)); } toggle(name, active) { if (active) this.add(name); else this.delete(name); } }
     class Element {
@@ -15,7 +15,7 @@ function fixture({ saved = new Map(), blocked = false, quietMode = false, cores 
     }
     const body = new Element(), html = new Element(), controls = new Map(), windowEvents = {}, documentEvents = {};
     body.classList.add('existing-app'); body.classList.add('theme-midnight');
-    const buttons = [...themeNames, 'custom'].map(name => { const el = new Element(); el.dataset.themeChoice = name; return el; });
+    const buttons = themeNames.map(name => { const el = new Element(); el.dataset.themeChoice = name; return el; });
     const opacity = [10, 20, 30].map(value => { const el = new Element(); el.dataset.transparencyChoice = String(value); return el; });
     const mount = { innerHTML: '', querySelectorAll: selector => selector.includes('theme-choice') ? buttons : opacity,
         querySelector(selector) { if (!controls.has(selector)) controls.set(selector, new Element()); return controls.get(selector); } };
@@ -52,7 +52,7 @@ test('all themes keep independently selected accent, background and transparency
         assert.match(f.body.style.values.get('--ui-panel'), /,0\.7\)$/);
     }
     const secondPage = fixture({ saved: f.saved });
-    assert.equal(secondPage.api.snapshot().theme, 'glass');
+    assert.equal(secondPage.api.snapshot().theme, 'coffee');
     assert.equal(secondPage.api.snapshot().accent, '#aabbcc');
     assert.equal(secondPage.body.dataset.background, 'solid');
     f.opacity[0].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.9\)$/);
@@ -62,7 +62,7 @@ test('all themes keep independently selected accent, background and transparency
 test('theme selector renders named rows with decorative three-color palettes and live accent previews', async () => {
     const f = fixture();
     const rows = [...f.mount.innerHTML.matchAll(/<button type="button" data-theme-choice="([^"]+)" aria-pressed="false">([\s\S]*?)<\/button>/g)];
-    assert.deepEqual(rows.map(row => row[1]), [...themeNames, 'custom']);
+    assert.deepEqual(rows.map(row => row[1]), themeNames);
     for (const [, , markup] of rows) {
         assert.match(markup, /class="appearance-theme-name">[^<]+<\/span>/);
         assert.match(markup, /class="appearance-palette" aria-hidden="true"/);
@@ -100,6 +100,18 @@ test('legacy settings migrate, invalid settings fall back, blocked writes leave 
     f.control('[name="accentHex"]').events.change({ target: { value: 'red;url(x)' } });
     assert.equal(f.api.snapshot().accent, old);
     assert.equal(f.api.normalize({ theme: '__proto__', accent: 'red', transparency: 99 }).theme, 'neumorphism');
+});
+
+test('soft coffee theme uses a warm readable palette, persists and retains a chosen accent', () => {
+    const f = fixture(); f.theme('coffee');
+    assert.equal(f.api.snapshot().accent, '#cda985');
+    assert.equal(f.body.style.values.get('--ui-ground'), '#29221e');
+    assert.equal(f.body.style.values.get('--ui-text'), '#f2e8dd');
+    assert.equal(f.body.style.values.get('--ui-muted'), '#c4b4a5');
+    assert.equal(fixture({ saved: f.saved }).body.dataset.theme, 'coffee');
+    f.theme('minimal');
+    f.control('[name="accentHex"]').events.change({ target: { value: '#aabbcc' } });
+    f.theme('coffee'); assert.equal(f.api.snapshot().accent, '#aabbcc');
 });
 
 test('wallpaper is preserved when selecting solid/gradient; storage events synchronize both pages', () => {
@@ -253,79 +265,6 @@ test('all app pages load appearance synchronously before CSS and prime body befo
         assert.ok(scripts[0].index < html.indexOf('rel="stylesheet"'));
         assert.match(html, /<body[^>]*>\s*<script>window\.studyAppearance\?\.prime\(document\.body\);<\/script>/);
     }
-});
-
-test('custom theme has an independent palette, background and continuous transparency that survive switching and reload', () => {
-    const f = fixture();
-    f.control('[name="accentHex"]').events.change({ target: { value: '#112233' } });
-    f.theme('custom');
-    assert.equal(f.control('[data-custom-editor]').hidden, false);
-    assert.equal(f.control('[data-preset-transparency]').hidden, true);
-    f.control('[name="accentHex"]').events.change({ target: { value: '#00ff88' } });
-    f.control('[name="background"]').events.change({ target: { value: 'solid' } });
-    f.control('[data-custom-hex="ground"]').events.input({ target: { value: '#152335' } });
-    f.control('[data-custom-range="transparency"]').events.input({ target: { value: '47' } });
-    assert.equal(f.body.style.values.get('--ui-ground'), '#152335');
-    assert.equal(f.body.style.values.get('--ui-panel'), 'rgba(42,45,48,0.53)');
-    assert.equal(f.body.dataset.background, 'solid');
-    f.theme('minimal');
-    assert.equal(f.control('[data-custom-editor]').hidden, true);
-    assert.equal(f.api.snapshot().accent, '#112233');
-    assert.equal(f.body.dataset.background, 'gradient');
-    f.theme('custom');
-    assert.equal(f.control('[name="accent"]').value, '#00ff88');
-    const other = fixture({ saved: f.saved, early: true });
-    assert.equal(other.html.style.values.get('background'), '#152335');
-    other.startBody(); other.domReady();
-    assert.equal(other.body.style.values.get('--ui-panel'), 'rgba(42,45,48,0.53)');
-    const copy = other.api.snapshot(); copy.custom.ground = '#ffffff';
-    assert.equal(other.api.snapshot().custom.ground, '#152335');
-});
-
-test('custom geometry, styles, exact colors, fonts and effects update actual tokens; low-power glass avoids blur', () => {
-    const f = fixture(); f.theme('custom');
-    for (const [name, value] of Object.entries({ radius: 30, buttonRadius: 4, borderWidth: 3, blur: 26, shadow: 45, angle: 240 })) {
-        f.control(`[data-custom-range="${name}"]`).events.input({ target: { value: String(value) } });
-    }
-    assert.equal(f.body.style.values.get('--custom-radius'), '30px');
-    assert.equal(f.body.style.values.get('--custom-button-radius'), '4px');
-    assert.equal(f.body.style.values.get('--custom-border-width'), '3px');
-    assert.equal(f.body.style.values.get('--custom-blur'), 'blur(26px)');
-    assert.match(f.body.style.values.get('--appearance-gradient'), /240deg/);
-    f.control('[data-custom-select="style"]').events.change({ target: { value: 'flat' } });
-    assert.equal(f.body.style.values.get('--custom-shadow'), 'none');
-    assert.equal(f.body.style.values.get('--custom-blur'), 'none');
-    f.control('[data-custom-select="style"]').events.change({ target: { value: 'soft' } });
-    assert.match(f.body.style.values.get('--custom-shadow'), /-6px -6px/);
-    f.control('[data-custom-select="font"]').events.change({ target: { value: 'mono' } });
-    assert.match(f.body.style.values.get('--custom-font'), /monospace/);
-    f.control('[data-custom-check="contrast"]').events.change({ target: { checked: false } });
-    f.control('[data-custom-color="text"]').events.input({ target: { value: '#223344' } });
-    assert.equal(f.body.style.values.get('--ui-text'), '#223344');
-    for (const name of ['motion', 'particles']) f.control(`[data-custom-check="${name}"]`).events.change({ target: { checked: false } });
-    assert.equal(f.body.dataset.customMotion, 'false'); assert.equal(f.body.dataset.customParticles, 'false');
-    f.control('[data-custom-select="style"]').events.change({ target: { value: 'glass' } });
-    assert.equal(fixture({ saved: f.saved, cores: 2 }).body.style.values.get('--custom-blur'), 'none');
-    assert.equal(fixture({ saved: f.saved, quietMode: true }).body.style.values.get('--custom-blur'), 'none');
-});
-
-test('custom normalization blocks arbitrary CSS, invalid enums and non-finite sizes; reset supports undo', () => {
-    const f = fixture(); f.theme('custom');
-    const normalized = f.api.normalize({ theme: 'custom', custom: { ground: 'url(https://evil.test)', radius: 999, blur: -5, shadow: Infinity, font: 'url(x)', style: '__proto__', contrast: 'false' } });
-    assert.equal(normalized.custom.ground, '#17191b');
-    assert.equal(normalized.custom.radius, 36); assert.equal(normalized.custom.blur, 0);
-    assert.equal(normalized.custom.shadow, 25); assert.equal(normalized.custom.font, 'sans');
-    assert.equal(normalized.custom.style, 'glass'); assert.equal(normalized.custom.contrast, true);
-    assert.equal(f.api.normalize(null).theme, 'neumorphism');
-    f.control('[data-custom-range="radius"]').events.input({ target: { value: '28' } });
-    const reset = f.control('[data-custom-reset]'); reset.events.click({ target: reset });
-    assert.equal(f.api.snapshot().custom.radius, 16);
-    reset.events.click({ target: reset }); assert.equal(f.api.snapshot().custom.radius, 28);
-    const input = f.control('[data-custom-hex="ground"]'); input.events.change({ target: { value: 'invalid' } });
-    assert.match(f.control('[data-appearance-notice]').textContent, /HEX/);
-    const other = fixture({ saved: f.saved });
-    other.control('[data-custom-range="radius"]').events.input({ target: { value: '8' } });
-    f.windowEvents.storage({ key }); assert.equal(f.body.style.values.get('--custom-radius'), '8px');
 });
 
 test('both pages share appearance assets and controls; glowing lessons respect reduced motion', async () => {

@@ -48,6 +48,12 @@
             controls.set(kind, input); label.append(span, input); section.append(label);
         }
         status = document.createElement('p'); status.className = 'appearance-notice'; status.setAttribute('role', 'status');
+        const disableAll = document.createElement('button'); disableAll.type = 'button'; disableAll.textContent = 'Вимкнути всі сповіщення';
+        disableAll.addEventListener('click', () => {
+            for (const kind of Object.keys(labels)) set(kind, false);
+            window.studyBackgroundNotifications?.disable();
+        });
+        section.append(disableAll);
         section.append(status); appearance.insertAdjacentElement('afterend', section);
     }
     window.studyNotifications = { enabled, set };

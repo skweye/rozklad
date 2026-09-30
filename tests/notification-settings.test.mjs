@@ -20,7 +20,7 @@ function fixture({ storage = new Map(), blocked = false, loading = false } = {})
     const window = { addEventListener(name, fn) { events[name] = fn; }, dispatchEvent(event) { emitted.push(event.type); } };
     vm.runInNewContext(source, { window, document, Event,
         localStorage: { getItem(k) { if (blocked) throw Error('blocked'); return storage.get(k) ?? null; }, setItem(k, v) { if (blocked) throw Error('blocked'); storage.set(k, v); } } });
-    return { api: window.studyNotifications, appearance, storage, events, domEvents, emitted,
+    return { api: window.studyNotifications, window, appearance, storage, events, domEvents, emitted,
         input(kind) { return appearance.after.children.find(el => el.children?.[1]?.attrs['data-notification-kind'] === kind).children[1]; },
         change(kind, value) { const input = this.input(kind); input.checked = value; input.listeners.change(); } };
 }
@@ -65,10 +65,19 @@ test('blocked storage defaults off but remains usable for the current tab', () =
     f.change('replacements', false); assert.equal(f.api.enabled('replacements'), false);
 });
 
+test('disable-all clears every preference and also disables the background channel', () => {
+    const f = fixture(); let disabled = 0;
+    f.window.studyBackgroundNotifications = { disable() { disabled++; } };
+    for (const kind of kinds) f.change(kind, true);
+    f.appearance.after.children.find(el => el.textContent === 'Вимкнути всі сповіщення').listeners.click();
+    for (const kind of kinds) { assert.equal(f.api.enabled(kind), false); assert.equal(f.input(kind).checked, false); }
+    assert.equal(disabled, 1);
+});
+
 test('all app pages share settings and build publishes the script', async () => {
     for (const file of ['index.html', 'reports/index.html', 'admin/index.html']) {
         const html = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
-        assert.match(html, /<script src="(?:\.\.\/|\/)?site-notifications\.js"><\/script>/);
+        assert.match(html, /<script src="(?:\.\.\/|\/)?site-notifications\.js(?:\?v=\d+)?"><\/script>/);
         assert.ok(html.indexOf('site-notifications.js') < html.indexOf('background-notifications.js'));
     }
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');

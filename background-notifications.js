@@ -6,7 +6,7 @@
     const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
     const write = (key, value) => { try { localStorage.setItem(key, value); } catch { /* session-only fallback */ } };
     const supported = window.isSecureContext && 'Notification' in window && 'serviceWorker' in navigator;
-    let optedIn = read(preferenceKey) === 'true', working = false, registrationPromise;
+    let optedIn = read(preferenceKey) === 'true', working = false, registrationPromise, intent = 0;
     const memoryDelivered = new Set();
     const inFlight = new Set();
     const enabled = () => Boolean(supported && optedIn && Notification.permission === 'granted');
@@ -25,6 +25,7 @@
         hint.textContent = message || (!supported ? 'Цей браузер не підтримує системні сповіщення. Відкрийте сайт через HTTPS у підтримуваному браузері.' : Notification.permission === 'denied' ? 'Сповіщення заблоковано. Дозвольте їх у налаштуваннях цього сайту в браузері.' : enabled() ? 'Увімкнено для відкритої фонової вкладки. Закрита або призупинена браузером вкладка не перевіряє зміни. Звук залежить від налаштувань системи.' : 'Отримуйте сповіщення про заміни, коли вкладка відкрита у фоні. Браузер може затримувати перевірки. Після закриття вкладки сповіщень не буде.');
     }
     function changed() { paint(); window.dispatchEvent(new Event('study-background-notifications-change')); }
+    function disable() { intent++; optedIn = false; write(preferenceKey, 'false'); changed(); }
     async function registration() {
         if (!registrationPromise) registrationPromise = (async () => {
             await navigator.serviceWorker.register('/schedule-notification-sw.js', { scope: '/' });
@@ -37,18 +38,21 @@
     }
     button.addEventListener('click', async () => {
         if (!supported || working) return;
-        if (optedIn) { optedIn = false; write(preferenceKey, 'false'); changed(); return; }
+        if (optedIn) { disable(); return; }
         working = true; paint();
+        const requestIntent = ++intent;
         try {
             // Permission is requested synchronously from this explicit user click only.
             const permission = await Notification.requestPermission();
+            if (requestIntent !== intent) return;
             if (permission !== 'granted') { optedIn = false; write(preferenceKey, 'false'); working = false; changed(); return; }
             await registration();
+            if (requestIntent !== intent) return;
             optedIn = true; write(preferenceKey, 'true');
         } catch {
             optedIn = false; write(preferenceKey, 'false');
             working = false; changed(); paint('Не вдалося підключити сповіщення. Перевірте інтернет і повторіть спробу.'); return;
-        } finally { working = false; }
+        } finally { working = false; if (requestIntent !== intent) paint(); }
         changed();
     });
     function delivered() {
@@ -85,9 +89,9 @@
         try { if (navigator.locks?.request) await navigator.locks.request('study-schedule-notification-delivery', send); else await send(); }
         catch { /* In-page notifications remain available if system delivery fails. */ }
     }
-    window.addEventListener('storage', event => { if (event.key === preferenceKey || event.key === null) { optedIn = read(preferenceKey) === 'true'; changed(); } });
+    window.addEventListener('storage', event => { if (event.key === preferenceKey || event.key === null) { intent++; optedIn = read(preferenceKey) === 'true'; changed(); } });
     window.addEventListener('pageshow', () => { mount(); optedIn = read(preferenceKey) === 'true'; changed(); });
     window.addEventListener('focus', () => changed());
-    window.studyBackgroundNotifications = { enabled, show };
+    window.studyBackgroundNotifications = { enabled, show, disable };
     paint();
 })();
