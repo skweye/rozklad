@@ -14,14 +14,17 @@
         university: { name: 'University', ground: '#f3f0e8', panel: '255,253,248', shade: '#ddd5c4', light: true },
         glass: { name: 'Матове скло', ground: '#17191b', panel: '42,45,48', shade: '#363b40' },
         coffee: { name: 'М’яка кава', ground: '#29221e', panel: '57,47,40', shade: '#524235', text: '#f2e8dd', muted: '#c4b4a5', line: 'rgba(218,190,163,.2)', inset: 'rgba(32,26,22,.85)', soft: 'rgba(218,190,163,.065)' },
-        graphite: { name: 'Graphite / Монохром', ground: '#242424', panel: '48,48,48', shade: '#383838', text: '#e5e5e5', muted: '#b3b3b3', line: 'rgba(190,190,190,.22)', inset: 'rgba(30,30,30,.9)', soft: 'rgba(190,190,190,.07)', accent: '#bdbdbd' }
+        // Palette: Monkeytype Dualshot (frontend/src/ts/constants/themes.ts).
+        dualshot: { name: 'Dualshot', ground: '#737373', panel: '100,100,100', shade: '#737373', text: '#212222', muted: '#aaaaaa', line: 'rgba(33,34,34,.18)', inset: '#646464', soft: '#646464', accent: '#212222', light: true }
     };
     const read = name => { try { return localStorage.getItem(name); } catch { return null; } };
     const cookie = name => { try { return decodeURIComponent(document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1] || ''); } catch { return ''; } };
     function normalize(value = {}) {
+        const theme = value.theme === 'graphite' ? 'dualshot' : Object.hasOwn(themes, value.theme) ? value.theme : 'neumorphism';
+        const accent = value.theme === 'graphite' && typeof value.accent === 'string' && value.accent.toLowerCase() === '#bdbdbd' ? themes.dualshot.accent : value.accent;
         return {
-            theme: Object.hasOwn(themes, value.theme) ? value.theme : 'neumorphism',
-            accent: /^#[0-9a-f]{6}$/i.test(value.accent) ? value.accent.toLowerCase() : '#657caf',
+            theme,
+            accent: /^#[0-9a-f]{6}$/i.test(accent) ? accent.toLowerCase() : themes[theme].accent || '#657caf',
             background: ['wallpaper', 'gradient', 'solid'].includes(value.background) ? value.background : 'gradient',
             transparency: [10, 20, 30].includes(Number(value.transparency)) ? Number(value.transparency) : 20
         };
@@ -103,7 +106,7 @@
         body.dataset.background = state.background;
         body.dataset.transparency = String(state.transparency);
         body.dataset.lowPower = String(lowPower);
-        const accent = readableAccent(state.accent, theme.ground), rgb = channels(accent).join(',');
+        const accent = state.theme === 'dualshot' && state.accent === theme.accent ? theme.accent : readableAccent(state.accent, theme.ground), rgb = channels(accent).join(',');
         const panel = `rgba(${theme.panel},${1 - state.transparency / 100})`;
         const values = {
             '--ui-ground': theme.ground, '--ui-panel': panel, '--ui-inset': light ? 'rgba(255,255,255,.9)' : 'rgba(8,11,16,.8)',
@@ -127,9 +130,9 @@
             '--ui-line': theme.line, '--border-color': theme.line, '--ui-glass-edge': theme.line,
             '--ui-inset': theme.inset, '--ui-soft': theme.soft
         });
-        if (state.theme === 'graphite') Object.assign(values, {
-            '--ui-glass-edge-hover': 'rgba(190,190,190,.42)', '--ui-glass-rim': 'none',
-            '--wallpaper-veil': 'rgba(24,24,24,.45)'
+        if (state.theme === 'dualshot') Object.assign(values, {
+            '--ui-glass-edge-hover': 'rgba(33,34,34,.4)', '--ui-glass-rim': 'none',
+            '--wallpaper-veil': 'rgba(115,115,115,.45)'
         });
         for (const [name, value] of Object.entries(values)) body.style.setProperty(name, value);
         body.style.colorScheme = light ? 'light' : 'dark';
@@ -150,7 +153,7 @@
         mount.querySelectorAll('[data-theme-choice]').forEach(button => {
             button.setAttribute('aria-pressed', String(button.dataset.themeChoice === state.theme));
             const previewTheme = themes[button.dataset.themeChoice];
-            button.style.setProperty('--theme-preview-accent', readableAccent(previewTheme.accent || state.accent, previewTheme.ground));
+            button.style.setProperty('--theme-preview-accent', previewTheme.accent || readableAccent(state.accent, previewTheme.ground));
         });
         mount.querySelectorAll('[data-transparency-choice]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.transparencyChoice) === state.transparency)));
         mount.querySelector('[name="accent"]').value = state.accent;

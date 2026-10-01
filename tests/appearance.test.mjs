@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
-const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'graphite'];
+const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'dualshot'];
 test('report input carets follow readable field text rather than a fixed dark or accent color', async () => {
     const css = await readFile(new URL('../reports/style.css', import.meta.url), 'utf8');
     const caretRules = [...css.matchAll(/caret-color:\s*([^;]+);/g)].map(match => match[1]);
@@ -56,7 +56,7 @@ test('themes retain background/transparency; only the monochrome preset resets t
     f.opacity[2].events.click();
     for (const name of themeNames) {
         f.theme(name);
-        assert.equal(f.api.snapshot().accent, name === 'graphite' ? '#bdbdbd' : '#aabbcc');
+        assert.equal(f.api.snapshot().accent, name === 'dualshot' ? '#212222' : '#aabbcc');
         assert.equal(f.api.snapshot().background, 'solid');
         assert.equal(f.api.snapshot().transparency, 30);
         assert.equal(f.body.dataset.theme, name);
@@ -65,8 +65,8 @@ test('themes retain background/transparency; only the monochrome preset resets t
         assert.match(f.body.style.values.get('--ui-panel'), /,0\.7\)$/);
     }
     const secondPage = fixture({ saved: f.saved });
-    assert.equal(secondPage.api.snapshot().theme, 'graphite');
-    assert.equal(secondPage.api.snapshot().accent, '#bdbdbd');
+    assert.equal(secondPage.api.snapshot().theme, 'dualshot');
+    assert.equal(secondPage.api.snapshot().accent, '#212222');
     assert.equal(secondPage.body.dataset.background, 'solid');
     f.opacity[0].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.9\)$/);
     f.opacity[1].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.8\)$/);
@@ -127,25 +127,36 @@ test('soft coffee theme uses a warm readable palette, persists and retains a cho
     f.theme('coffee'); assert.equal(f.api.snapshot().accent, '#aabbcc');
 });
 
-test('graphite starts monochrome, persists across pages and still allows a custom accent', async () => {
+test('Dualshot uses the original palette, persists across pages and still allows a custom accent', async () => {
     const f = fixture();
     f.control('[name="accentHex"]').events.change({ target: { value: '#FF0088' } });
-    f.theme('graphite');
-    for (const [token, value] of Object.entries({ '--ui-ground': '#242424', '--ui-panel': 'rgba(48,48,48,0.8)', '--ui-text': '#e5e5e5', '--ui-muted': '#b3b3b3', '--ui-accent': '#bdbdbd', '--ui-inset': 'rgba(30,30,30,.9)', '--ui-glass-rim': 'none' })) assert.equal(f.body.style.values.get(token), value);
-    assert.equal(f.body.style.colorScheme, 'dark');
+    f.theme('dualshot');
+    for (const [token, value] of Object.entries({ '--ui-ground': '#737373', '--ui-panel': 'rgba(100,100,100,0.8)', '--ui-text': '#212222', '--ui-muted': '#aaaaaa', '--ui-accent': '#212222', '--ui-inset': '#646464', '--ui-glass-rim': 'none' })) assert.equal(f.body.style.values.get(token), value);
+    assert.equal(f.body.style.colorScheme, 'light');
     const restored = fixture({ saved: f.saved, early: true });
-    assert.equal(restored.html.dataset.theme, 'graphite');
-    assert.equal(restored.html.style.values.get('--ui-accent'), '#bdbdbd');
+    assert.equal(restored.html.dataset.theme, 'dualshot');
+    assert.equal(restored.html.style.values.get('--ui-accent'), '#212222');
     restored.startBody(); restored.domReady();
-    assert.equal(restored.body.style.values.get('--ui-ground'), '#242424');
+    assert.equal(restored.body.style.values.get('--ui-ground'), '#737373');
     f.control('[name="accentHex"]').events.change({ target: { value: '#AACCEE' } });
     assert.equal(fixture({ saved: f.saved }).api.snapshot().accent, '#aaccee');
     f.theme('minimal');
     assert.equal(f.body.style.values.get('--ui-inset'), 'rgba(255,255,255,.9)');
     assert.notEqual(f.body.style.values.get('--ui-glass-rim'), 'none');
     const css = await readFile(new URL('../appearance.css', import.meta.url), 'utf8');
-    assert.match(css, /\[data-theme="graphite"\] > \.background-particles \{ display: none; \}/);
-    assert.match(css, /\[data-theme="graphite"\][^}]*backdrop-filter: none !important/);
+    assert.match(css, /\[data-theme="dualshot"\] > \.background-particles \{ display: none; \}/);
+    assert.match(css, /\[data-theme="dualshot"\][^}]*backdrop-filter: none !important/);
+});
+
+test('saved Graphite migrates to Dualshot before paint without losing custom choices', () => {
+    for (const [accent, expected] of [['#bdbdbd', '#212222'], ['#BDBDBD', '#212222'], ['#ff0088', '#ff0088'], [null, '#212222']]) {
+        const f = fixture({ early: true, saved: new Map([[key, JSON.stringify({ theme: 'graphite', accent, background: 'solid', transparency: 30 })]]) });
+        assert.equal(f.html.dataset.theme, 'dualshot');
+        assert.equal(f.html.style.values.get('--ui-ground'), '#737373');
+        assert.equal(f.api.snapshot().accent, expected);
+        assert.equal(f.api.snapshot().transparency, 30);
+        assert.equal(f.api.snapshot().background, 'solid');
+    }
 });
 
 test('wallpaper is preserved when selecting solid/gradient; storage events synchronize both pages', () => {
