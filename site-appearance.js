@@ -13,7 +13,8 @@
         sunset: { name: 'Sunset', ground: '#211519', panel: '49,30,33', shade: '#743f31' },
         university: { name: 'University', ground: '#f3f0e8', panel: '255,253,248', shade: '#ddd5c4', light: true },
         glass: { name: 'Матове скло', ground: '#17191b', panel: '42,45,48', shade: '#363b40' },
-        coffee: { name: 'М’яка кава', ground: '#29221e', panel: '57,47,40', shade: '#524235', text: '#f2e8dd', muted: '#c4b4a5', line: 'rgba(218,190,163,.2)' }
+        coffee: { name: 'М’яка кава', ground: '#29221e', panel: '57,47,40', shade: '#524235', text: '#f2e8dd', muted: '#c4b4a5', line: 'rgba(218,190,163,.2)', inset: 'rgba(32,26,22,.85)', soft: 'rgba(218,190,163,.065)' },
+        graphite: { name: 'Graphite / Монохром', ground: '#242424', panel: '48,48,48', shade: '#383838', text: '#e5e5e5', muted: '#b3b3b3', line: 'rgba(190,190,190,.22)', inset: 'rgba(30,30,30,.9)', soft: 'rgba(190,190,190,.07)', accent: '#bdbdbd' }
     };
     const read = name => { try { return localStorage.getItem(name); } catch { return null; } };
     const cookie = name => { try { return decodeURIComponent(document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1] || ''); } catch { return ''; } };
@@ -124,7 +125,11 @@
             '--ui-text': theme.text, '--text-primary': theme.text,
             '--ui-muted': theme.muted, '--text-secondary': theme.muted, '--text-muted': theme.muted,
             '--ui-line': theme.line, '--border-color': theme.line, '--ui-glass-edge': theme.line,
-            '--ui-inset': 'rgba(32,26,22,.85)', '--ui-soft': 'rgba(218,190,163,.065)'
+            '--ui-inset': theme.inset, '--ui-soft': theme.soft
+        });
+        if (state.theme === 'graphite') Object.assign(values, {
+            '--ui-glass-edge-hover': 'rgba(190,190,190,.42)', '--ui-glass-rim': 'none',
+            '--wallpaper-veil': 'rgba(24,24,24,.45)'
         });
         for (const [name, value] of Object.entries(values)) body.style.setProperty(name, value);
         body.style.colorScheme = light ? 'light' : 'dark';
@@ -144,7 +149,8 @@
         if (!mount) return;
         mount.querySelectorAll('[data-theme-choice]').forEach(button => {
             button.setAttribute('aria-pressed', String(button.dataset.themeChoice === state.theme));
-            button.style.setProperty('--theme-preview-accent', readableAccent(state.accent, themes[button.dataset.themeChoice].ground));
+            const previewTheme = themes[button.dataset.themeChoice];
+            button.style.setProperty('--theme-preview-accent', readableAccent(previewTheme.accent || state.accent, previewTheme.ground));
         });
         mount.querySelectorAll('[data-transparency-choice]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.transparencyChoice) === state.transparency)));
         mount.querySelector('[name="accent"]').value = state.accent;
@@ -174,7 +180,8 @@
                 <p class="appearance-notice" data-appearance-notice role="status" aria-live="polite"></p>`;
             mount.querySelectorAll('[data-theme-choice]').forEach(button => button.addEventListener('click', () => change({
                 theme: button.dataset.themeChoice,
-                ...(button.dataset.themeChoice === 'coffee' && state.accent === '#657caf' ? { accent: '#cda985' } : {})
+                ...(button.dataset.themeChoice === 'coffee' && state.accent === '#657caf' ? { accent: '#cda985' } : {}),
+                ...(themes[button.dataset.themeChoice].accent ? { accent: themes[button.dataset.themeChoice].accent } : {})
             })));
             mount.querySelectorAll('[data-transparency-choice]').forEach(button => button.addEventListener('click', () => change({ transparency: Number(button.dataset.transparencyChoice) })));
             mount.querySelector('[name="accent"]').addEventListener('input', event => change({ accent: event.target.value }));

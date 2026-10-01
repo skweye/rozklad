@@ -41,6 +41,13 @@ body[data-app][data-theme] .appearance-transparency button, body[data-app][data-
 .appearance-notice:empty { display: none; }
 body[data-app][data-theme="coffee"] { --ui-radius: 18px; }
 body[data-app][data-theme="coffee"] :is(.card,.links-grid,.classroom-list,.live-preview-card) { box-shadow: 0 8px 24px rgba(18,12,8,.12); }
+/* Quiet graphite surfaces; leave document previews and uploaded images unchanged. */
+body[data-app][data-theme="graphite"] { --ui-radius: 12px; }
+body[data-app][data-theme="graphite"] :is(.card,.header-inner,.links-grid,.classroom-list,.live-preview-card,.settings-menu,.reports-settings-menu,.rb-block,.question-item) {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important;
+}
+body[data-app][data-theme="graphite"] :is(.btn,.btn-tool,.auth-trigger,.auth-google-button,.rb-choice,.form-control) { border-radius: 8px; }
+body[data-app][data-theme="graphite"] > .background-particles { display: none; }
 .notification-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 8px 0; color: var(--ui-text); font-size: 13px; cursor: pointer; }
 .notification-setting input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
 .notification-setting input:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
@@ -67,6 +74,8 @@ body[data-app][data-theme] .lesson-item.is-current-lesson:hover {
     box-shadow: inset 3px 0 0 var(--ui-accent), 0 0 15px color-mix(in srgb,var(--ui-accent) 20%,transparent) !important;
 }
 .lesson-item.is-current-lesson::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: 0 0 18px 2px color-mix(in srgb,var(--ui-accent) 32%,transparent); opacity: .5; animation: current-lesson-glow 2.8s ease-in-out infinite; }
+body[data-app][data-theme="graphite"] .lesson-item.is-current-lesson::before { display: none; }
+body[data-app][data-theme="graphite"] :is(.lesson-item.is-current-lesson,.lesson-item.is-current-lesson:hover) { box-shadow: inset 3px 0 0 var(--ui-accent) !important; }
 .lesson-current-badge { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--ui-accent); }
 .lesson-current-badge[hidden] { display: none; }
 @keyframes current-lesson-glow { 0%,100% { opacity: .2; } 50% { opacity: .8; } }

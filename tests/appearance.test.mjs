@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
-const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee'];
+const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'graphite'];
 test('report input carets follow readable field text rather than a fixed dark or accent color', async () => {
     const css = await readFile(new URL('../reports/style.css', import.meta.url), 'utf8');
     const caretRules = [...css.matchAll(/caret-color:\s*([^;]+);/g)].map(match => match[1]);
@@ -48,7 +48,7 @@ function fixture({ saved = new Map(), blocked = false, quietMode = false, cores 
         theme(name) { buttons.find(button => button.dataset.themeChoice === name).events.click(); } };
 }
 
-test('all themes keep independently selected accent, background and transparency; active state persists', () => {
+test('themes retain background/transparency; only the monochrome preset resets the selected accent', () => {
     const f = fixture();
     assert.equal(f.api.snapshot().accent, '#657caf');
     f.control('[name="accentHex"]').events.change({ target: { value: '#AABBCC' } });
@@ -56,7 +56,7 @@ test('all themes keep independently selected accent, background and transparency
     f.opacity[2].events.click();
     for (const name of themeNames) {
         f.theme(name);
-        assert.equal(f.api.snapshot().accent, '#aabbcc');
+        assert.equal(f.api.snapshot().accent, name === 'graphite' ? '#bdbdbd' : '#aabbcc');
         assert.equal(f.api.snapshot().background, 'solid');
         assert.equal(f.api.snapshot().transparency, 30);
         assert.equal(f.body.dataset.theme, name);
@@ -65,8 +65,8 @@ test('all themes keep independently selected accent, background and transparency
         assert.match(f.body.style.values.get('--ui-panel'), /,0\.7\)$/);
     }
     const secondPage = fixture({ saved: f.saved });
-    assert.equal(secondPage.api.snapshot().theme, 'coffee');
-    assert.equal(secondPage.api.snapshot().accent, '#aabbcc');
+    assert.equal(secondPage.api.snapshot().theme, 'graphite');
+    assert.equal(secondPage.api.snapshot().accent, '#bdbdbd');
     assert.equal(secondPage.body.dataset.background, 'solid');
     f.opacity[0].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.9\)$/);
     f.opacity[1].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.8\)$/);
@@ -125,6 +125,27 @@ test('soft coffee theme uses a warm readable palette, persists and retains a cho
     f.theme('minimal');
     f.control('[name="accentHex"]').events.change({ target: { value: '#aabbcc' } });
     f.theme('coffee'); assert.equal(f.api.snapshot().accent, '#aabbcc');
+});
+
+test('graphite starts monochrome, persists across pages and still allows a custom accent', async () => {
+    const f = fixture();
+    f.control('[name="accentHex"]').events.change({ target: { value: '#FF0088' } });
+    f.theme('graphite');
+    for (const [token, value] of Object.entries({ '--ui-ground': '#242424', '--ui-panel': 'rgba(48,48,48,0.8)', '--ui-text': '#e5e5e5', '--ui-muted': '#b3b3b3', '--ui-accent': '#bdbdbd', '--ui-inset': 'rgba(30,30,30,.9)', '--ui-glass-rim': 'none' })) assert.equal(f.body.style.values.get(token), value);
+    assert.equal(f.body.style.colorScheme, 'dark');
+    const restored = fixture({ saved: f.saved, early: true });
+    assert.equal(restored.html.dataset.theme, 'graphite');
+    assert.equal(restored.html.style.values.get('--ui-accent'), '#bdbdbd');
+    restored.startBody(); restored.domReady();
+    assert.equal(restored.body.style.values.get('--ui-ground'), '#242424');
+    f.control('[name="accentHex"]').events.change({ target: { value: '#AACCEE' } });
+    assert.equal(fixture({ saved: f.saved }).api.snapshot().accent, '#aaccee');
+    f.theme('minimal');
+    assert.equal(f.body.style.values.get('--ui-inset'), 'rgba(255,255,255,.9)');
+    assert.notEqual(f.body.style.values.get('--ui-glass-rim'), 'none');
+    const css = await readFile(new URL('../appearance.css', import.meta.url), 'utf8');
+    assert.match(css, /\[data-theme="graphite"\] > \.background-particles \{ display: none; \}/);
+    assert.match(css, /\[data-theme="graphite"\][^}]*backdrop-filter: none !important/);
 });
 
 test('wallpaper is preserved when selecting solid/gradient; storage events synchronize both pages', () => {
@@ -272,7 +293,7 @@ test('back-forward restore reloads the shared theme and root canvas color', () =
 test('all app pages load appearance synchronously before CSS and prime body before its content', async () => {
     for (const page of ['index.html', 'reports/index.html', 'admin/index.html']) {
         const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
-        const scripts = [...html.matchAll(/<script\b[^>]*src="[^"]*site-appearance\.js"[^>]*><\/script>/g)];
+        const scripts = [...html.matchAll(/<script\b[^>]*src="[^"]*site-appearance\.js(?:\?[^\"]*)?"[^>]*><\/script>/g)];
         assert.equal(scripts.length, 1);
         assert.doesNotMatch(scripts[0][0], /\b(?:defer|async)\b/);
         assert.ok(scripts[0].index < html.indexOf('rel="stylesheet"'));
