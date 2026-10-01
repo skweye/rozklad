@@ -146,6 +146,7 @@
                 const tag = b.ordered ? "ol" : "ul";
                 return `<${tag} class="rb-preview-list">${lines(b.text).filter(s => s.trim()).map(s => `<li>${escape(s)}</li>`).join("")}</${tag}>`;
             }
+            if (b.kind === "text") return lines(b.text).map(line => `<div class="rb-preview-text" style="text-align:${b.alignment};font-weight:${b.bold ? "bold" : "normal"};font-style:${b.italic ? "italic" : "normal"}">${line.trim() ? escape(line) : "&nbsp;"}</div>`).join("");
             const text = `${b.kind === "step" ? `${++step}. ` : ""}${escape(b.text).replace(/\n/g, "<br>")}`;
             return `<div class="rb-preview-text${b.kind === "heading" ? " rb-preview-heading" : ""}" style="text-align:${b.alignment};${indentTaskHeading(b) ? "text-indent:1.25cm;" : ""}font-weight:${b.bold || b.kind === "heading" ? "bold" : "normal"};font-style:${b.italic ? "italic" : "normal"}">${text}</div>`;
         }).join("");
@@ -200,6 +201,8 @@
                 for (const line of lines(b.text)) out.push(paragraph(line, { alignment: d.AlignmentType.LEFT, spacing: { line: 240, lineRule: d.LineRuleType.AUTO, after: 0 } }, { font: "Consolas", size: 22 }));
             } else if (b.kind === "list") {
                 lines(b.text).filter(s => s.trim()).forEach((line, i) => out.push(paragraph(`${b.ordered ? `${i + 1}.` : "•"} ${line}`, { alignment: d.AlignmentType.LEFT, indent: { left: 360, hanging: 360 } })));
+            } else if (b.kind === "text") {
+                for (const line of lines(b.text)) out.push(paragraph(line, { alignment: align[b.alignment], indent: { firstLine: 720 } }, { bold: b.bold, italics: b.italic }));
             } else {
                 out.push(paragraph(`${b.kind === "step" ? `${++step}. ` : ""}${b.text}`, { alignment: align[b.alignment], ...(b.kind === "heading" ? { keepNext: true, spacing: { line: 360, before: 180, after: 120 }, ...(indentTaskHeading(b) ? { indent: { firstLine: 709 } } : {}) } : { indent: { firstLine: 720 } }) }, { bold: b.bold || b.kind === "heading", italics: b.italic }));
             }

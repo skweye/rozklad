@@ -97,6 +97,31 @@ test('invalid image decoding fails visibly instead of silently losing a picture 
     await assert.rejects(b.toDocx([b.create('image', { dataUrl: png })], docx, async () => null), /зображення/);
 });
 
+test('each Enter in a text block creates a formatted paragraph including empty lines', async () => {
+    const block = b.create('text', { text: 'Перший абзац <1>\r\nДругий абзац\r\n\r\nОстанній абзац\n', alignment: 'left', bold: true, italic: true });
+    const before = JSON.stringify(block);
+    const html = b.preview([block]);
+    const previewParagraphs = [...html.matchAll(/<div class="rb-preview-text"[^>]*>([\s\S]*?)<\/div>/g)];
+    assert.deepEqual(previewParagraphs.map(match => match[1]), ['Перший абзац &lt;1&gt;', 'Другий абзац', '&nbsp;', 'Останній абзац', '&nbsp;']);
+    assert.doesNotMatch(html, /<br>/);
+    for (const [paragraph] of previewParagraphs) assert.match(paragraph, /text-align:left;font-weight:bold;font-style:italic/);
+    const xml = await xmlFor([block]);
+    const wordParagraphs = [...xml.matchAll(/<w:p\b[^>]*>[\s\S]*?<\/w:p>/g)].map(match => match[0]);
+    assert.equal(wordParagraphs.length, 5);
+    assert.match(wordParagraphs[0], /Перший абзац &lt;1&gt;/);
+    assert.match(wordParagraphs[1], /Другий абзац/);
+    assert.match(wordParagraphs[3], /Останній абзац/);
+    assert.doesNotMatch(xml, /<w:br\b/);
+    for (const paragraph of wordParagraphs) {
+        assert.match(paragraph, /w:firstLine="720"/);
+        assert.match(paragraph, /w:jc w:val="left"/);
+        assert.match(paragraph, /<w:b\/>/);
+        assert.match(paragraph, /<w:i\/>/);
+        assert.match(paragraph, /w:line="360"/);
+    }
+    assert.equal(JSON.stringify(block), before);
+});
+
 test('each nonempty code block has a program heading in preview and Word, without orphan headings for empty blocks', async () => {
     const items = [b.create('code', { text: '  first();\n\tsecond();' }), b.create('code', { text: ' \n ' }), b.create('text', { text: 'Explanation' }), b.create('code', { text: 'last();' })];
     const html = b.preview(items), xml = await xmlFor(items);
@@ -267,7 +292,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20260930-task-heading-indent"';
+    const blocksAsset = 'src="blocks.js?v=20261001-text-paragraphs"';
     const scriptAsset = 'src="script.js?v=20260930-question-answers"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
