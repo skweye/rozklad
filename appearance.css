@@ -53,6 +53,15 @@ body[data-app][data-theme="dualshot"] .link-card[href*="classroom.google.com"] .
 body[data-app][data-theme="dualshot"] .link-card[href*="meet.google.com"] .resource-icon { color: #25a5a9; }
 body[data-app][data-theme="dualshot"] .link-card[href*="docs.google.com"] .resource-icon { color: #de9c24; }
 body[data-app][data-theme="dualshot"] :is(.settings-fab,.reports-settings-fab) { color: #d82231; background: #646464; box-shadow: none; }
+/* Bright deadline badges stay legible against Dualshot's medium-gray cards. */
+body[data-app][data-theme="dualshot"] .classroom-countdown {
+    --countdown-color: #65efb6;
+    background: #444444;
+    border-color: color-mix(in srgb,var(--countdown-color) 55%,transparent);
+}
+body[data-app][data-theme="dualshot"] .classroom-countdown[data-urgency="near"] { --countdown-color: #ffe082; }
+body[data-app][data-theme="dualshot"] .classroom-countdown[data-urgency="soon"] { --countdown-color: #ffae70; }
+body[data-app][data-theme="dualshot"] .classroom-countdown:is([data-urgency="urgent"],[data-urgency="overdue"]) { --countdown-color: #ff96a5; }
 [data-theme-choice="dualshot"] .appearance-palette { background: #212222; }
 [data-theme-choice="dualshot"] .appearance-palette > span { background: #646464; }
 [data-theme-choice="dualshot"] .appearance-palette > span:nth-child(2) { background: #aaaaaa; }
