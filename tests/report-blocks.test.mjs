@@ -293,13 +293,13 @@ test('full report export retains A4, margins, underlined student fields and titl
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
     const blocksAsset = 'src="blocks.js?v=20261001-text-paragraphs"';
-    const scriptAsset = 'src="script.js?v=20260930-question-answers"';
+    const scriptAsset = 'src="script.js?v=20261006-draft-library"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));
     assert.match(html, /Додати блок/);
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
-    for (const asset of ['reports/blocks.js', 'reports/blocks.css', 'neumorphism.css']) {
+    for (const asset of ['reports/blocks.js', 'reports/blocks.css', 'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css', 'neumorphism.css']) {
         assert.ok(build.includes(`'${asset}'`));
         assert.ok((await readFile(new URL(`../${asset}`, import.meta.url))).length > 0);
     }

@@ -1,0 +1,43 @@
+/* Local drafts use the shared palette; native dialog stays above the header. */
+.report-draft-bar { max-width: 1520px; margin: 0 auto 18px; padding: 14px 18px; display: flex; align-items: center; gap: 18px; border: 1px solid var(--ui-line); border-radius: 14px; background: var(--ui-panel); color: var(--ui-text); }
+.report-draft-label { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.report-draft-label > span { font-size: 11px; color: var(--ui-muted); letter-spacing: .07em; text-transform: uppercase; }
+.report-draft-label strong { font-size: 14px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.report-draft-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.drafts-dialog { position: fixed; inset: 0; margin: auto; box-sizing: border-box; width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 26px; color: var(--ui-text); background: var(--ui-ground); border: 1px solid var(--ui-line); border-radius: 22px; box-shadow: 0 24px 80px #0005; }
+.drafts-dialog::backdrop { background: #0008; }
+.drafts-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.drafts-dialog h2 { font-size: 24px; letter-spacing: -.04em; margin: 0 0 8px; color: inherit; }
+.drafts-heading p, .drafts-local-note { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ui-muted); }
+.drafts-dialog .draft-close { flex: 0 0 36px; min-height: 36px; padding: 4px; font-size: 24px; }
+.drafts-current { padding: 18px; border-radius: 14px; background: var(--ui-panel); border: 1px solid var(--ui-line); }
+.drafts-current label { display: block; font-size: 12px; color: var(--ui-muted); margin-bottom: 8px; }
+.drafts-current input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid var(--ui-line); border-radius: 10px; color: var(--ui-text); caret-color: currentColor; background: var(--ui-ground); font: inherit; font-size: 16px; }
+.drafts-current input::placeholder { color: var(--ui-muted); }
+.drafts-current-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.drafts-dialog .draft-action { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--ui-line); border-radius: 9px; padding: 9px 12px; min-height: 40px; background: var(--ui-panel); color: var(--ui-text); font: inherit; font-size: 12px; cursor: pointer; }
+.drafts-dialog .draft-action-primary { border-color: var(--ui-accent); }
+.drafts-dialog .draft-action:hover:not(:disabled) { border-color: var(--ui-accent); }
+.drafts-dialog :is(button,input):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+.drafts-dialog button:disabled { opacity: .45; cursor: default; }
+.drafts-status { min-height: 1.5em; margin: 10px 0 20px; font-size: 12px; line-height: 1.5; color: var(--ui-muted); }
+.drafts-list-label { display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 500; margin: 0 0 10px; color: var(--ui-muted); }
+.drafts-list-label span { font-variant-numeric: tabular-nums; }
+.drafts-list { display: grid; gap: 10px; }
+.draft-card { min-width: 0; border: 1px solid var(--ui-line); border-radius: 14px; padding: 16px; }
+.draft-card.is-current { border-color: var(--ui-accent); }
+.draft-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--ui-text); overflow-wrap: anywhere; }
+.draft-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: var(--ui-muted); overflow-wrap: anywhere; }
+.draft-card .draft-meta { font-size: 11px; }
+.draft-card-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.drafts-local-note { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--ui-line); font-size: 12px; }
+@media (max-width: 700px) {
+    .report-draft-bar { margin-inline: 16px; flex-wrap: wrap; padding: 14px; gap: 12px; }
+    .report-draft-label { flex-basis: 100%; }
+    .report-draft-actions { width: 100%; }
+    .report-draft-actions > button { flex: 1; }
+    .drafts-dialog { padding: 18px; }
+    .drafts-current { padding: 14px; }
+    .drafts-current-actions > button { flex: 1 1 180px; }
+}
+@media print { .report-draft-bar, .drafts-dialog { display: none !important; } }

@@ -21,7 +21,8 @@
             const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "btn btn-sm"; cancel.textContent = "Скасувати";
             const accept = document.createElement("button"); accept.type = "button"; accept.className = "btn btn-sm delete-confirm-accept"; accept.textContent = confirmLabel;
             actions.append(cancel, accept); panel.append(heading, description, hint, actions);
-            document.body.append(panel);
+            // A popover must belong to the active dialog to remain interactive there.
+            (anchor.closest?.("dialog[open]") || document.body).append(panel);
             if (typeof panel.showPopover === "function") panel.showPopover();
             else panel.removeAttribute("popover");
             anchor.setAttribute("aria-expanded", "true");

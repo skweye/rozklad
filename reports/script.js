@@ -30,6 +30,8 @@
 
     const STORAGE_KEY = "lab_report_generator_state_v3";
     let autoSaveTimer = null;
+    let draftLibrary = null, draftsUI = null, saveRevision = 0, reportSwitching = false;
+    const emptyReport = JSON.parse(JSON.stringify(state));
 
     // DOM Елементи
     const dom = {
@@ -182,14 +184,49 @@
 
     // Ініціалізація
     async function init() {
-        const hasLoadedSaved = loadFromStorage();
+        // Restore the active report first; the old single draft is migrated on save.
+        let activeState = null;
+        dom.workspaceWrapper.inert = true;
+        try {
+            draftLibrary = window.ReportDraftStore.createLibrary(await window.ReportDraftStore.openRepository());
+            activeState = await draftLibrary.restore();
+        } catch {
+            draftLibrary = null;
+            showAppNotice("Сховище чернеток недоступне. Можна працювати зі звітом і зберігати його у файл.", "error");
+        }
+        const hasLoadedSaved = loadFromStorage(activeState);
         if (!hasLoadedSaved) {
             loadInitialDefaults(false);
         }
+        if (draftLibrary) {
+            draftsUI = window.ReportDrafts.mount({ library: draftLibrary, getState: () => state,
+                applyState: saved => { loadFromStorage(saved); triggerLivePreview(); },
+                blankState: () => ({ ...emptyReport, tasks: [], questions: [], studentName: state.studentName,
+                    studentGroup: state.studentGroup, reportYear: state.reportYear, studentTeacher: "" }),
+                flush: async () => {
+                    const saved = await saveToStorage();
+                    setSaveStatus(saved ? "Збережено локально" : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
+                    return saved;
+                },
+                pause: () => { reportSwitching = true; clearTimeout(autoSaveTimer); saveRevision++; },
+                resume: () => { reportSwitching = false; },
+                notice: showAppNotice, exportState: exportDraftState
+            });
+            // Persist migration before the first switch, including reports with images.
+            triggerAutoSave();
+        } else {
+            for (const id of ["btnDraftLibrary", "btnNewDraft"]) {
+                document.getElementById(id).disabled = true;
+                document.getElementById(id).title = "Сховище браузера недоступне. Використайте збереження у файл.";
+            }
+            document.getElementById("currentDraftTitle").textContent = "Поточний звіт · зберігайте у файл";
+        }
+        dom.workspaceWrapper.inert = false;
 
         // Відновлення налаштувань режиму розділеного екрану
         if (dom.workspaceWrapper) {
-            const savedSplit = localStorage.getItem("reportsSplitView");
+            let savedSplit;
+            try { savedSplit = localStorage.getItem("reportsSplitView"); } catch { /* Private mode may block storage. */ }
             if (savedSplit === "single") {
                 dom.workspaceWrapper.classList.add("single-column");
                 if (dom.btnToggleSplitView) dom.btnToggleSplitView.setAttribute("aria-pressed", "false");
@@ -198,6 +235,9 @@
         }
 
         bindEvents();
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden" && !reportSwitching) { clearTimeout(autoSaveTimer); void saveToStorage(); }
+        });
         resizeReportTextAreas();
         document.addEventListener("input", (event) => {
             if (event.target.matches(AUTO_GROW_TEXTAREA_SELECTOR)) {
@@ -562,6 +602,11 @@
 
         dom.btnCloseSuccess.addEventListener("click", () => dom.successModal.classList.remove("active"));
         dom.btnNewReport.addEventListener("click", async (event) => {
+            if (draftsUI) {
+                dom.successModal.classList.remove("active");
+                await draftsUI.open();
+                return;
+            }
             const confirmed = await window.ReportDeleteConfirm.request({
                 anchor: dom.btnNewReport, skipConfirmation: event.shiftKey,
                 title: "Створити новий звіт?",
@@ -650,13 +695,14 @@
         setSaveStatus("Збереження...", "saving");
 
         clearTimeout(autoSaveTimer);
-        autoSaveTimer = setTimeout(() => {
-            const saved = saveToStorage();
-            setSaveStatus(saved ? "Збережено локально" : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
+        const revision = ++saveRevision;
+        autoSaveTimer = setTimeout(async () => {
+            const saved = await saveToStorage();
+            if (revision === saveRevision) setSaveStatus(saved ? "Збережено локально" : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
         }, 350);
     }
 
-    function saveToStorage() {
+    async function saveToStorage() {
         try {
             const dataToSave = {
                 labNumber: state.labNumber,
@@ -674,19 +720,24 @@
                 conclusionText: state.conclusionText,
                 ...Object.fromEntries(conclusionFields.map(key => [key, state[key]]))
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            if (draftLibrary) {
+                await draftLibrary.save(dataToSave);
+                draftsUI?.updateTitle();
+                // Remove the obsolete duplicate only after a successful IndexedDB commit.
+                try { localStorage.removeItem(STORAGE_KEY); } catch { /* IndexedDB remains authoritative. */ }
+            } else {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            }
             return true;
         } catch (err) {
-            console.warn("Помилка збереження у localStorage:", err);
+            console.warn("Не вдалося зберегти звіт:", err?.name);
             return false;
         }
     }
 
-    function loadFromStorage() {
+    function loadFromStorage(snapshot = null) {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return false;
-            const saved = JSON.parse(raw);
+            const saved = snapshot || JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
             if (!saved) return false;
 
             state.labNumber = saved.labNumber || 1;
@@ -734,37 +785,58 @@
 
     function clearAllData() {
         clearTimeout(autoSaveTimer);
-        localStorage.removeItem(STORAGE_KEY);
+        try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage failure must not prevent editing. */ }
         loadInitialDefaults(true);
         setSaveStatus("Форма очищена", "neutral");
         showAppNotice("Форму очищено. Можна починати новий звіт.", "success");
-        setTimeout(() => {
-            setSaveStatus("Збережено локально", "saved");
-        }, 1500);
     }
 
     function exportDraft() {
+        exportDraftState(state);
+    }
+
+    function exportDraftState(report) {
         const draftObj = {
             version: 4,
             exportDate: new Date().toISOString(),
-            state: state
+            state: report
         };
         const blob = new Blob([JSON.stringify(draftObj, null, 2)], { type: "application/json" });
-        const filename = getDocxFileName().replace(".docx", "_чернетка.json");
+        const filename = report === state ? getDocxFileName().replace(".docx", "_чернетка.json")
+            : `${window.ReportDraftStore.titleFor(report).replace(/[\\/:*?"<>|]/g, "_")}_чернетка.json`;
         downloadBlob(blob, filename);
     }
 
     function importDraft(e) {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file || reportSwitching) return;
+
+        reportSwitching = true;
+        clearTimeout(autoSaveTimer);
+        saveRevision++;
+        dom.workspaceWrapper.inert = true;
+        const importControls = [dom.btnImportDraft, dom.btnClearForm, document.getElementById("btnDraftLibrary"), document.getElementById("btnNewDraft")];
+        const wasDisabled = importControls.map(button => button.disabled);
+        importControls.forEach(button => { button.disabled = true; });
+        const finishImport = () => {
+            reportSwitching = false;
+            dom.workspaceWrapper.inert = false;
+            importControls.forEach((button, index) => { button.disabled = wasDisabled[index]; });
+        };
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const parsed = JSON.parse(event.target.result);
                 const loadedState = parsed.state || parsed;
 
                 if (!loadedState || typeof loadedState !== "object" || Array.isArray(loadedState)) throw new Error("Невірний формат чернетки");
+                clearTimeout(autoSaveTimer);
+                saveRevision++;
+                if (draftLibrary) {
+                    // Preserve the current report before importing another one.
+                    await draftLibrary.startNew(state, loadedState);
+                }
                 const blocks = window.ReportBlocks.normalize(loadedState.tasks);
                 for (const key of Object.keys(state)) {
                     if (["tasks", "questions"].includes(key)) continue;
@@ -802,8 +874,11 @@
                 showAppNotice("Чернетку успішно завантажено.", "success");
             } catch (err) {
                 showAppNotice("Не вдалося прочитати чернетку: " + err.message, "error");
+            } finally {
+                finishImport();
             }
         };
+        reader.onerror = () => { finishImport(); showAppNotice("Не вдалося прочитати файл. Поточний звіт не змінено.", "error"); };
         reader.readAsText(file);
         dom.draftFileInput.value = "";
     }

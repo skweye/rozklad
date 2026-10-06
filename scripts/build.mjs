@@ -15,6 +15,7 @@ const assets = [
     'background-particles.js', 'site-navigation.js', 'site-branding.js', 'site-auth.js', 'site-classroom.js',
     'brand-icon.svg', 'ui-icons.svg', 'icon.png', 'sound.mp3', 'schedule.json', 'announcement.json',
     'reports/index.html', 'reports/style.css', 'reports/script.js', 'reports/blocks.js', 'reports/blocks.css', 'reports/delete-confirm.js',
+    'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css',
     'reports/sound.mp3', 'reports/templates/oop-lab1.js', 'reports/assets/libs/docx.umd.js'
 ];
 for (const asset of assets) {

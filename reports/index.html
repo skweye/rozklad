@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="../appearance.css?v=20261001-bright-countdowns">
     <link rel="stylesheet" href="blocks.css?v=20260930-table-captions">
     <link rel="stylesheet" href="../neumorphism.css">
+    <link rel="stylesheet" href="drafts.css?v=20261006">
     <script src="../background-particles.js" defer></script>
     <script src="../site-navigation.js" defer></script>
     <script src="../site-branding.js" defer></script>
@@ -91,6 +92,17 @@
             <p class="hero-description">Склади звіт із потрібних блоків, перевір оформлення та збережи документ.</p>
         </div>
         <span class="hero-tag">Лабораторні та практичні</span>
+    </section>
+    <section class="report-draft-bar" aria-label="Чернетки звітів">
+        <div class="report-draft-label"><span>Поточний звіт</span><strong id="currentDraftTitle">Відновлення чернетки…</strong></div>
+        <div class="report-draft-actions">
+            <button type="button" class="btn btn-secondary" id="btnDraftLibrary" aria-haspopup="dialog">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#list"/></svg>Мої чернетки
+            </button>
+            <button type="button" class="btn btn-primary" id="btnNewDraft" aria-haspopup="dialog">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт
+            </button>
+        </div>
     </section>
     <nav class="report-steps" aria-label="Розділи звіту">
         <a href="#reportStudent"><span>01</span> Дані студента</a>
@@ -327,6 +339,27 @@
         </div>
     </div>
 
+    <dialog class="drafts-dialog" id="draftsDialog" aria-labelledby="draftsTitle" aria-describedby="draftsDescription">
+        <div class="drafts-heading">
+            <div><h2 id="draftsTitle">Мої чернетки</h2><p id="draftsDescription">Відкладіть одну роботу й продовжуйте іншу. При перемиканні поточний звіт зберігається автоматично.</p></div>
+            <button type="button" class="draft-action draft-close" id="btnCloseDrafts" aria-label="Закрити чернетки">×</button>
+        </div>
+        <div class="drafts-current">
+            <label for="draftName">Назва поточної чернетки</label>
+            <input id="draftName" type="text" maxlength="120" placeholder="Наприклад: ОС — лабораторна №2" autocomplete="off">
+            <div class="drafts-current-actions">
+                <button type="button" class="draft-action" id="btnSaveNamedDraft">Зберегти</button>
+                <button type="button" class="draft-action draft-action-primary" id="btnSaveAndNewDraft">
+                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Зберегти й почати новий
+                </button>
+            </div>
+        </div>
+        <p class="drafts-status" id="draftsStatus" role="status" aria-live="polite"></p>
+        <h3 class="drafts-list-label">Збережені роботи <span id="draftCount">0</span></h3>
+        <div class="drafts-list" id="draftsList"></div>
+        <p class="drafts-local-note">Лише в цьому браузері, без синхронізації з Google. Очищення даних сайту видалить чернетки. Для резервної копії або іншого пристрою завантажте звіт кнопкою «У файл».</p>
+    </dialog>
+
     <!-- Модальне вікно успіху -->
     <div class="modal-overlay" id="successModal">
         <div class="modal-sheet" style="max-width: 520px;">
@@ -370,9 +403,11 @@
     <!-- Вільний конструктор блоків -->
     <script src="delete-confirm.js"></script>
     <script src="blocks.js?v=20261001-text-paragraphs"></script>
+    <script src="drafts-store.js?v=20261006"></script>
+    <script src="drafts.js?v=20261006"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="script.js?v=20260930-question-answers"></script>
+    <script src="script.js?v=20261006-draft-library"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');
