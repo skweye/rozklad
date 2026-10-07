@@ -121,7 +121,9 @@
         for (let day = 1; day <= 5; day++) (schedule[day] || []).forEach((slot, slotIndex) => {
             for (const variant of ['common', 'num', 'den']) {
                 const lesson = slot[variant];
-                if (!lesson || (Array.isArray(lesson) && (!lesson.length || lesson.some(item => !item?.s?.trim()))) || (!Array.isArray(lesson) && !lesson.s?.trim())) continue;
+                const items = Array.isArray(lesson) ? lesson : [lesson];
+                // Debt/make-up sessions stay in the timetable, but are not replacement choices.
+                if (!items.length || items.some(item => !item?.s?.trim() || /борги/iu.test(item.note || ''))) continue;
                 const text = label(lesson);
                 if (seen.has(text)) continue;
                 seen.add(text);
@@ -130,7 +132,6 @@
                 const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'replacement-choice'; radio.value = String(choiceIndex);
                 const copy = document.createElement('span'); copy.className = 'replacement-choice-copy';
                 const title = document.createElement('strong');
-                const items = Array.isArray(lesson) ? lesson : [lesson];
                 title.textContent = [...new Set(items.map(item => item.s.trim()))].join(' / ');
                 const details = document.createElement('span'); details.className = 'replacement-choice-details';
                 details.textContent = items.map(item => [item.g ? `Група ${item.g}` : '', item.t, item.r && item.r !== '-' ? `Ауд. ${item.r}` : '', item.note].filter(Boolean).join(' · ')).join(' / ');

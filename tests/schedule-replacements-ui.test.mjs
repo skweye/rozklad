@@ -7,7 +7,7 @@ const source = await readFile(new URL('../schedule-replacements.js', import.meta
 const clockSource = await readFile(new URL('../schedule-time.js', import.meta.url), 'utf8');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const base = { 1: [{ common: { s: 'Бази даних', t: 'Викладач' } }], 4: [{ common: { s: 'Основна пара' } }] };
-function fixture({ admin = true, permissions, fail = false, initial = [] } = {}) {
+function fixture({ admin = true, permissions, fail = false, initial = [], schedule = base } = {}) {
     let records = initial, writes = [], noticeUpdates = [], refreshes = 0, reads = 0, failWrite = false, subscriber;
     let timestamp = Date.parse('2026-09-24T06:00:00Z');
     class ClockDate extends Date { constructor(...args) { super(...(args.length ? args : [timestamp])); } static now() { return timestamp; } }
@@ -35,12 +35,12 @@ function fixture({ admin = true, permissions, fail = false, initial = [] } = {})
     const timers = new Map(); let timerId = 0;
     const window = { listeners: {}, addEventListener(name, handler) { this.listeners[name] = handler; },
         studyScheduleNotices: { update(records, suppressedIds) { noticeUpdates.push({ records, suppressedIds: [...suppressedIds] }); } },
-        scheduleReplacementView: { schedule: () => base, refresh() { refreshes++; } },
+        scheduleReplacementView: { schedule: () => schedule, refresh() { refreshes++; } },
         studyAuth: { snapshot: () => ({ scheduleAdmin: admin, permissions }), subscribe(fn) { subscriber = fn; }, errorMessage: error => error.message,
             async changeReplacement(data) {
                 if (failWrite) throw new Error('replacement_conflict');
                 writes.push(data);
-                const replacement = data.operation === 'set' ? { date: data.date, index: data.index, revision: 'new-revision', lesson: data.source.kind === 'window' ? null : base[data.source.day][data.source.index][data.source.variant], source: data.source } : null;
+                const replacement = data.operation === 'set' ? { date: data.date, index: data.index, revision: 'new-revision', lesson: data.source.kind === 'window' ? null : schedule[data.source.day][data.source.index][data.source.variant], source: data.source } : null;
                 records = records.filter(item => item.date !== data.date || item.index !== data.index);
                 if (replacement) records.push(replacement);
                 return { replacement, date: data.date, index: data.index, notificationId: `${data.date}/${data.index}@${replacement ? replacement.revision : `removed:${data.revision}`}` };
@@ -129,6 +129,38 @@ test('window is the first searchable choice, persists selection and can be cance
     f.dialog.parts['.replacement-remove'].listeners.click(); await settle();
     assert.equal(f.writes[1].operation, 'remove');
     assert.equal(f.window.studyReplacements.entries().length, 0);
+});
+
+test('debt sessions are excluded from every replacement variant without changing the timetable or source indices', async () => {
+    const regular = { s: 'Бази даних', t: 'Викладач' };
+    const debt = { ...regular, note: 'борги і т.д.' };
+    const schedule = { ...base, 1: [
+        { common: debt },
+        { num: { ...debt, note: ' БОРГИ і т. д. ' }, den: regular },
+        { common: [{ s: 'Підгрупи', g: 'I' }, { s: 'Підгрупи', g: 'II', note: 'борги і т.д.' }] },
+        { den: debt },
+        { common: { s: 'Практична пара', note: 'Практика' } }
+    ] };
+    const original = JSON.stringify(schedule);
+    const f = fixture({ schedule }); await settle(); f.enable(); f.open();
+    const options = f.dialog.parts['.replacement-choices'].children;
+    assert.deepEqual(options.map(node => node.children[1].children[0].textContent), ['Вікно', 'Бази даних', 'Практична пара', 'Основна пара']);
+    const search = f.dialog.parts['.replacement-search']; search.value = 'борги'; search.listeners.input();
+    assert.ok(options.every(node => node.hidden));
+    assert.equal(f.dialog.parts['.replacement-empty'].hidden, false);
+    search.value = ''; search.listeners.input(); f.choose(1); await f.save();
+    assert.equal(JSON.stringify(f.writes[0].source), JSON.stringify({ day: 1, index: 1, variant: 'den' }));
+    assert.equal(JSON.stringify(schedule), original);
+});
+
+test('real schedule offers ordinary lessons and a window without debt-marked duplicates', async () => {
+    const schedule = JSON.parse(await readFile(new URL('../schedule.json', import.meta.url), 'utf8'));
+    const f = fixture({ schedule }); await settle(); f.enable(); f.open();
+    const options = f.dialog.parts['.replacement-choices'].children;
+    assert.ok(options.length > 1);
+    for (const node of options) assert.doesNotMatch(node.children[1].children.map(child => child.textContent).join(' '), /борги/iu);
+    assert.ok(options.some(node => node.children[1].children[0].textContent === 'Бази даних'));
+    assert.ok(JSON.stringify(schedule).includes('борги і т.д.'));
 });
 
 test('visitors read replacements but cannot open editor; logout removes editing immediately', async () => {
