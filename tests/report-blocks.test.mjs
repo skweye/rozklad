@@ -261,7 +261,7 @@ test('multi-file upload creates individual image blocks without absorbing follow
 });
 test('full report export retains A4, margins, underlined student fields and title-page footer', async () => {
     const elements = new Map(); let documentModel;
-    const element = id => { if (!elements.has(id)) elements.set(id, { value: '', textContent: '', classList: { add() {}, remove() {} }, appendChild() {}, click() {}, remove() {} }); return elements.get(id); };
+    const element = id => { if (!elements.has(id)) elements.set(id, { value: '', textContent: '', classList: { add() {}, remove() {} }, appendChild() {}, click() {}, remove() {}, showModal() { this.open = true; } }); return elements.get(id); };
     const document = { readyState: 'loading', getElementById: element, addEventListener() {}, createElement: () => element('download'), body: { appendChild() {}, removeChild() {} } };
     const window = { ReportBlocks: b, docx: { ...docx, Packer: { toBlob: async model => { documentModel = model; return new Blob(); } } } };
     const instrumented = mainSource.replace('    if (document.readyState === "loading")', '    window.reportTest = { state, generateDocxDocument };\n    if (document.readyState === "loading")');
@@ -271,6 +271,8 @@ test('full report export retains A4, margins, underlined student fields and titl
     window.reportTest.state.conclusionText = 'ВИСНОВОК:\nОпрацьовано ОС.\nМету досягнуто частково.';
     await window.reportTest.generateDocxDocument();
     assert.ok(documentModel);
+    assert.equal(element('successModal').open, true);
+    assert.match(element('successFileNameDisplay').textContent, /\.docx$/);
     const packed = await docx.Packer.toBuffer(documentModel), xml = zipEntry(packed, 'word/document.xml');
     assert.match(xml, /w:w="11906" w:h="16838"/);
     for (const [side, amount] of Object.entries({ top: 1134, bottom: 1134, left: 1418, right: 567 })) assert.match(xml, new RegExp(`w:${side}="${amount}"`));
@@ -293,7 +295,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
     const blocksAsset = 'src="blocks.js?v=20261001-text-paragraphs"';
-    const scriptAsset = 'src="script.js?v=20261006-draft-library"';
+    const scriptAsset = 'src="script.js?v=20261007-download-dialog"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));

@@ -21,7 +21,7 @@ test('report input carets follow readable field text rather than a fixed dark or
     f.theme('minimal'); assert.equal(color(), '#202835');
     f.theme('neumorphism-dark'); assert.equal(color(), '#edf1f5');
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    assert.match(html, /style\.css\?v=20260930-visible-caret/);
+    assert.match(html, /style\.css\?v=20261007-download-dialog/);
 });
 function fixture({ saved = new Map(), blocked = false, quietMode = false, cores = 8, early = false } = {}) {
     class Classes extends Set { remove(...names) { names.forEach(name => this.delete(name)); } toggle(name, active) { if (active) this.add(name); else this.delete(name); } }

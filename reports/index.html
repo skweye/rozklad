@@ -13,7 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Cascadia+Mono:wght@400;600&family=Google+Sans:wght@500&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260930-visible-caret">
+    <link rel="stylesheet" href="style.css?v=20261007-download-dialog">
     <link rel="stylesheet" href="../workspace.css">
     <link rel="stylesheet" href="../appearance.css?v=20261001-bright-countdowns">
     <link rel="stylesheet" href="blocks.css?v=20260930-table-captions">
@@ -360,20 +360,25 @@
         <p class="drafts-local-note">Лише в цьому браузері, без синхронізації з Google. Очищення даних сайту видалить чернетки. Для резервної копії або іншого пристрою завантажте звіт кнопкою «У файл».</p>
     </dialog>
 
-    <!-- Модальне вікно успіху -->
-    <div class="modal-overlay" id="successModal">
-        <div class="modal-sheet" style="max-width: 520px;">
-            <div class="success-card">
-                <div class="success-icon">✓</div>
-                <h2>Звіт успішно сформовано!</h2>
-                <p id="successFileNameDisplay">Файл завантажено на ваш пристрій.</p>
-                <div class="success-actions">
-                    <button type="button" class="btn btn-secondary" id="btnCloseSuccess">Закрити</button>
-                    <button type="button" class="btn btn-primary" id="btnNewReport">Сформувати ще один звіт</button>
-                </div>
-            </div>
+    <dialog class="modal-sheet download-dialog" id="successModal" aria-labelledby="downloadTitle" aria-describedby="downloadDescription">
+        <div class="download-heading">
+            <span class="download-status"><span aria-hidden="true"></span>Документ готовий</span>
+            <button type="button" class="download-dismiss" id="btnDismissSuccess" aria-label="Закрити вікно завантаження">
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
         </div>
-    </div>
+        <h2 id="downloadTitle">Звіт сформовано</h2>
+        <p class="download-description" id="downloadDescription">Файл передано браузеру для завантаження. Ваш звіт залишається в редакторі.</p>
+        <div class="download-file">
+            <div class="download-file-icon" aria-hidden="true"><svg class="ui-icon" focusable="false"><use href="../ui-icons.svg#file"/></svg><span>DOCX</span></div>
+            <div class="download-file-copy"><strong id="successFileNameDisplay"></strong><span id="successFileMeta">Документ Word · .docx</span></div>
+        </div>
+        <div class="download-actions">
+            <button type="button" class="btn btn-secondary" id="btnCloseSuccess" autofocus>До редактора</button>
+            <button type="button" class="btn btn-primary" id="btnDownloadAgain"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Завантажити ще раз</button>
+        </div>
+        <div class="download-footer"><span>Продовжити іншу роботу?</span><button type="button" id="btnNewReport">Інший звіт<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button></div>
+    </dialog>
 
     <!-- Єдиний вбудований діалог для підтверджень та повідомлень -->
     <div class="modal-overlay app-dialog-overlay" id="appDialog" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle">
@@ -407,7 +412,7 @@
     <script src="drafts.js?v=20261006"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="script.js?v=20261006-draft-library"></script>
+    <script src="script.js?v=20261007-download-dialog"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

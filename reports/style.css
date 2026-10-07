@@ -1931,47 +1931,53 @@ input[type="submit"] {
 }
 
 /* ==========================================================================
-   Success Card (Frosted Glass Alert)
+   Download receipt: a compact, theme-aware native dialog
    ========================================================================== */
-.success-card {
-    text-align: center;
-    padding: 2.5rem 2rem;
+dialog.download-dialog {
+    position: fixed; inset: 0; margin: auto; box-sizing: border-box;
+    width: min(480px, calc(100vw - 32px)); max-width: 480px;
+    max-height: calc(100dvh - 32px); padding: 26px; overflow-y: auto;
+    text-align: left; color: var(--ui-text); background: var(--ui-ground);
+    border: 1px solid; border-color: var(--ui-glass-edge); border-radius: 24px;
+    box-shadow: var(--ui-glass-rim), 0 24px 80px rgba(0,0,0,.24);
+    animation: ui-pop-in 180ms ease-out;
 }
-
-.success-icon {
-    width: 72px;
-    height: 72px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #FFFFFF;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.3rem;
-    margin: 0 auto 1.25rem auto;
-    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+dialog.download-dialog:not([open]) { display: none; }
+dialog.download-dialog[open] { display: block; }
+dialog.download-dialog::before { content: none; }
+dialog.download-dialog::backdrop { background: rgba(8,11,16,.38); }
+.download-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.download-status { display: inline-flex; align-items: center; gap: 8px; color: var(--ui-accent); font-size: 11px; font-weight: 600; letter-spacing: .05em; }
+.download-status > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.download-dismiss { display: grid; place-items: center; flex: 0 0 36px; height: 36px; padding: 0; border: 1px solid var(--ui-line); border-radius: 50%; background: transparent; color: var(--ui-muted); cursor: pointer; }
+.download-dismiss:hover { color: var(--ui-text); background: var(--ui-soft); }
+.download-dialog h2 { margin: 0 0 10px; color: var(--ui-text); font-size: 25px; font-weight: 600; line-height: 1.2; letter-spacing: -.04em; }
+.download-description { margin: 0; color: var(--ui-muted); font-size: 13px; line-height: 1.65; }
+.download-file { display: flex; align-items: center; gap: 16px; margin: 24px 0; padding: 16px; border: 1px solid var(--ui-line); border-radius: 16px; background: var(--ui-soft); }
+.download-file-icon { display: grid; justify-items: center; gap: 5px; flex: 0 0 44px; color: var(--ui-accent); }
+.download-file-icon .ui-icon { width: 30px; height: 30px; }
+.download-file-icon > span { font-size: 9px; font-weight: 600; letter-spacing: .08em; }
+.download-file-copy { display: grid; gap: 7px; min-width: 0; }
+.download-file-copy strong { color: var(--ui-text); font-size: 14px; line-height: 1.5; font-weight: 500; overflow-wrap: anywhere; }
+.download-file-copy > span { color: var(--ui-muted); font-size: 11px; }
+.download-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+.download-actions .btn { min-height: 44px; padding: 10px 14px; justify-content: center; }
+.download-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--ui-line); font-size: 11px; color: var(--ui-muted); }
+.download-footer button { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0; color: var(--ui-text); border: 0; background: none; font: inherit; cursor: pointer; }
+.download-footer button:hover { color: var(--ui-accent); }
+.download-footer .ui-icon { width: 15px; height: 15px; }
+@media (max-width: 480px) {
+    dialog.download-dialog { padding: 20px; border-radius: 20px; }
+    .download-heading { margin-bottom: 16px; }
+    .download-actions { grid-template-columns: 1fr; }
+    .download-actions .btn-primary { grid-row: 1; }
+    .download-dismiss { flex-basis: 44px; height: 44px; }
+    .download-footer button { min-height: 44px; }
 }
-
-.success-card h2 {
-    font-size: 1.6rem;
-    color: var(--text-primary);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
+@media (prefers-reduced-motion: reduce) {
+    dialog.download-dialog { animation: none; }
 }
-
-.success-card p {
-    color: var(--text-secondary);
-    font-size: 0.98rem;
-    margin-bottom: 1.75rem;
-}
-
-.success-actions {
-    display: flex;
-    justify-content: center;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-}
+body[data-low-power="true"] dialog.download-dialog { animation: none; }
 
 /* Backwards compatibility for save-status-pill */
 
@@ -2414,12 +2420,6 @@ body.theme-frosted-glass .header-save-badge.saving .save-status-dot,
 body.theme-frosted-glass .live-pulse-dot {
     background: #dbe1e6;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.34);
-}
-
-body.theme-frosted-glass .success-icon {
-    background: linear-gradient(135deg, #e5e9ed 0%, #afb9c3 100%);
-    color: #252b31;
-    box-shadow: 0 10px 24px rgba(5, 8, 12, 0.24);
 }
 
 body.theme-frosted-glass .app-notice-success .app-notice-icon {

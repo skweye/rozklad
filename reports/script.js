@@ -31,6 +31,7 @@
     const STORAGE_KEY = "lab_report_generator_state_v3";
     let autoSaveTimer = null;
     let draftLibrary = null, draftsUI = null, saveRevision = 0, reportSwitching = false;
+    let generatedReport = null;
     const emptyReport = JSON.parse(JSON.stringify(state));
 
     // DOM Елементи
@@ -65,7 +66,10 @@
         btnClosePreviewBottom: document.getElementById("btnClosePreviewBottom"),
         successModal: document.getElementById("successModal"),
         successFileNameDisplay: document.getElementById("successFileNameDisplay"),
+        successFileMeta: document.getElementById("successFileMeta"),
         btnCloseSuccess: document.getElementById("btnCloseSuccess"),
+        btnDismissSuccess: document.getElementById("btnDismissSuccess"),
+        btnDownloadAgain: document.getElementById("btnDownloadAgain"),
         btnNewReport: document.getElementById("btnNewReport"),
         btnExportDraft: document.getElementById("btnExportDraft"),
         btnImportDraft: document.getElementById("btnImportDraft"),
@@ -600,10 +604,10 @@
             generateDocxDocument();
         });
 
-        dom.btnCloseSuccess.addEventListener("click", () => dom.successModal.classList.remove("active"));
+        setupDownloadDialog();
         dom.btnNewReport.addEventListener("click", async (event) => {
             if (draftsUI) {
-                dom.successModal.classList.remove("active");
+                dom.successModal.close();
                 await draftsUI.open();
                 return;
             }
@@ -615,7 +619,7 @@
                 tone: "danger"
             });
             if (confirmed) {
-                dom.successModal.classList.remove("active");
+                dom.successModal.close();
                 clearAllData();
                 dom.studentName.focus();
             }
@@ -1482,12 +1486,31 @@
             const filename = getDocxFileName();
             downloadBlob(blob, filename);
 
-            dom.successFileNameDisplay.textContent = `Файл «${filename}» успішно згенеровано.`;
-            dom.successModal.classList.add("active");
+            showReportDownload(blob, filename);
         } catch (err) {
             console.error("Помилка при створенні DOCX:", err);
             showAppNotice("Не вдалося сформувати документ: " + err.message, "error");
         }
+    }
+
+    function setupDownloadDialog() {
+        dom.btnCloseSuccess.addEventListener("click", () => dom.successModal.close());
+        dom.btnDismissSuccess.addEventListener("click", () => dom.successModal.close());
+        dom.btnDownloadAgain.addEventListener("click", () => {
+            if (generatedReport) downloadBlob(generatedReport.blob, generatedReport.filename);
+        });
+        // Native dialog provides Escape, focus trapping and return to the invoking button.
+        dom.successModal.addEventListener("close", () => { generatedReport = null; });
+    }
+
+    function showReportDownload(blob, filename) {
+        generatedReport = { blob, filename };
+        dom.successFileNameDisplay.textContent = filename;
+        const size = blob.size >= 1024 * 1024
+            ? `${(blob.size / (1024 * 1024)).toLocaleString('uk-UA', { maximumFractionDigits: 1 })} МБ`
+            : `${Math.max(1, Math.ceil(blob.size / 1024)).toLocaleString('uk-UA')} КБ`;
+        dom.successFileMeta.textContent = `Документ Word · ${size}`;
+        if (!dom.successModal.open) dom.successModal.showModal();
     }
 
     function createEmptyParagraph() {
