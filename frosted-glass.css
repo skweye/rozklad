@@ -1,206 +1,108 @@
-/* Shared frosted-glass theme tokens and component fallbacks. */
-body.theme-frosted-glass {
-    color-scheme: dark;
-    --frost-pane: linear-gradient(135deg, rgba(255,255,255,.095), rgba(255,255,255,.015)), rgba(38,40,44,.76);
-    --frost-border: rgba(255,255,255,.17);
-    --frost-shadow: 0 12px 32px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.16);
-    --frost-blur: blur(20px) saturate(.65);
-    --bg-color: #17181b;
-    --card-bg: rgba(43,45,49,.88);
-    --text-primary: #f4f4f5;
-    --text-secondary: #d0d1d5;
-    --text-muted: #b6b8be;
-    --text-light: #b6b8be;
-    --accent-color: #e4e5e9;
-    --accent-rgb: 228,229,233;
-    --accent-hover: #ffffff;
-    --success-color: #e4e5e9;
-    --warning-color: #e4e5e9;
-    --border-color: var(--frost-border);
-    --header-bg: rgba(29,30,33,.86);
-    --table-header-bg: rgba(255,255,255,.04);
-    --card-shadow: var(--frost-shadow);
-    --glow-color: transparent;
-    --glass-bg-card: var(--frost-pane);
-    --glass-bg-card-hover: var(--frost-pane);
-    --glass-bg-header: var(--header-bg);
-    --glass-bg-subtle: rgba(255,255,255,.035);
-    --glass-bg-input: rgba(16,17,20,.55);
-    --glass-bg-input-focus: rgba(16,17,20,.8);
-    --glass-bg-floating: rgba(32,33,37,.94);
-    --glass-bg-modal: rgba(32,33,37,.97);
-    --glass-border: 1px solid var(--frost-border);
-    --glass-border-subtle: 1px solid rgba(255,255,255,.11);
-    --glass-border-focused: 1px solid #e4e5e9;
-    --glass-highlight: inset 0 1px 0 rgba(255,255,255,.14);
-    --glass-highlight-subtle: inset 0 1px 0 rgba(255,255,255,.06);
-    --glass-shadow: var(--frost-shadow);
-    --glass-shadow-hover: var(--frost-shadow);
-    --glass-shadow-sm: var(--glass-highlight-subtle);
-    --glass-shadow-dock: 0 16px 40px rgba(0,0,0,.3), var(--glass-highlight);
-    --glass-shadow-modal: var(--glass-shadow-dock);
-    --glass-blur-sm: none;
-    --glass-blur-md: var(--frost-blur);
-    --glass-blur-lg: var(--frost-blur);
-    --sky-primary: #e4e5e9;
-    --sky-gradient: linear-gradient(#f2f2f3, #d5d6da);
-    --sky-gradient-hover: linear-gradient(#ffffff, #e4e5e9);
-    --sky-primary-glow: none;
-    --accent-green: #e4e5e9;
-    --accent-green-light: rgba(255,255,255,.08);
-    --reports-preview-bg: rgba(10,11,13,.35);
-    background-color: #17181b !important;
-    color: var(--text-primary);
+/* Liquid/frosted glass: a smoky pane with a directional reflective rim.
+   Scoped to the shared theme; the white document preview is never styled. */
+body[data-app][data-theme="glass"] {
+    --ui-radius: 22px;
+    --frost-tint: color-mix(in srgb, var(--ui-panel) 32%, transparent);
+    --frost-pane: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.012) 48%, rgba(255,255,255,.045)), var(--frost-tint);
+    --frost-nested: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+    --frost-floating: linear-gradient(135deg, rgba(255,255,255,.075), transparent 65%), rgba(27,31,36,.94);
+    --frost-blur: blur(18px) saturate(.85);
+    --frost-shadow: var(--ui-glass-rim), 0 8px 28px rgba(0,0,0,.13);
+    --frost-control: linear-gradient(145deg, rgba(255,255,255,.1), rgba(255,255,255,.025));
 }
 
-/* Broad, stationary light shapes reveal the glass without continuous animation. */
-body.theme-frosted-glass:not(.has-custom-bg):not(.reports-has-custom-bg) {
-    background-image:
-        radial-gradient(ellipse at 8% 0%, rgba(230,231,236,.18), transparent 48%),
-        radial-gradient(ellipse at 95% 75%, rgba(164,166,175,.13), transparent 48%),
-        linear-gradient(120deg, #26272c, #141518 58%, #25262b) !important;
-    background-size: cover !important;
-    background-attachment: fixed !important;
-}
-
-body.theme-frosted-glass::before { opacity: .018; }
-
-/* Keep the same background on hover to avoid a flash between gradient and solid paint. */
-body.theme-frosted-glass .card,
-body.theme-frosted-glass .card:hover,
-body.theme-frosted-glass .link-card,
-body.theme-frosted-glass .link-card:hover,
-body.theme-frosted-glass .day-card.card:hover {
+/* Main panes keep exactly the same fill and blur on hover: no dark flash. */
+body[data-app][data-theme="glass"] :is(.card,.card:hover,.card.day-card:hover,.header-inner,.links-grid,.classroom-list,.live-preview-card,.report-steps,.report-draft-bar,.actions-footer,.admin-widget,.admin-gate) {
     background: var(--frost-pane) !important;
-    border: 1px solid var(--frost-border) !important;
-    border-radius: 22px;
-    box-shadow: var(--frost-shadow);
-    backdrop-filter: var(--frost-blur);
-    -webkit-backdrop-filter: var(--frost-blur);
-    transform: none;
-    animation: none;
-    transition: border-color 160ms ease;
+    border: 1px solid !important;
+    border-color: var(--ui-glass-edge) !important;
+    box-shadow: var(--frost-shadow) !important;
+    backdrop-filter: var(--frost-blur); -webkit-backdrop-filter: var(--frost-blur);
 }
+body[data-app][data-theme="glass"] :is(.card,.card:hover,.card.day-card:hover) {
+    opacity: 1; transform: none; animation: none !important;
+    transition: border-color 180ms ease;
+}
+body[data-app][data-theme="glass"] :is(.header-inner,.site-switcher-toggle) { border-radius: 999px; }
 
-body.theme-frosted-glass .day-card.is-today,
-body.theme-frosted-glass .day-card.is-today:hover {
-    border-color: rgba(255,255,255,.48) !important;
-    box-shadow: var(--frost-shadow);
-}
-body.theme-frosted-glass .day-header {
-    background: rgba(255,255,255,.04);
-    padding: 14px 16px;
-    border-color: rgba(255,255,255,.1);
-}
-body.theme-frosted-glass .day-name { font-weight: 600; letter-spacing: -.02em; }
-body.theme-frosted-glass .day-card.is-today .day-header { background: rgba(255,255,255,.085); }
-body.theme-frosted-glass :is(.lesson-item, .subgroup-item, .week-lesson-block) {
-    background: rgba(0,0,0,.09);
-    border-color: rgba(255,255,255,.075);
-    box-shadow: none;
-    transform: none;
-}
-body.theme-frosted-glass :is(.lesson-item:hover, .subgroup-item:hover, .week-lesson-block.week-current, .lesson-item.is-current-lesson) {
-    background: rgba(255,255,255,.075) !important;
-    border-color: rgba(255,255,255,.24) !important;
-    box-shadow: none;
-    transform: none;
-}
-
-body.theme-frosted-glass header,
-body.theme-frosted-glass header.app-header {
-    background: var(--header-bg) !important;
-    border: 1px solid var(--frost-border) !important;
-    border-radius: 18px;
-    box-shadow: var(--glass-highlight);
-    backdrop-filter: var(--frost-blur);
-    -webkit-backdrop-filter: var(--frost-blur);
-}
-body.theme-frosted-glass :is(.settings-menu, .reports-settings-menu, .custom-color-picker, .reports-custom-color-picker, .toast, .bubble-content) {
-    background: var(--glass-bg-floating) !important;
-    border: 1px solid var(--frost-border) !important;
-    box-shadow: var(--glass-shadow-dock);
-    backdrop-filter: var(--frost-blur);
-    -webkit-backdrop-filter: var(--frost-blur);
-}
-body.theme-frosted-glass .modal-sheet {
-    background: var(--glass-bg-modal) !important;
-    border: 1px solid var(--frost-border) !important;
-    box-shadow: var(--glass-shadow-modal);
-    backdrop-filter: var(--frost-blur);
-    -webkit-backdrop-filter: var(--frost-blur);
-}
-body.theme-frosted-glass :is(.task-block, .question-item, .sequence-box, .flowchart-section, .upload-zone, .settings-card, .reports-settings-card) {
-    border-radius: 14px;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    box-shadow: none;
-}
-body.theme-frosted-glass .form-control {
-    background: var(--glass-bg-input);
-    border: var(--glass-border-subtle);
-    color: var(--text-primary);
-    box-shadow: none;
-}
-body.theme-frosted-glass .form-control::placeholder { color: #b6b8be; opacity: 1; }
-body.theme-frosted-glass .code-editor-wrapper { background: #191a1e; box-shadow: none; border-color: var(--frost-border); }
-body.theme-frosted-glass .code-editor-header { background: #28292e; color: #d0d1d5; border-color: var(--frost-border); }
-body.theme-frosted-glass .code-editor-textarea,
-body.theme-frosted-glass .code-editor-textarea:focus { background: #191a1e; color: #f4f4f5; }
-
-/* Restrained controls with a solid, readable primary action. */
-body.theme-frosted-glass :is(.btn, .btn-reports, .settings-action-btn, .reports-settings-action-btn, .upload-btn) {
-    background: rgba(255,255,255,.055);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 10px;
-    color: #f4f4f5;
-    box-shadow: none;
-    text-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-body.theme-frosted-glass :is(.btn, .btn-reports, .settings-action-btn, .reports-settings-action-btn, .upload-btn):hover {
-    background: rgba(255,255,255,.12);
-    border-color: rgba(255,255,255,.4);
-    color: #ffffff;
-    box-shadow: none;
-    transform: none;
-}
-body.theme-frosted-glass .btn.btn-primary,
-body.theme-frosted-glass .btn.btn-primary-nav { background: #e4e5e9; color: #202125; border-color: #e4e5e9; }
-body.theme-frosted-glass .btn.btn-primary:hover,
-body.theme-frosted-glass .btn.btn-primary-nav:hover { background: #ffffff; color: #202125; border-color: #ffffff; }
-body.theme-frosted-glass .btn.btn-danger-dialog { background: #922e37; color: white; border-color: #d98c92; }
-body.theme-frosted-glass .btn.btn-danger-dialog:hover { background: #a73741; color: white; }
-body.theme-frosted-glass :is(.btn-danger-outline, .btn-danger-nav) { color: #ffc1c5; }
-body.theme-frosted-glass :is(button, a, input, textarea):focus-visible {
-    outline: 2px solid #f4f4f5;
-    outline-offset: 3px;
-}
-body.theme-frosted-glass .reports-theme-item { display: grid; place-items: center; }
-body.theme-frosted-glass .reports-theme-item.active { border-color: #f4f4f5; outline-color: #f4f4f5; box-shadow: none; }
-body.theme-frosted-glass :is(.settings-fab, .reports-settings-fab) {
-    background: #e4e5e9; color: #202125; border: 1px solid rgba(255,255,255,.25); box-shadow: 0 4px 16px rgba(0,0,0,.22);
-}
-body.theme-frosted-glass :is(.live-pulse-dot, .save-status-dot, .paste-badge-dot) { background: #e4e5e9; box-shadow: none; animation: none; }
-body.theme-frosted-glass .logo .logo-text { background: none; -webkit-text-fill-color: currentColor; color: #f4f4f5; }
-body.theme-frosted-glass :is(.logo-icon, .link-icon) { filter: none; box-shadow: none; }
-body.theme-frosted-glass #btnGenerateDocx::after { content: none; animation: none; }
-body.theme-frosted-glass .task-block:hover,
-body.theme-frosted-glass .question-item:hover { background: var(--glass-bg-subtle); box-shadow: none; transform: none; }
-body.theme-frosted-glass [data-tooltip]::before { background: #27282d; color: #f4f4f5; border-color: var(--frost-border); }
-body.theme-frosted-glass [data-tooltip]::after { border-color: transparent transparent #27282d transparent; }
-
-/* No nested blurs on phones; opaque surfaces preserve contrast without GPU filters. */
-@media (max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce) {
-    body.theme-frosted-glass { --frost-blur: none; --frost-pane: #303136; --header-bg: #242529; }
-    body.theme-frosted-glass:not(.has-custom-bg):not(.reports-has-custom-bg) { background-attachment: scroll !important; }
-    body.theme-frosted-glass::before { display: none; }
-    body.theme-frosted-glass *, body.theme-frosted-glass *::before, body.theme-frosted-glass *::after {
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
+/* Masked highlight paints only the edge and cannot cover text or intercept clicks.
+   Buttons retain their existing pseudo-elements for tooltips. */
+body[data-app][data-theme="glass"] :is(.card,.header-inner,.links-grid,.rb-block,.question-item,.report-draft-bar) { position: relative; }
+@supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+    body[data-app][data-theme="glass"] :is(.card,.header-inner,.links-grid,.rb-block,.question-item,.report-draft-bar)::after {
+        content: ''; position: absolute; inset: 0; width: auto; height: auto; padding: 1px;
+        border-radius: inherit; pointer-events: none; z-index: 1;
+        background: linear-gradient(125deg, rgba(255,255,255,.72), rgba(255,255,255,.18) 25%, rgba(255,255,255,.025) 52%, rgba(255,255,255,.5) 83%, rgba(255,255,255,.14));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
     }
 }
-@supports not (backdrop-filter: blur(1px)) {
-    body.theme-frosted-glass { --frost-pane: #303136; --header-bg: #242529; }
+
+/* Nested editor panes get tint and rims, without another blur layer. */
+body[data-app][data-theme="glass"] :is(.rb-block,.question-item,.task-block,.sequence-box,.flowchart-section,.upload-zone,.rb-image-drop,.image-thumb-card,.draft-card,.drafts-current) {
+    background: var(--frost-nested) !important;
+    border: 1px solid !important; border-color: var(--ui-glass-edge) !important;
+    border-radius: 16px; box-shadow: var(--ui-glass-rim) !important;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+body[data-app][data-theme="glass"] :is(.day-header,.live-preview-header) { background: rgba(255,255,255,.025); }
+body[data-app][data-theme="glass"] :is(.lesson-item,.subgroup-item,.week-lesson-block) { box-shadow: none; }
+body[data-app][data-theme="glass"] .day-card.is-today .day-header { background: color-mix(in srgb,var(--ui-accent) 9%,transparent); }
+body[data-app][data-theme="glass"] .draft-card.is-current { border-color: var(--ui-accent) !important; }
+
+/* Directional borders continue around controls and circular navigation. */
+body[data-app][data-theme="glass"] :is(.btn,.btn.btn-primary,.btn-tool,.upload-btn,.settings-action-btn,.reports-settings-action-btn,.site-switcher-toggle,.auth-trigger,.auth-google-button,.draft-action,.rb-choice,.settings-fab,.reports-settings-fab,.floating-preview-btn,.modal-close-btn,.btn-remove-img) {
+    background: var(--frost-control); color: var(--ui-text);
+    border: 1px solid; border-color: var(--ui-glass-edge);
+    box-shadow: var(--ui-glass-rim); text-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    transition: border-color 160ms ease, background-color 160ms ease;
+}
+body[data-app][data-theme="glass"] :is(.btn,.btn.btn-primary,.btn-tool,.upload-btn,.site-switcher-toggle,.auth-trigger,.auth-google-button,.draft-action,.rb-choice,.settings-fab,.reports-settings-fab):hover {
+    background: var(--frost-control); background-color: rgba(255,255,255,.04);
+    color: var(--ui-text); border-color: var(--ui-glass-edge-hover); box-shadow: var(--ui-glass-rim); transform: none;
+}
+body[data-app][data-theme="glass"] :is(.btn.btn-primary,.auth-google-button,.draft-action-primary) {
+    background: linear-gradient(135deg,rgba(255,255,255,.17),rgba(255,255,255,.05));
+    border-top-color: rgba(255,255,255,.8); font-weight: 600;
+}
+body[data-app][data-theme="glass"] :is(.btn.btn-danger-outline,.btn.btn-danger-nav,.btn.btn-danger-dialog,.delete-confirm-accept) {
+    color: var(--ui-danger); border-color: color-mix(in srgb,var(--ui-danger) 45%,transparent);
+}
+body[data-app][data-theme="glass"] .form-control,
+body[data-app][data-theme="glass"] .drafts-current input {
+    background: rgba(10,13,17,.26); color: var(--ui-text);
+    border: 1px solid rgba(240,246,255,.2); box-shadow: inset 0 1px 4px rgba(0,0,0,.12), 0 1px 0 rgba(255,255,255,.08);
+}
+body[data-app][data-theme="glass"] .form-control::placeholder { color: var(--ui-muted); opacity: .8; }
+body[data-app][data-theme="glass"] :is(button,a,input,textarea,select,summary):focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+
+/* Denser floating panels keep text readable over the content below. */
+body[data-app][data-theme="glass"] :is(.settings-menu,.reports-settings-menu,.site-switcher-panel,.modal-sheet,.auth-dialog,.rb-picker,.drafts-dialog,.replacement-dialog,.permissions-dialog:not(.admin-widget),.delete-confirm,.schedule-notices) {
+    background: var(--frost-floating) !important;
+    border: 1px solid; border-color: var(--ui-glass-edge) !important;
+    box-shadow: var(--ui-glass-rim), 0 20px 64px rgba(0,0,0,.32) !important;
+    backdrop-filter: var(--frost-blur); -webkit-backdrop-filter: var(--frost-blur);
+}
+body[data-app][data-theme="glass"] > .background-particles { opacity: .22; }
+
+/* On small/slow devices or without backdrop support, a solid tint keeps contrast. */
+body[data-app][data-theme="glass"][data-low-power="true"] {
+    --frost-blur: none;
+    --frost-pane: linear-gradient(135deg,rgba(255,255,255,.07),transparent 70%), #282d33;
+}
+@media (max-width: 768px) {
+    body[data-app][data-theme="glass"] .header-inner { border-radius: 26px; }
+}
+@media (max-width: 768px), (pointer: coarse), (prefers-reduced-motion: reduce) {
+    body[data-app][data-theme="glass"] {
+        --frost-blur: none;
+        --frost-pane: linear-gradient(135deg,rgba(255,255,255,.07),transparent 70%), #282d33;
+    }
+    body[data-app][data-theme="glass"] :is(.card,.btn,.draft-action,.rb-choice) { transition: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    body[data-app][data-theme="glass"] { --frost-pane: #282d33; --frost-blur: none; }
 }

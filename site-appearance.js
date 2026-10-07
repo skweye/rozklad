@@ -3,17 +3,17 @@
     'use strict';
     const key = 'studyAppearanceV1';
     const themes = {
-        neumorphism: { name: 'Neumorphism', ground: '#e6ebf2', panel: '230,235,242', shade: '#edf1f7', light: true },
-        'neumorphism-dark': { name: 'Neumorphism Dark', ground: '#252b34', panel: '37,43,52', shade: '#303946' },
-        cyber: { name: 'Cyber / Neon', ground: '#080d14', panel: '15,23,34', shade: '#12322e' },
-        amoled: { name: 'AMOLED', ground: '#000000', panel: '0,0,0', shade: '#000000' },
-        minimal: { name: 'Minimal', ground: '#f5f6f8', panel: '255,255,255', shade: '#e6eaf0', light: true },
-        green: { name: 'Green', ground: '#0c1814', panel: '19,36,29', shade: '#254d39' },
-        purple: { name: 'Purple', ground: '#171121', panel: '36,27,48', shade: '#4d326b' },
-        sunset: { name: 'Sunset', ground: '#211519', panel: '49,30,33', shade: '#743f31' },
-        university: { name: 'University', ground: '#f3f0e8', panel: '255,253,248', shade: '#ddd5c4', light: true },
-        glass: { name: 'Матове скло', ground: '#17191b', panel: '42,45,48', shade: '#363b40' },
-        coffee: { name: 'М’яка кава', ground: '#29221e', panel: '57,47,40', shade: '#524235', text: '#f2e8dd', muted: '#c4b4a5', line: 'rgba(218,190,163,.2)', inset: 'rgba(32,26,22,.85)', soft: 'rgba(218,190,163,.065)' },
+        neumorphism: { name: 'Neumorphism', ground: '#e6ebf2', panel: '230,235,242', shade: '#edf1f7', accent: '#506894', light: true },
+        'neumorphism-dark': { name: 'Neumorphism Dark', ground: '#252b34', panel: '37,43,52', shade: '#303946', accent: '#93b4ee' },
+        cyber: { name: 'Cyber / Neon', ground: '#080d14', panel: '15,23,34', shade: '#12322e', accent: '#00ff88' },
+        amoled: { name: 'AMOLED', ground: '#000000', panel: '0,0,0', shade: '#000000', accent: '#f2f2f2' },
+        minimal: { name: 'Minimal', ground: '#f5f6f8', panel: '255,255,255', shade: '#e6eaf0', accent: '#334155', light: true },
+        green: { name: 'Green', ground: '#0c1814', panel: '19,36,29', shade: '#254d39', accent: '#6ed6a0' },
+        purple: { name: 'Purple', ground: '#171121', panel: '36,27,48', shade: '#4d326b', accent: '#b79aff' },
+        sunset: { name: 'Sunset', ground: '#211519', panel: '49,30,33', shade: '#743f31', accent: '#ffa575' },
+        university: { name: 'University', ground: '#f3f0e8', panel: '255,253,248', shade: '#ddd5c4', accent: '#8a633e', light: true },
+        glass: { name: 'Матове скло', ground: '#17191b', panel: '42,45,48', shade: '#363b40', accent: '#c3ced9' },
+        coffee: { name: 'М’яка кава', ground: '#29221e', panel: '57,47,40', shade: '#524235', text: '#f2e8dd', muted: '#c4b4a5', line: 'rgba(218,190,163,.2)', inset: 'rgba(32,26,22,.85)', soft: 'rgba(218,190,163,.065)', accent: '#cda985' },
         // Palette: Monkeytype Dualshot (frontend/src/ts/constants/themes.ts).
         dualshot: { name: 'Dualshot', ground: '#737373', panel: '100,100,100', shade: '#737373', text: '#212222', muted: '#aaaaaa', line: 'rgba(33,34,34,.18)', inset: '#646464', soft: '#646464', accent: '#212222', light: true }
     };
@@ -24,7 +24,7 @@
         const accent = value.theme === 'graphite' && typeof value.accent === 'string' && value.accent.toLowerCase() === '#bdbdbd' ? themes.dualshot.accent : value.accent;
         return {
             theme,
-            accent: /^#[0-9a-f]{6}$/i.test(accent) ? accent.toLowerCase() : themes[theme].accent || '#657caf',
+            accent: /^#[0-9a-f]{6}$/i.test(accent) ? accent.toLowerCase() : themes[theme].accent,
             background: ['wallpaper', 'gradient', 'solid'].includes(value.background) ? value.background : 'gradient',
             transparency: [10, 20, 30].includes(Number(value.transparency)) ? Number(value.transparency) : 20
         };
@@ -130,6 +130,14 @@
             '--ui-line': theme.line, '--border-color': theme.line, '--ui-glass-edge': theme.line,
             '--ui-inset': theme.inset, '--ui-soft': theme.soft
         });
+        if (state.theme === 'glass') Object.assign(values, {
+            '--ui-inset': 'rgba(8,11,16,.18)',
+            '--ui-glass-edge': 'rgba(255,255,255,.52) rgba(255,255,255,.18) rgba(255,255,255,.36) rgba(255,255,255,.26)',
+            '--ui-glass-edge-hover': 'rgba(255,255,255,.7)',
+            '--ui-glass-rim': 'inset 0 1px 1px rgba(255,255,255,.14), inset 0 -1px 1px rgba(255,255,255,.07)',
+            '--appearance-gradient': 'radial-gradient(ellipse at 12% 0%,rgba(191,202,213,.16),transparent 48%),radial-gradient(ellipse at 90% 65%,rgba(165,177,189,.1),transparent 46%),linear-gradient(125deg,#24292f,#131619 58%,#20252a)',
+            '--wallpaper-veil': 'rgba(12,16,21,.48)'
+        });
         if (state.theme === 'dualshot') Object.assign(values, {
             '--ui-glass-edge-hover': 'rgba(33,34,34,.4)', '--ui-glass-rim': 'none',
             '--wallpaper-veil': 'rgba(115,115,115,.45)'
@@ -153,7 +161,7 @@
         mount.querySelectorAll('[data-theme-choice]').forEach(button => {
             button.setAttribute('aria-pressed', String(button.dataset.themeChoice === state.theme));
             const previewTheme = themes[button.dataset.themeChoice];
-            button.style.setProperty('--theme-preview-accent', previewTheme.accent || readableAccent(state.accent, previewTheme.ground));
+            button.style.setProperty('--theme-preview-accent', previewTheme.accent);
         });
         mount.querySelectorAll('[data-transparency-choice]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.transparencyChoice) === state.transparency)));
         mount.querySelector('[name="accent"]').value = state.accent;
@@ -176,15 +184,14 @@
                 <fieldset class="appearance-section"><legend>Акцентний колір</legend><div class="appearance-accent-row">
                     <input type="color" name="accent" aria-label="Обрати акцентний колір" value="#00ff88">
                     <input type="text" name="accentHex" aria-label="HEX акцентного кольору" value="#00FF88" maxlength="7" spellcheck="false" pattern="#[0-9a-fA-F]{6}">
-                </div><p class="appearance-hint">Незалежний від теми. Відтінок тексту адаптується для читабельності.</p></fieldset>
+                </div><p class="appearance-hint">Кожна тема має свій акцент. Можна обрати власний; вибір теми відновить її стандартний колір. Відтінок тексту адаптується для читабельності.</p></fieldset>
                 <label class="appearance-section"><span>Фон</span><select name="background"><option value="wallpaper">Шпалери</option><option value="gradient">Градієнт</option><option value="solid">Однотонний</option></select></label>
                 <div data-wallpaper-controls hidden><p class="appearance-hint" data-wallpaper-hint></p><div class="appearance-wallpaper-actions"><button type="button" data-upload-wallpaper>Завантажити</button><button type="button" data-remove-wallpaper hidden>Видалити</button></div><input type="file" name="wallpaper" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden></div>
                 <fieldset class="appearance-section"><legend>Прозорість карток</legend><div class="appearance-transparency">${[10, 20, 30].map(value => `<button type="button" data-transparency-choice="${value}" aria-pressed="false">${value}%</button>`).join('')}</div><p class="appearance-hint">Більше значення — краще видно фон.</p></fieldset>
                 <p class="appearance-notice" data-appearance-notice role="status" aria-live="polite"></p>`;
             mount.querySelectorAll('[data-theme-choice]').forEach(button => button.addEventListener('click', () => change({
                 theme: button.dataset.themeChoice,
-                ...(button.dataset.themeChoice === 'coffee' && state.accent === '#657caf' ? { accent: '#cda985' } : {}),
-                ...(themes[button.dataset.themeChoice].accent ? { accent: themes[button.dataset.themeChoice].accent } : {})
+                accent: themes[button.dataset.themeChoice].accent
             })));
             mount.querySelectorAll('[data-transparency-choice]').forEach(button => button.addEventListener('click', () => change({ transparency: Number(button.dataset.transparencyChoice) })));
             mount.querySelector('[name="accent"]').addEventListener('input', event => change({ accent: event.target.value }));

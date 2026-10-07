@@ -5,6 +5,11 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
 const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'dualshot'];
+const themeAccents = {
+    neumorphism: '#506894', 'neumorphism-dark': '#93b4ee', cyber: '#00ff88', amoled: '#f2f2f2',
+    minimal: '#334155', green: '#6ed6a0', purple: '#b79aff', sunset: '#ffa575',
+    university: '#8a633e', glass: '#c3ced9', coffee: '#cda985', dualshot: '#212222'
+};
 test('report input carets follow readable field text rather than a fixed dark or accent color', async () => {
     const css = await readFile(new URL('../reports/style.css', import.meta.url), 'utf8');
     const caretRules = [...css.matchAll(/caret-color:\s*([^;]+);/g)].map(match => match[1]);
@@ -48,15 +53,18 @@ function fixture({ saved = new Map(), blocked = false, quietMode = false, cores 
         theme(name) { buttons.find(button => button.dataset.themeChoice === name).events.click(); } };
 }
 
-test('themes retain background/transparency; only the monochrome preset resets the selected accent', () => {
+test('every theme applies its own accent while retaining background and transparency', () => {
     const f = fixture();
-    assert.equal(f.api.snapshot().accent, '#657caf');
+    assert.equal(f.api.snapshot().accent, themeAccents.neumorphism);
     f.control('[name="accentHex"]').events.change({ target: { value: '#AABBCC' } });
     f.control('[name="background"]').events.change({ target: { value: 'solid' } });
     f.opacity[2].events.click();
     for (const name of themeNames) {
         f.theme(name);
-        assert.equal(f.api.snapshot().accent, name === 'dualshot' ? '#212222' : '#aabbcc');
+        assert.equal(f.api.snapshot().accent, themeAccents[name]);
+        assert.equal(f.control('[name="accent"]').value, themeAccents[name]);
+        assert.equal(f.control('[name="accentHex"]').value, themeAccents[name].toUpperCase());
+        assert.equal(f.body.style.values.get('--ui-accent'), themeAccents[name]);
         assert.equal(f.api.snapshot().background, 'solid');
         assert.equal(f.api.snapshot().transparency, 30);
         assert.equal(f.body.dataset.theme, name);
@@ -72,7 +80,7 @@ test('themes retain background/transparency; only the monochrome preset resets t
     f.opacity[1].events.click(); assert.match(f.body.style.values.get('--ui-panel'), /,0\.8\)$/);
 });
 
-test('theme selector renders named rows with decorative three-color palettes and live accent previews', async () => {
+test('theme selector renders named rows whose palette previews retain their preset accent', async () => {
     const f = fixture();
     const rows = [...f.mount.innerHTML.matchAll(/<button type="button" data-theme-choice="([^"]+)" aria-pressed="false">([\s\S]*?)<\/button>/g)];
     assert.deepEqual(rows.map(row => row[1]), themeNames);
@@ -83,6 +91,7 @@ test('theme selector renders named rows with decorative three-color palettes and
     }
     f.control('[name="accentHex"]').events.change({ target: { value: '#F080AC' } });
     for (const button of f.buttons) {
+        assert.equal(button.style.values.get('--theme-preview-accent'), themeAccents[button.dataset.themeChoice]);
         f.theme(button.dataset.themeChoice);
         assert.equal(button.style.values.get('--theme-preview-accent'), f.body.style.values.get('--ui-accent'));
         assert.equal(button.attrs['aria-pressed'], 'true');
@@ -115,16 +124,30 @@ test('legacy settings migrate, invalid settings fall back, blocked writes leave 
     assert.equal(f.api.normalize({ theme: '__proto__', accent: 'red', transparency: 99 }).theme, 'neumorphism');
 });
 
-test('soft coffee theme uses a warm readable palette, persists and retains a chosen accent', () => {
+test('soft coffee theme uses its warm accent; manual changes persist until selecting a theme', () => {
     const f = fixture(); f.theme('coffee');
     assert.equal(f.api.snapshot().accent, '#cda985');
     assert.equal(f.body.style.values.get('--ui-ground'), '#29221e');
     assert.equal(f.body.style.values.get('--ui-text'), '#f2e8dd');
     assert.equal(f.body.style.values.get('--ui-muted'), '#c4b4a5');
     assert.equal(fixture({ saved: f.saved }).body.dataset.theme, 'coffee');
-    f.theme('minimal');
     f.control('[name="accentHex"]').events.change({ target: { value: '#aabbcc' } });
-    f.theme('coffee'); assert.equal(f.api.snapshot().accent, '#aabbcc');
+    assert.equal(fixture({ saved: f.saved }).api.snapshot().accent, '#aabbcc');
+    f.theme('minimal'); assert.equal(f.api.snapshot().accent, themeAccents.minimal);
+    f.theme('coffee'); assert.equal(f.api.snapshot().accent, '#cda985');
+});
+
+test('missing or invalid saved accents use the selected theme preset before paint; custom colors survive reload', () => {
+    for (const theme of themeNames) {
+        for (const accent of [undefined, null, 'invalid', '#a1b2c3']) {
+            const f = fixture({ early: true, saved: new Map([[key, JSON.stringify({ theme, accent })]]) });
+            assert.equal(f.api.snapshot().accent, accent === '#a1b2c3' ? accent : themeAccents[theme]);
+            f.startBody();
+            const initial = f.body.style.values.get('--ui-accent');
+            f.domReady();
+            assert.equal(f.body.style.values.get('--ui-accent'), initial);
+        }
+    }
 });
 
 test('Dualshot uses the original palette, persists across pages and still allows a custom accent', async () => {
@@ -146,6 +169,26 @@ test('Dualshot uses the original palette, persists across pages and still allows
     const css = await readFile(new URL('../appearance.css', import.meta.url), 'utf8');
     assert.match(css, /\[data-theme="dualshot"\] > \.background-particles \{ display: none; \}/);
     assert.match(css, /\[data-theme="dualshot"\][^}]*backdrop-filter: none !important/);
+});
+
+test('glass primes reflective edges, restores across pages and does not leak into other themes', async () => {
+    const f = fixture({ early: true, saved: new Map([[key, JSON.stringify({ theme: 'glass', background: 'gradient', transparency: 30 })]]) });
+    const tokens = ['--ui-inset', '--ui-glass-edge', '--ui-glass-rim', '--appearance-gradient', '--wallpaper-veil'];
+    const initial = tokens.map(name => f.html.style.values.get(name));
+    assert.match(initial[0], /,\.18\)/, 'Nested surfaces should remain translucent');
+    assert.equal(initial[1].match(/rgba\(/g).length, 4, 'Each side has its own reflective edge');
+    f.startBody(); f.domReady();
+    assert.deepEqual(tokens.map(name => f.body.style.values.get(name)), initial);
+    const restored = fixture({ saved: f.saved });
+    assert.deepEqual(tokens.map(name => restored.body.style.values.get(name)), initial);
+    f.theme('purple');
+    const purple = fixture(); purple.theme('purple');
+    assert.deepEqual(tokens.map(name => f.body.style.values.get(name)), tokens.map(name => purple.body.style.values.get(name)));
+    for (const page of ['index.html', 'reports/index.html', 'admin/index.html']) {
+        const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
+        const styles = [...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)].map(match => match[0]);
+        assert.match(styles.at(-1), /frosted-glass\.css/, 'Glass overrides should load after shared and page styles');
+    }
 });
 
 test('saved Graphite migrates to Dualshot before paint without losing custom choices', () => {
@@ -224,7 +267,7 @@ test('neumorphism is the fresh default without overwriting saved appearance; eve
     assert.match(css, /focus-visible/);
 });
 
-test('dark neumorphism persists, syncs and switches back to light without resetting personal settings', () => {
+test('dark neumorphism persists and syncs; switching to light resets only the accent', () => {
     const f = fixture();
     f.control('[name="accentHex"]').events.change({ target: { value: '#C3B3EA' } });
     f.control('[name="background"]').events.change({ target: { value: 'solid' } });
@@ -243,7 +286,7 @@ test('dark neumorphism persists, syncs and switches back to light without resett
     f.windowEvents.storage({ key });
     assert.equal(f.body.style.colorScheme, 'light');
     assert.equal(f.body.classList.has('theme-light'), true);
-    assert.equal(f.api.snapshot().accent, '#c3b3ea');
+    assert.equal(f.api.snapshot().accent, themeAccents.neumorphism);
     assert.equal(f.api.snapshot().background, 'solid');
     assert.equal(f.api.snapshot().transparency, 30);
 });
