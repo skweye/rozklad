@@ -103,6 +103,7 @@
 
     function resizeTextArea(textarea) {
         if (!(textarea instanceof HTMLTextAreaElement)) return;
+        if (!textarea.getClientRects().length) return;
 
         if (!textarea.dataset.minAutoHeight) {
             textarea.dataset.minAutoHeight = String(textarea.offsetHeight);
@@ -243,6 +244,9 @@
             if (document.visibilityState === "hidden" && !reportSwitching) { clearTimeout(autoSaveTimer); void saveToStorage(); }
         });
         resizeReportTextAreas();
+        document.addEventListener("toggle", event => {
+            if (event.target.matches?.('.studio-section[open]')) resizeReportTextAreas();
+        }, true);
         document.addEventListener("input", (event) => {
             if (event.target.matches(AUTO_GROW_TEXTAREA_SELECTOR)) {
                 resizeTextArea(event.target);
@@ -1123,6 +1127,8 @@
                 confirmLabel: "Сформувати"
             });
             if (!proceed) {
+                const studentSection = dom.studentName.closest('.studio-section');
+                if (studentSection) studentSection.open = true;
                 dom.studentName.focus();
                 return;
             }
