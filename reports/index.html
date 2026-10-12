@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="blocks.css?v=20260930-table-captions">
     <link rel="stylesheet" href="../neumorphism.css">
     <link rel="stylesheet" href="drafts.css?v=20261006">
-    <link rel="stylesheet" href="studio.css?v=20261011">
+    <link rel="stylesheet" href="studio.css?v=20261012">
     <link rel="stylesheet" href="../frosted-glass.css?v=20261007-liquid-glass">
     <script src="../background-particles.js" defer></script>
     <script src="../site-navigation.js" defer></script>
@@ -37,6 +37,10 @@
     <video id="reportsBgVideo" class="reports-bg-video" muted autoplay loop playsinline preload="auto"></video>
     <div class="studio-backdrop" aria-hidden="true"></div>
     <a class="studio-skip" href="#reportDetails">До заповнення звіту</a>
+    <button type="button" id="btnStudioSidebar" class="studio-sidebar-toggle" aria-expanded="true" aria-controls="studioSidebar" aria-label="Сховати бічне меню" title="Сховати бічне меню">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#sidebar"/></svg>
+        <span>Сховати меню</span>
+    </button>
     <header class="app-header" id="studioSidebar">
         <details class="site-switcher">
             <summary class="site-switcher-toggle" aria-label="Навігація між сторінками" title="Навігація">
@@ -427,7 +431,7 @@
     <script src="drafts.js?v=20261006"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="studio.js?v=20261011"></script>
+    <script src="studio.js?v=20261012"></script>
     <script src="script.js?v=20261011-studio"></script>
     <script>
         (() => {

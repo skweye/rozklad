@@ -16,18 +16,37 @@ function fixture(hash = '') {
         focus() { this.focused = true; }
         showModal() { this.open = true; }
         close() { this.open = false; }
+        dispatchEvent(event) { this.events[event.type]?.(event); }
     }
     const sections = ['reportStudent', 'reportDetails', 'reportWork', 'reportQuestions', 'reportConclusion'].map(id => {
         const section = new Element(); section.id = id; section.summary = new Element();
         section.open = id === 'reportDetails'; return section;
     });
     const links = sections.map(section => { const link = new Element(); link.attrs.href = `#${section.id}`; return link; });
-    const nodes = Object.fromEntries(['studioHelpDialog', 'btnStudioHelp', 'btnCloseStudioHelp'].map(id => [id, new Element()]));
+    const nodes = Object.fromEntries(['studioHelpDialog', 'btnStudioHelp', 'btnCloseStudioHelp', 'studioSidebar', 'btnStudioSidebar'].map(id => [id, new Element()]));
     const window = new Element(), location = { hash };
-    const document = { getElementById: id => nodes[id], querySelectorAll: selector => selector === '.studio-section' ? sections : links };
-    vm.runInNewContext(source, { document, window, location });
-    return { sections, links, nodes, window, location };
+    const classes = new Set();
+    const document = { body: { classList: { toggle(name, on) { on ? classes.add(name) : classes.delete(name); } } }, getElementById: id => nodes[id], querySelectorAll: selector => selector === '.studio-section' ? sections : links };
+    vm.runInNewContext(source, { document, window, location, Event });
+    return { sections, links, nodes, window, location, classes };
 }
+
+test('sidebar can be hidden and restored without discarding the editor, and refits the preview', () => {
+    const f = fixture();
+    let resizes = 0;
+    f.window.addEventListener('resize', () => resizes++);
+    f.nodes.btnStudioSidebar.events.click();
+    assert.equal(f.nodes.studioSidebar.hidden, true);
+    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-expanded'], 'false');
+    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-label'], 'Показати бічне меню');
+    assert.ok(f.classes.has('studio-sidebar-collapsed'));
+    assert.equal(f.sections[1].open, true);
+    f.nodes.btnStudioSidebar.events.click();
+    assert.equal(f.nodes.studioSidebar.hidden, false);
+    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-expanded'], 'true');
+    assert.equal(f.classes.has('studio-sidebar-collapsed'), false);
+    assert.equal(resizes, 2);
+});
 
 test('studio navigation reveals collapsed sections, marks the active step and moves keyboard focus', () => {
     const f = fixture();

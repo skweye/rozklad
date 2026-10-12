@@ -1,6 +1,19 @@
 /* Navigation only: report data, templates, persistence and export stay in the editor. */
 (() => {
     'use strict';
+    const sidebar = document.getElementById('studioSidebar');
+    const sidebarToggle = document.getElementById('btnStudioSidebar');
+    sidebarToggle.addEventListener('click', () => {
+        const collapsed = !sidebar.hidden;
+        sidebar.hidden = collapsed;
+        document.body.classList.toggle('studio-sidebar-collapsed', collapsed);
+        sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+        const label = collapsed ? 'Показати бічне меню' : 'Сховати бічне меню';
+        sidebarToggle.setAttribute('aria-label', label);
+        sidebarToggle.setAttribute('title', label);
+        // Refit the paper after the editor changes width.
+        window.dispatchEvent(new Event('resize'));
+    });
     const sections = [...document.querySelectorAll('.studio-section')];
     const steps = [...document.querySelectorAll('.report-steps a')];
     function mark(section) {
