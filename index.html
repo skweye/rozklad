@@ -26,6 +26,7 @@
     <script src="schedule-notices.js" defer></script>
     <script src="schedule-replacements.js?v=20261007-no-debt-choices" defer></script>
     <script src="site-classroom.js" defer></script>
+    <script src="workspace-layout.js?v=20261020" defer></script>
 </head>
 <body data-app="schedule" class="workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
@@ -102,13 +103,15 @@
         <section class="workspace-hero" aria-labelledby="workspaceTitle">
             <div>
                 <p class="eyebrow">ПЗ-24-1/9 · Навчальний простір</p>
-                <h1 id="workspaceTitle">Твій тиждень<span class="heading-dot">.</span></h1>
-                <p class="hero-description">Розклад перед очима. Усе інше — під рукою.</p>
+                <h1 id="workspaceTitle">Навчання</h1>
+                <p class="hero-description">Плануй день. Тримай завдання під контролем.</p>
             </div>
             <a class="hero-link" href="#assignments">До завдань <span aria-hidden="true">↓</span></a>
         </section>
 
-        <div class="section-heading"><p class="eyebrow">Сьогодні та далі</p><span>ПЗ-24-1/9</span></div>
+        <div class="learning-workspace">
+        <aside class="learning-context" aria-label="Сьогодні та навчальні ресурси">
+        <div class="section-heading"><p class="eyebrow">Мій день</p></div>
         <div class="overview-layout">
         <div class="overview-sidebar">
         <div class="status-grid">
@@ -174,8 +177,15 @@
 
         </div>
 
+        </aside>
+        <div class="learning-content" data-workspace-views>
+        <nav class="workspace-view-navigation" aria-label="Робоча область">
+            <a href="#weeklySchedule" data-workspace-view="scheduleView">Розклад</a>
+            <a href="#assignments" data-workspace-view="assignments">Завдання</a>
+        </nav>
+        <section id="scheduleView" class="workspace-view" aria-labelledby="scheduleViewTitle">
         <div class="section-heading schedule-heading" id="weeklySchedule">
-            <div><p class="eyebrow">01 / План тижня</p><h2>Розклад занять</h2></div>
+            <div><p class="eyebrow">План тижня</p><h2 id="scheduleViewTitle">Розклад занять</h2></div>
             <span class="section-hint">Натисни на предмет, щоб відкрити Classroom</span>
         </div>
         <div class="replacement-status-bar">
@@ -191,12 +201,15 @@
         <div id="scheduleGrid" class="schedule-grid">
             <!-- JS generated cards -->
         </div>
+        </section>
         <section id="assignments" class="assignments-section" aria-label="Завдання">
-            <div class="section-heading"><p class="eyebrow">02 / Завдання</p><span>Google Classroom</span></div>
+            <div class="section-heading"><p class="eyebrow">Мої роботи</p><span>Google Classroom</span></div>
             <section class="classroom-panel" data-classroom data-icons="ui-icons.svg" aria-label="Найближчі здачі в Classroom">
                 <noscript>Увімкніть JavaScript, щоб увійти та побачити роботи з Classroom.</noscript>
             </section>
         </section>
+        </div>
+        </div>
     </main>
 
     <script>

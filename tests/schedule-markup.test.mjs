@@ -32,7 +32,7 @@ test('direct event bindings on schedule reference existing markup elements', asy
 
 test('summary and resource links precede the timetable, assignments follow it in reading order', async () => {
     const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-    const overview = html.slice(html.indexOf('<div class="overview-layout">'), html.indexOf('<div class="section-heading schedule-heading"'));
+    const overview = html.slice(html.indexOf('<div class="overview-layout">'), html.indexOf('</aside>'));
     const stack = [], children = [], sidebarChildren = [];
     // Inspect nesting rather than only checking that the blocks occur somewhere on the page.
     for (const [token, closing, tag, attrs] of overview.matchAll(/<(\/?)(div|nav|section)\b([^>]*)>/g)) {
