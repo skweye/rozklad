@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="appearance.css?v=20261001-bright-countdowns">
     <link rel="stylesheet" href="neumorphism.css">
     <link rel="stylesheet" href="frosted-glass.css?v=20261007-liquid-glass">
+    <link rel="stylesheet" href="editorial.css?v=20261020">
     <script src="schedule-time.js" defer></script>
-    <script src="background-particles.js" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
     <script src="site-auth.js" defer></script>
@@ -27,8 +27,9 @@
     <script src="schedule-replacements.js?v=20261007-no-debt-choices" defer></script>
     <script src="site-classroom.js" defer></script>
 </head>
-<body data-app="schedule">
+<body data-app="schedule" class="workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
+    <a class="workspace-skip" href="#weeklySchedule">До розкладу</a>
     <video id="bgVideo" class="bg-video" muted autoplay loop playsinline preload="auto"></video>
     <div id="onboardingHint" class="onboarding-bubble hidden">
         <div class="bubble-content">
@@ -57,6 +58,10 @@
                 <span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span>
             </a>
             <div class="nav-links">
+                <nav class="primary-navigation" aria-label="Основні розділи">
+                    <a href="index.html" aria-current="page">Розклад</a>
+                    <a href="reports/index.html">Звіти</a>
+                </nav>
             </div>
         </div>
     </header>
@@ -96,14 +101,14 @@
         <div id="toastContainer" class="toast-container"></div>
         <section class="workspace-hero" aria-labelledby="workspaceTitle">
             <div>
-                <p class="eyebrow">Твій навчальний простір</p>
-                <h1 id="workspaceTitle">Тиждень під контролем<span class="heading-dot">.</span></h1>
-                <p class="hero-description">Пари, завдання та потрібні посилання — в одному місці.</p>
+                <p class="eyebrow">ПЗ-24-1/9 · Навчальний простір</p>
+                <h1 id="workspaceTitle">Твій тиждень<span class="heading-dot">.</span></h1>
+                <p class="hero-description">Розклад перед очима. Усе інше — під рукою.</p>
             </div>
-            <a class="hero-link" href="#weeklySchedule">До розкладу <span aria-hidden="true">↓</span></a>
+            <a class="hero-link" href="#assignments">До завдань <span aria-hidden="true">↓</span></a>
         </section>
 
-        <div class="section-heading"><p class="eyebrow">01 / Огляд дня</p><span>ПЗ-24-1/9</span></div>
+        <div class="section-heading"><p class="eyebrow">Сьогодні та далі</p><span>ПЗ-24-1/9</span></div>
         <div class="overview-layout">
         <div class="overview-sidebar">
         <div class="status-grid">
@@ -167,13 +172,10 @@
         </nav>
         </div>
 
-        <section class="classroom-panel" data-classroom data-icons="ui-icons.svg" aria-label="Найближчі здачі в Classroom">
-            <noscript>Увімкніть JavaScript, щоб увійти та побачити роботи з Classroom.</noscript>
-        </section>
         </div>
 
         <div class="section-heading schedule-heading" id="weeklySchedule">
-            <div><p class="eyebrow">02 / План тижня</p><h2>Розклад занять</h2></div>
+            <div><p class="eyebrow">01 / План тижня</p><h2>Розклад занять</h2></div>
             <span class="section-hint">Натисни на предмет, щоб відкрити Classroom</span>
         </div>
         <div class="replacement-status-bar">
@@ -183,9 +185,18 @@
                 <button type="button" class="btn" id="refreshReplacements" aria-label="Оновити заміни" title="Оновити заміни"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#refresh"/></svg></button>
             </div>
         </div>
+        <nav class="schedule-day-navigation" aria-label="Перейти до дня">
+            <a href="#scheduleDay1">Пн</a><a href="#scheduleDay2">Вт</a><a href="#scheduleDay3">Ср</a><a href="#scheduleDay4">Чт</a><a href="#scheduleDay5">Пт</a>
+        </nav>
         <div id="scheduleGrid" class="schedule-grid">
             <!-- JS generated cards -->
         </div>
+        <section id="assignments" class="assignments-section" aria-label="Завдання">
+            <div class="section-heading"><p class="eyebrow">02 / Завдання</p><span>Google Classroom</span></div>
+            <section class="classroom-panel" data-classroom data-icons="ui-icons.svg" aria-label="Найближчі здачі в Classroom">
+                <noscript>Увімкніть JavaScript, щоб увійти та побачити роботи з Classroom.</noscript>
+            </section>
+        </section>
     </main>
 
     <script>
@@ -564,6 +575,7 @@
             function buildDayCard(d) {
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card card';
+                dayCard.id = `scheduleDay${d}`;
                 if (d === currentDay) dayCard.classList.add('is-today');
 
                 let html = `

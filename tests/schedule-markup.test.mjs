@@ -30,7 +30,7 @@ test('direct event bindings on schedule reference existing markup elements', asy
     assert.ok(!html.includes("getElementById('testSoundBtn')"));
 });
 
-test('overview contains summary, resource links and Classroom in reading order with responsive columns', async () => {
+test('summary and resource links precede the timetable, assignments follow it in reading order', async () => {
     const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
     const overview = html.slice(html.indexOf('<div class="overview-layout">'), html.indexOf('<div class="section-heading schedule-heading"'));
     const stack = [], children = [], sidebarChildren = [];
@@ -41,11 +41,13 @@ test('overview contains summary, resource links and Classroom in reading order w
         if (stack.length === 2 && children.at(-1) === 'overview-sidebar') sidebarChildren.push(attrs.match(/class="([^"]+)"/)?.[1]);
         stack.push(tag);
     }
-    assert.deepEqual(children, ['overview-sidebar', 'classroom-panel']);
+    assert.deepEqual(children, ['overview-sidebar']);
     assert.deepEqual(sidebarChildren, ['status-grid', 'links-grid']);
     assert.equal(stack.length, 0);
     assert.match(overview, /id="currentDate"/);
     assert.match(overview, /id="statusCard"/);
+    assert.ok(html.indexOf('id="scheduleGrid"') < html.indexOf('data-classroom'));
+    assert.match(html, /href="#assignments"/);
     const css = await readFile(new URL('../workspace.css', import.meta.url), 'utf8');
     assert.match(css, /grid-template-areas: "sidebar classroom"/);
     assert.match(css, /grid-template-areas: "sidebar" "classroom"/);

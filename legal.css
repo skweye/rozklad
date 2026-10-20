@@ -14,16 +14,16 @@ h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.2; letter-spacing: -.04em
 h2 { font-size: 21px; line-height: 1.4; margin: 0 0 16px; }
 p { margin: 12px 0; }
 .lead { font-size: 18px; color: #ceced6; }
-section { margin-top: 32px; padding: 28px; border: 1px solid #ffffff20; border-radius: 20px; background: #ffffff04; }
+section { margin-top: 36px; padding: 28px 0 0; border: 0; border-top: 1px solid #ffffff20; border-radius: 0; background: transparent; }
 ul, ol { padding-left: 24px; }
 li + li { margin-top: 12px; }
 code { font-size: .87em; overflow-wrap: anywhere; }
 footer { padding-block: 24px 40px; border-top: 1px solid #ffffff24; font-size: 13px; }
-@media (max-width: 480px) { section { padding: 20px; } main { padding-block: 24px; } }
+@media (max-width: 480px) { section { padding: 24px 0 0; } main { padding-block: 24px; } }
 @media (prefers-color-scheme: light) {
     :root { color: #25252d; background: #f6f6f8; }
     a { color: #5142a4; } a:hover { color: #251b64; }
     .eyebrow { color: #62626e; } .lead { color: #4b4b58; }
-    header, footer, section { border-color: #25252d24; } section { background: #ffffff80; }
+    header, footer, section { border-color: #25252d24; }
 }
 @media print { :root { color: #000; background: #fff; } header, footer { display: none; } main { width: 100%; padding: 0; } section { padding: 0; border: 0; } a { color: inherit; } }

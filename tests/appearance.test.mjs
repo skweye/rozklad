@@ -187,7 +187,8 @@ test('glass primes reflective edges, restores across pages and does not leak int
     for (const page of ['index.html', 'reports/index.html', 'admin/index.html']) {
         const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
         const styles = [...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)].map(match => match[0]);
-        assert.match(styles.at(-1), /frosted-glass\.css/, 'Glass overrides should load after shared and page styles');
+        assert.match(styles.at(-2), /frosted-glass\.css/, 'Theme styling loads before the shared editorial layout');
+        assert.match(styles.at(-1), /editorial\.css/, 'The card-free layout has priority across palettes');
     }
 });
 
