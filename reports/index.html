@@ -37,17 +37,6 @@
     <video id="reportsBgVideo" class="reports-bg-video" muted autoplay loop playsinline preload="auto"></video>
     <div class="studio-backdrop" aria-hidden="true"></div>
     <a class="studio-skip" href="#reportDetails">До заповнення звіту</a>
-    <header class="report-topbar">
-        <a class="report-home" href="../index.html" aria-label="Навчальний простір — розклад">
-            <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
-            Навчальний простір <small>ПЗ-24-1/9</small>
-        </a>
-        <nav class="primary-navigation" aria-label="Основні розділи">
-            <a href="../index.html">Розклад</a>
-            <a href="index.html" aria-current="page">Звіти</a>
-        </nav>
-        <div class="nav-links"></div>
-    </header>
     <button type="button" id="btnStudioSidebar" class="studio-sidebar-toggle" aria-expanded="true" aria-controls="studioSidebar" aria-label="Сховати бічне меню" title="Сховати бічне меню">
         <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#sidebar"/></svg>
         <span>Сховати меню</span>
@@ -64,42 +53,30 @@
             </nav>
         </details>
         <div class="header-inner">
-            <p class="studio-tools-label">Зміст документа</p>
-            <nav class="report-steps" aria-label="Розділи звіту">
-                <a href="#reportStudent"><span>01</span> Дані студента</a>
-                <a href="#reportDetails"><span>02</span> Параметри</a>
-                <a href="#reportWork"><span>03</span> Хід роботи</a>
-                <a href="#reportQuestions"><span>04</span> Питання</a>
-                <a href="#reportConclusion"><span>05</span> Висновок</a>
+            <nav class="primary-navigation" aria-label="Основні розділи">
+                <a href="../index.html">Розклад</a>
+                <a href="index.html" aria-current="page">Звіти</a>
             </nav>
-            <p class="studio-tools-label">Бібліотека та допомога</p>
+            <div class="header-brand-group">
+                <a class="workspace-brand" href="../index.html" aria-label="Навчальний простір — розклад">
+                    <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                    <span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span>
+                </a>
+                <!-- Індикатор локального збереження в шапці -->
+                <div class="header-save-badge saved" id="saveStatusIndicator" role="status" aria-live="polite" aria-atomic="true"
+                    data-tooltip="Звіт автоматично зберігається у цьому браузері.">
+                    <span class="save-status-dot" aria-hidden="true"></span>
+                    <span class="save-status-text">Збережено локально</span>
+                </div>
+            </div>
             <nav class="studio-navigation" aria-label="Майстерня звітів">
                 <a href="#reportDetails" class="studio-nav-item" aria-current="page"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg>Створити звіт</a>
                 <button type="button" class="studio-nav-item" id="btnDraftLibrary" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#folder"/></svg>Мої файли</button>
                 <a href="#reportWork" class="studio-nav-item"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#layers"/></svg>Блоки звіту</a>
                 <button type="button" class="studio-nav-item" id="btnStudioHelp" aria-haspopup="dialog"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#book"/></svg>Інструкція</button>
             </nav>
-        </div>
-    </header>
-
-    <section class="report-document-bar" aria-label="Поточний документ та дії">
-        <div class="report-document-title">
-            <h1 id="reportsTitle">Редактор звіту</h1>
-            <div class="header-save-badge saved" id="saveStatusIndicator" role="status" aria-live="polite" aria-atomic="true"
-                data-tooltip="Звіт автоматично зберігається у цьому браузері.">
-                <span class="save-status-dot" aria-hidden="true"></span>
-                <span class="save-status-text">Збережено локально</span>
-            </div>
-        </div>
-        <section class="report-draft-bar" aria-label="Чернетки звітів">
-            <div class="report-draft-label"><span>Поточний звіт</span><strong id="currentDraftTitle">Відновлення чернетки…</strong></div>
-            <div class="report-draft-actions">
-                <button type="button" class="btn btn-primary" id="btnNewDraft" aria-haspopup="dialog">
-                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт
-                </button>
-            </div>
-        </section>
-        <div class="report-file-tools" role="group" aria-label="Дії з файлом">
+            <p class="studio-tools-label">Робота з файлом</p>
+            <div class="nav-links">
                 <button type="button" class="btn btn-reports-nav" id="btnToggleSplitView" aria-pressed="true"
                     data-tooltip="Показати або сховати попередній перегляд A4 у реальному часі">
                     <svg class="ui-icon" id="splitViewIcon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg>
@@ -122,7 +99,31 @@
                     <span class="btn-text">Очистити форму</span>
                 </button>
             </div>
+        </div>
+    </header>
+
+    <section class="workspace-hero reports-hero" aria-labelledby="reportsTitle">
+        <div>
+            <p class="eyebrow">Майстерня / Звіти</p>
+            <h1 id="reportsTitle">Від думки до документа<span class="heading-dot">.</span></h1>
+            <p class="hero-description">Додавай потрібне. Оформлення ми вже підготували.</p>
+        </div>
     </section>
+    <section class="report-draft-bar" aria-label="Чернетки звітів">
+        <div class="report-draft-label"><span>Поточний звіт</span><strong id="currentDraftTitle">Відновлення чернетки…</strong></div>
+        <div class="report-draft-actions">
+            <button type="button" class="btn btn-primary" id="btnNewDraft" aria-haspopup="dialog">
+                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт
+            </button>
+        </div>
+    </section>
+    <nav class="report-steps" aria-label="Розділи звіту">
+        <a href="#reportStudent"><span>01</span> Дані студента</a>
+        <a href="#reportDetails"><span>02</span> Параметри</a>
+        <a href="#reportWork"><span>03</span> Хід роботи</a>
+        <a href="#reportQuestions"><span>04</span> Питання</a>
+        <a href="#reportConclusion"><span>05</span> Висновок</a>
+    </nav>
     <div class="workspace-wrapper" id="workspaceWrapper">
         <main class="main-container editor-pane">
         <div class="studio-editor-heading"><h2>Заповнення звіту</h2><p>Розкривай потрібні розділи. Зміни зберігаються автоматично.</p></div>
