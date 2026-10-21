@@ -218,10 +218,32 @@
         document.body.append(dialog);
         dialog.querySelector("[data-close]").onclick = () => dialog.close();
         dialog.addEventListener("click", e => { if (e.target === dialog) { const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
-        dialog.addEventListener("close", () => returnFocus?.isConnected && returnFocus.focus());
+        dialog.addEventListener("close", () => returnFocus?.isConnected && returnFocus.focus({ preventScroll: true }));
         const open = (after = null) => { insertAfter = after; returnFocus = document.activeElement; dialog.showModal(); };
-        const focusBlock = id => { const card = container.querySelector(`[data-block="${id}"]`); (card?.querySelector("textarea, input, button") || container.querySelector("[data-add]"))?.focus(); };
-        const changed = (redraw = false) => { if (redraw) render(); onChange(); };
+        const focusBlock = id => { const card = container.querySelector(`[data-block="${id}"]`); (card?.querySelector("textarea, input, button") || container.querySelector("[data-add]"))?.focus({ preventScroll: true }); };
+        const changed = (redraw = false) => {
+            if (redraw) {
+                // Replacing the editor temporarily shrinks the document. Restore all
+                // scroll containers after the textareas have regained their height.
+                const view = container.ownerDocument.defaultView;
+                const position = { left: view.scrollX, top: view.scrollY };
+                const parents = [];
+                for (let node = container; node; node = node.parentElement) {
+                    parents.push({ node, top: node.scrollTop, left: node.scrollLeft });
+                }
+                const tables = [...container.querySelectorAll('.rb-table-scroll')].map(node => ({
+                    id: node.closest('[data-block]').dataset.block, left: node.scrollLeft
+                }));
+                render();
+                for (const { id, left } of tables) {
+                    const table = container.querySelector(`[data-block="${id}"] .rb-table-scroll`);
+                    if (table) table.scrollLeft = left;
+                }
+                for (const { node, top, left } of parents) { node.scrollTop = top; node.scrollLeft = left; }
+                view.scrollTo({ ...position, behavior: 'instant' });
+            }
+            onChange();
+        };
         dialog.querySelectorAll("[data-kind]").forEach(button => button.onclick = () => {
             const items = getItems(), blocks = preset(button.dataset.kind);
             const afterIndex = items.findIndex(b => b.id === insertAfter);
@@ -286,7 +308,11 @@
             else if (action === "remove-row" && b.rows.length > 1) b.rows.pop();
             else if (action === "remove-column" && b.rows[0].length > 1) b.rows.forEach(row => row.pop());
             else return;
-            changed(true); focusBlock(items.find(x => x.id === id)?.id || items[Math.min(index, items.length - 1)]?.id);
+            changed(true);
+            const card = container.querySelector(`[data-block="${id}"]`);
+            const restoredButton = card?.querySelector(`[data-action="${action}"]:not(:disabled)`);
+            if (restoredButton) restoredButton.focus({ preventScroll: true });
+            else focusBlock(items.find(x => x.id === id)?.id || items[Math.min(index, items.length - 1)]?.id);
         });
         async function upload(file, id) {
             if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) { notice("Оберіть PNG, JPEG, WebP або GIF.", "error"); return; }

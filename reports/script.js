@@ -980,10 +980,10 @@
             state.questions.forEach((q, index) => {
                 html += `
                     <div class="preview-para" style="font-weight: normal; margin-top: 0.6rem;">
-                        ${escapeHtml(numberedQuestion(q.question, index))}
+                        ${escapeHtml(numberedQuestion(q.question, index)).replace(/\r\n|[\n\r]/g, "<br>")}
                     </div>
                     <div class="preview-para">
-                        ${escapeHtml(q.answer || "")}
+                        ${escapeHtml(q.answer || "").replace(/\r\n|[\n\r]/g, "<br>")}
                     </div>
                 `;
             });
@@ -1423,23 +1423,24 @@
                     alignment: AlignmentType.BOTH,
                     indent: { firstLine: 720 },
                     spacing: { line: 360, lineRule: LineRuleType.AUTO, before: 60, after: 0 },
-                    children: [
+                    children: numberedQuestion(q.question, index).split(/\r\n|[\n\r]/).map((line, lineIndex) =>
                         new TextRun({
-                            text: numberedQuestion(q.question, index),
+                            text: line || " ",
+                            ...(lineIndex ? { break: 1 } : {}),
                             font: "Times New Roman",
                             size: 28,
                             bold: false
                         })
-                    ]
+                    )
                 }));
 
                 const ansText = q.answer && q.answer.trim().length > 0 ? q.answer.trim() : "";
-                children.push(new Paragraph({
+                for (const line of (ansText || " ").split(/\r\n|[\n\r]/)) children.push(new Paragraph({
                     alignment: AlignmentType.BOTH,
                     indent: { firstLine: 720 },
                     spacing: { line: 360, lineRule: LineRuleType.AUTO, after: 0 },
                     children: [
-                        new TextRun({ text: ansText || " ", font: "Times New Roman", size: 28 })
+                        new TextRun({ text: line || " ", font: "Times New Roman", size: 28 })
                     ]
                 }));
             });

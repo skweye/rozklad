@@ -31,7 +31,7 @@ test('editor leaves numbers outside editable text and preview/export share the n
     assert.match(add, /question: ""/);
     assert.match(source, /aria-label="Запитання \$\{index \+ 1\}"/);
     assert.match(source, /escapeHtml\(numberedQuestion\(q.question, index\)\)/);
-    assert.match(source, /text: numberedQuestion\(q.question, index\)/);
+    assert.match(source, /children: numberedQuestion\(q.question, index\)\.split/);
     assert.doesNotThrow(() => new vm.Script(source));
 });
 
@@ -72,4 +72,26 @@ test('preview shows answer content without a prefix or empty-answer placeholder'
     assert.match(output.html, /2 Друге\?/);
     assert.match(output.html, /Текст &lt;приклад&gt;/);
     assert.doesNotMatch(output.html, /Відповідь:|Відповідь не заповнено/);
+});
+
+test('Enter and blank lines survive in question preview and Word paragraphs', () => {
+    const questions = [{ question: 'Перше?\nУточнення <текст>', answer: 'Рядок 1\r\n\r\nРядок 3' }];
+    const section = source.indexOf('// Відповіді на контрольні питання');
+    const previewStart = source.indexOf('            state.questions.forEach((q, index) => {', section);
+    const previewEnd = source.indexOf('\n            });', previewStart) + '\n            });'.length;
+    const preview = vm.createContext({ html: '', state: { questions }, numberedQuestion,
+        escapeHtml: text => text.replace(/</g, '&lt;').replace(/>/g, '&gt;') });
+    vm.runInContext(source.slice(previewStart, previewEnd), preview);
+    assert.match(preview.html, /1 Перше\?<br>Уточнення &lt;текст&gt;/);
+    assert.match(preview.html, /Рядок 1<br><br>Рядок 3/);
+    const start = source.lastIndexOf('            state.questions.forEach((q, index) => {');
+    const end = source.indexOf('\n            });', start) + '\n            });'.length;
+    const children = [];
+    vm.runInNewContext(source.slice(start, end), { state: { questions }, children, numberedQuestion,
+        Paragraph: class { constructor(value) { Object.assign(this, value); } },
+        TextRun: class { constructor(value) { Object.assign(this, value); } },
+        AlignmentType: { BOTH: 'both' }, LineRuleType: { AUTO: 'auto' } });
+    assert.equal(children[0].children[1].break, 1);
+    assert.equal(children[0].children[1].text, 'Уточнення <текст>');
+    assert.deepEqual(children.slice(1).map(p => p.children[0].text), ['Рядок 1', ' ', 'Рядок 3']);
 });
