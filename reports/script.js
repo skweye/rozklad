@@ -187,6 +187,13 @@
         });
     }
 
+    async function transferExistingReports(owner, remote) {
+        const local = await window.ReportDraftStore.openRepository();
+        let legacy = null;
+        try { legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { /* IndexedDB drafts remain available. */ }
+        return window.ReportDraftStore.transferLocalReports(local, remote, owner, legacy);
+    }
+
     // Ініціалізація
     async function init() {
         // Restore the active report first; the old single draft is migrated on save.
@@ -204,6 +211,14 @@
         dom.workspaceWrapper.inert = true;
         try {
             const repository = owner ? await window.ReportDraftStore.openAccountRepository(owner) : await window.ReportDraftStore.openRepository();
+            if (owner) {
+                try {
+                    const count = await transferExistingReports(owner, repository);
+                    if (count) showAppNotice(`Перенесено звітів в акаунт: ${count}. Локальні копії збережено.`, 'success');
+                } catch {
+                    showAppNotice('Не всі локальні звіти вдалося перенести. Копії залишилися в браузері. Повторіть перенесення кнопкою або оновіть сторінку.', 'error');
+                }
+            }
             draftLibrary = window.ReportDraftStore.createLibrary(repository);
             activeState = await draftLibrary.restore();
         } catch {
@@ -279,15 +294,8 @@
             reportSwitching = true; clearTimeout(autoSaveTimer);
             try {
                 if (!await saveToStorage()) throw new Error('reports_unavailable');
-                const local = await window.ReportDraftStore.openRepository();
-                const records = await local.list();
                 const remote = await window.ReportDraftStore.openAccountRepository(owner);
-                const existing = new Set((await remote.list()).map(item => item.id));
-                let count = 0;
-                for (const item of records) {
-                    if (existing.has(item.id)) continue;
-                    await remote.commit({ writes: [{ record: { ...item, revision: 1 }, expected: 0 }] }); count++;
-                }
+                const count = await transferExistingReports(owner, remote);
                 showAppNotice(`Перенесено звітів: ${count}. Локальні копії збережено.`, 'success');
             } catch (error) { showAppNotice(window.studyAuth.errorMessage(error), 'error'); }
             finally { reportSwitching = false; button.disabled = false; }

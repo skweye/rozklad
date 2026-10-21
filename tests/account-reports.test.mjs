@@ -26,6 +26,77 @@ function fixture(t) {
 const record = (id = 'report-1', revision = 1, text = 'Текст') => ({ id, revision, title: 'Лабораторна №5', state: { studentName: 'Студент', tasks: [{ kind: 'text', text }] } });
 const save = (service, owner, item, expected = item.revision - 1) => service.commit(owner, { writes: [{ record: item, expected }], activateId: item.id });
 
+async function transferFixture(t) {
+    const { service } = fixture(t);
+    const source = await readFile(new URL('../reports/drafts-store.js', import.meta.url), 'utf8');
+    const context = vm.createContext({}); vm.runInContext(source, context);
+    const records = [record('guest-1', 4), record('guest-2', 2)], claims = new Map();
+    records[0].state.tasks.push({ kind: 'image', dataUrl: 'data:image/png;base64,YWJj' });
+    const local = {
+        async list() { return structuredClone(records); },
+        async preserveLegacy(state) {
+            if (!records.some(item => item.id === 'legacy')) records.push({ ...record('legacy'), state });
+        },
+        async claimTransfer(id, owner) {
+            const previous = claims.get(id);
+            if (previous && (previous.owner !== owner || previous.done)) return false;
+            claims.set(id, { owner, done: false }); return true;
+        },
+        async finishTransfer(id, owner) { claims.set(id, { owner, done: true }); }
+    };
+    const remote = owner => ({
+        async list() { return (await service.list(owner)).items; },
+        async active() { const { items, activeId } = await service.list(owner); return items.find(item => item.id === activeId); },
+        commit: change => service.commit(owner, change)
+    });
+    return { transfer: context.ReportDraftStore.transferLocalReports, records, local, remote, service };
+}
+
+test('automatic migration copies existing and legacy drafts once, preserves images and local originals', async t => {
+    const f = await transferFixture(t), remote = f.remote('a');
+    const legacy = { discipline: 'Старий звіт', tasks: [{ kind: 'text', text: 'Збережений текст' }] };
+    assert.equal(await f.transfer(f.local, remote, 'a', legacy), 3);
+    const uploaded = await remote.list();
+    assert.equal(uploaded.length, 3);
+    assert.deepEqual(uploaded.find(item => item.id === 'guest-1').state, f.records[0].state);
+    assert.deepEqual(uploaded.find(item => item.id === 'legacy').state, legacy);
+    assert.equal(f.records[0].revision, 4);
+    assert.ok(await remote.active());
+    assert.equal(await f.transfer(f.local, remote, 'a', legacy), 0);
+    await f.service.commit('a', { activateId: 'legacy' });
+    await f.service.commit('a', { removeId: 'guest-1' });
+    assert.equal(await f.transfer(f.local, remote, 'a', legacy), 0);
+    assert.equal((await remote.list()).length, 2, 'deleted cloud reports are not resurrected');
+    assert.equal(await f.transfer(f.local, f.remote('b'), 'b', legacy), 0);
+    assert.equal((await f.remote('b').list()).length, 0, 'retained copies do not leak into another login');
+});
+
+test('partial transfer resumes after a lost response without duplicating or overwriting cloud reports', async t => {
+    const f = await transferFixture(t), remote = f.remote('a');
+    await save(f.service, 'a', record('cloud', 1, 'Already in account'));
+    let first = true;
+    const failing = { ...remote, async commit(change) {
+        const result = await remote.commit(change);
+        if (first) { first = false; throw new Error('network'); }
+        return result;
+    } };
+    await assert.rejects(f.transfer(f.local, failing, 'a'), /network/);
+    await save(f.service, 'a', record('guest-1', 2, 'Newer cloud edit'));
+    assert.equal(await f.transfer(f.local, remote, 'a'), 1);
+    assert.equal((await remote.list()).length, 3);
+    assert.equal((await remote.list()).find(item => item.id === 'guest-1').state.tasks[0].text, 'Newer cloud edit');
+    assert.equal((await remote.active()).id, 'guest-1', 'existing active report is preserved');
+});
+
+test('migration failure before upload keeps ownership for retry and leaves local content intact', async t => {
+    const f = await transferFixture(t), remote = f.remote('a');
+    const before = structuredClone(f.records);
+    await assert.rejects(f.transfer(f.local, { ...remote, commit: async () => { throw new Error('offline'); } }, 'a'), /offline/);
+    assert.deepEqual(f.records, before);
+    assert.equal(await f.transfer(f.local, remote, 'a'), 2);
+    assert.equal((await remote.list()).length, 2);
+});
+
 test('account reports persist text and images across devices and isolate identical report IDs by owner', async t => {
     const { service, db } = fixture(t);
     const a = record(); a.state.tasks.push({ kind: 'image', dataUrl: 'data:image/png;base64,' + 'a'.repeat(700000) });

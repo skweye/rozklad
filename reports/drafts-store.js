@@ -29,6 +29,46 @@
                     });
                 }
                 resolve({
+                    preserveLegacy(state) {
+                        return new Promise((done, fail) => {
+                            const tx = db.transaction(["drafts", "meta"], "readwrite");
+                            const meta = tx.objectStore("meta");
+                            const request = meta.get("legacy-import");
+                            request.onsuccess = () => {
+                                if (request.result) return;
+                                const id = root.crypto.randomUUID();
+                                tx.objectStore("drafts").put({ id, revision: 1, title: titleFor(state),
+                                    updatedAt: new Date().toISOString(), state });
+                                meta.put({ key: "legacy-import", id });
+                            };
+                            tx.oncomplete = done;
+                            tx.onabort = () => fail(tx.error);
+                        });
+                    },
+                    claimTransfer(id, owner) {
+                        return new Promise((done, fail) => {
+                            const tx = db.transaction("meta", "readwrite"), meta = tx.objectStore("meta");
+                            const key = `account-transfer:${id}`, request = meta.get(key);
+                            let claimed = false;
+                            request.onsuccess = () => {
+                                const previous = request.result;
+                                if (previous && (previous.owner !== owner || previous.done)) return;
+                                meta.put({ key, owner, done: false }); claimed = true;
+                            };
+                            tx.oncomplete = () => done(claimed);
+                            tx.onabort = () => fail(tx.error);
+                        });
+                    },
+                    finishTransfer(id, owner) {
+                        return new Promise((done, fail) => {
+                            const tx = db.transaction("meta", "readwrite"), meta = tx.objectStore("meta");
+                            const key = `account-transfer:${id}`, request = meta.get(key);
+                            request.onsuccess = () => {
+                                if (request.result?.owner === owner) meta.put({ key, owner, done: true });
+                            };
+                            tx.oncomplete = done; tx.onabort = () => fail(tx.error);
+                        });
+                    },
                     clear: () => new Promise((done, fail) => {
                         const tx = db.transaction(["drafts", "meta"], "readwrite");
                         tx.objectStore("drafts").clear(); tx.objectStore("meta").clear();
@@ -171,5 +211,32 @@
             async commit(change) { return (await request(change)).loaded; }
         };
     }
-    root.ReportDraftStore = { openRepository, openAccountRepository, createLibrary, titleFor };
+    async function transferLocalReports(local, remote, owner, legacyState = null) {
+        if (!owner) throw new Error('reports_account_changed');
+        if (legacyState && typeof legacyState === 'object' && !Array.isArray(legacyState)) {
+            await local.preserveLegacy(legacyState);
+        }
+        const records = await local.list();
+        const existing = new Set((await remote.list()).map(item => item.id));
+        let active = await remote.active(), count = 0;
+        for (const item of records) {
+            // Persist ownership before uploading; another login must not claim these copies.
+            if (!await local.claimTransfer(item.id, owner)) continue;
+            if (!existing.has(item.id)) {
+                try {
+                    await remote.commit({ writes: [{ record: { ...item, revision: 1 }, expected: 0 }],
+                        ...(!active ? { activateId: item.id } : {}) });
+                    active ||= item; count++;
+                } catch (error) {
+                    // A second tab may have completed the same transfer already.
+                    if (error.message !== 'draft_conflict' || !(await remote.list()).some(record => record.id === item.id)) throw error;
+                }
+                existing.add(item.id);
+            }
+            // Completed transfers stay completed even if the account copy is later deleted.
+            await local.finishTransfer(item.id, owner);
+        }
+        return count;
+    }
+    root.ReportDraftStore = { openRepository, openAccountRepository, createLibrary, titleFor, transferLocalReports };
 })(typeof window !== "undefined" ? window : globalThis);
