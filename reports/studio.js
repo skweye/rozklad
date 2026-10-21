@@ -1,51 +1,72 @@
-/* Navigation only: report data, templates, persistence and export stay in the editor. */
+/* View navigation only; document data and export belong to script.js. */
 (() => {
     'use strict';
-    const sidebar = document.getElementById('studioSidebar');
-    const sidebarToggle = document.getElementById('btnStudioSidebar');
-    sidebarToggle.addEventListener('click', () => {
-        const collapsed = !sidebar.hidden;
-        sidebar.hidden = collapsed;
-        document.body.classList.toggle('studio-sidebar-collapsed', collapsed);
-        sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
-        const label = collapsed ? 'Показати бічне меню' : 'Сховати бічне меню';
-        sidebarToggle.setAttribute('aria-label', label);
-        sidebarToggle.setAttribute('title', label);
-        // Refit the paper after the editor changes width.
-        window.dispatchEvent(new Event('resize'));
-    });
+    const el = id => document.getElementById(id);
     const sections = [...document.querySelectorAll('.studio-section')];
-    const steps = [...document.querySelectorAll('.report-steps a')];
-    function mark(section) {
-        for (const link of steps) {
-            if (link.getAttribute('href') === `#${section.id}`) link.setAttribute('aria-current', 'step');
-            else link.removeAttribute('aria-current');
-        }
+    const links = [...document.querySelectorAll('.report-steps a')];
+    let active = '#reportDetails';
+    function mobilePreview(preview) {
+        el('reportsEditor').classList.toggle('mobile-preview', preview);
+        el('btnMobileEdit').setAttribute('aria-pressed', String(!preview));
+        el('btnMobilePreview').setAttribute('aria-pressed', String(preview));
+        window.dispatchEvent(new Event('resize'));
     }
     function reveal(hash, focus = false) {
-        const section = sections.find(item => `#${item.id}` === hash);
-        if (!section) return;
-        section.open = true;
-        mark(section);
-        section.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-        if (focus) section.querySelector('summary').focus({ preventScroll: true });
+        const target = sections.find(section => `#${section.id}` === hash);
+        if (!target) return;
+        active = hash;
+        for (const section of sections) { section.hidden = section !== target; section.open = section === target; }
+        for (const link of links) {
+            if (link.getAttribute('href') === hash) link.setAttribute('aria-current', 'step');
+            else link.removeAttribute('aria-current');
+        }
+        mobilePreview(false);
+        if (focus) target.querySelector('summary').focus({ preventScroll: true });
+        window.dispatchEvent(new Event('resize'));
     }
-    for (const link of document.querySelectorAll('.report-steps a, .studio-navigation a, .studio-skip')) {
-        link.addEventListener('click', event => {
-            const hash = link.getAttribute('href');
-            if (!sections.some(section => `#${section.id}` === hash)) return;
-            event.preventDefault(); reveal(hash, true);
+    function showEditor(hash = active) {
+        el('reportsLibrary').hidden = true; el('reportsEditor').hidden = false;
+        reveal(hash, true); window.scrollTo({ top: 0 });
+    }
+    function showLibrary(focus = true) {
+        el('reportsEditor').hidden = true; el('reportsLibrary').hidden = false;
+        if (focus) { window.scrollTo({ top: 0 }); el('reportsTitle').focus(); }
+    }
+    links.forEach(link => link.addEventListener('click', event => { event.preventDefault(); reveal(link.getAttribute('href'), true); }));
+    document.querySelector('.studio-skip').addEventListener('click', event => { event.preventDefault(); showEditor(); });
+    // Native details remain keyboard accessible, but a selected section stays expanded.
+    sections.forEach(section => section.querySelector('summary').addEventListener('click', event => event.preventDefault()));
+    const help = el('studioHelpDialog');
+    el('btnStudioHelp').addEventListener('click', () => help.showModal());
+    el('btnCloseStudioHelp').addEventListener('click', () => help.close());
+    el('btnMobileEdit').addEventListener('click', () => mobilePreview(false));
+    el('btnMobilePreview').addEventListener('click', () => mobilePreview(true));
+    el('btnLibraryImport').addEventListener('click', () => el('btnImportDraft').click());
+    const exportDialog = el('reportExportDialog');
+    el('btnDownloadReport').addEventListener('click', () => {
+        const checks = el('exportChecklist'); checks.replaceChildren();
+        const fields = [['studentName', 'ПІБ студента'], ['studentGroup', 'Група'], ['studentTeacher', 'Викладач'], ['reportYear', 'Навчальний рік'], ['disciplineInput', 'Дисципліна'], ['labTheme', 'Тема роботи'], ['labGoal', 'Мета роботи']];
+        for (const [id, label] of fields) {
+            if (el(id).value.trim()) continue;
+            const button = document.createElement('button'); button.type = 'button'; button.className = 'export-missing';
+            button.textContent = `Заповнити: ${label} →`;
+            button.addEventListener('click', () => { exportDialog.close(); reveal(`#${el(id).closest('.studio-section').id}`); el(id).focus(); });
+            checks.append(button);
+        }
+        if (!checks.children.length) { const p = document.createElement('p'); p.textContent = '✓ Основні дані заповнено. Звіт готовий до скачування.'; checks.append(p); }
+        exportDialog.showModal();
+    });
+    el('btnCloseExport').addEventListener('click', () => exportDialog.close());
+    el('btnConfirmExport').addEventListener('click', () => { exportDialog.close(); el('btnGenerateDocx').click(); });
+    document.addEventListener('click', event => {
+        document.querySelectorAll('.report-file-menu[open]').forEach(menu => {
+            if (!menu.contains(event.target) || event.target.closest('button')) menu.open = false;
         });
-    }
-    for (const section of sections) {
-        section.addEventListener('toggle', () => { if (section.open) mark(section); });
-        section.addEventListener('focusin', () => mark(section));
-    }
-    const initial = sections.find(section => section.open);
-    if (initial) mark(initial);
-    if (location.hash) reveal(location.hash);
-    window.addEventListener('hashchange', () => reveal(location.hash));
-    const help = document.getElementById('studioHelpDialog');
-    document.getElementById('btnStudioHelp').addEventListener('click', () => help.showModal());
-    document.getElementById('btnCloseStudioHelp').addEventListener('click', () => help.close());
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') document.querySelectorAll('.report-file-menu[open]').forEach(menu => { menu.open = false; menu.querySelector('summary').focus(); });
+    });
+    window.addEventListener('hashchange', () => { if (sections.some(section => `#${section.id}` === location.hash)) showEditor(location.hash); });
+    window.ReportStudio = { showEditor, showLibrary, reveal };
+    reveal(active);
 })();

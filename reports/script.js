@@ -12,7 +12,7 @@
         labNumber: 1,
         studentName: "",
         studentGroup: "ПЗ-24-1/9",
-        studentTeacher: "Логвіненко В.В.",
+        studentTeacher: "",
         reportYear: "2026 – 2027 н.р.",
         discipline: "",
         cipher: "",
@@ -254,6 +254,13 @@
         });
         triggerLivePreview();
         setTimeout(fitZoom, 200);
+        if (draftsUI) {
+            if (/^#report(Student|Details|Work|Questions|Conclusion)$/.test(location.hash)) window.ReportStudio.showEditor(location.hash);
+            else await draftsUI.open(false);
+        } else {
+            window.ReportStudio.showEditor();
+            for (const id of ['btnRenameReport', 'btnDuplicateReport']) document.getElementById(id).disabled = true;
+        }
     }
 
     // Початкові дані за замовчуванням
@@ -878,6 +885,8 @@
                 renderTasks();
                 renderQuestions();
                 resizeReportTextAreas();
+                window.ReportStudio?.showEditor();
+                draftsUI?.updateTitle();
                 triggerAutoSave();
                 showAppNotice("Чернетку успішно завантажено.", "success");
             } catch (err) {
@@ -1129,6 +1138,7 @@
             if (!proceed) {
                 const studentSection = dom.studentName.closest('.studio-section');
                 if (studentSection) studentSection.open = true;
+                window.ReportStudio?.reveal('#reportStudent');
                 dom.studentName.focus();
                 return;
             }

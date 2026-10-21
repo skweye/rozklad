@@ -124,6 +124,29 @@
                     return copy(next.state);
                 });
             },
+            rename: (targetId, title) => serial(async () => {
+                const previous = (await repository.list()).find(item => item.id === targetId);
+                if (!previous) throw new Error("draft_missing");
+                if (targetId === current?.id && previous.revision !== current.revision) throw new Error("draft_conflict");
+                const next = recordFor(previous.state, previous, title);
+                await repository.commit({ writes: [{ record: next, expected: previous.revision }] });
+                if (targetId === current?.id) current = next;
+            }),
+            duplicate(targetId, state) {
+                const snapshot = copy(state);
+                return serial(async () => {
+                    const source = (await repository.list()).find(item => item.id === targetId);
+                    if (!source) throw new Error("draft_missing");
+                    const outgoing = recordFor(snapshot, current);
+                    const next = recordFor(targetId === current?.id ? snapshot : source.state, null,
+                        `${source.title || titleFor(source.state)} — копія`);
+                    await repository.commit({ writes: [
+                        { record: outgoing, expected: current?.revision || 0 }, { record: next, expected: 0 }
+                    ], activateId: next.id });
+                    current = next;
+                    return copy(next.state);
+                });
+            },
             remove: targetId => serial(async () => {
                 if (targetId === current?.id) throw new Error("draft_active");
                 await repository.commit({ removeId: targetId });
