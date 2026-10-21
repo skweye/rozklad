@@ -191,13 +191,25 @@
     async function init() {
         // Restore the active report first; the old single draft is migrated on save.
         let activeState = null;
+        const account = await window.studyAuth?.whenReady();
+        window.ReportAccount = { id: account?.status === 'ready' ? account.user?.id || null : null, saved: null, unavailable: false };
+        const owner = window.ReportAccount.id;
+        const storageNote = document.querySelector('.drafts-local-note');
+        storageNote.textContent = owner
+            ? 'Звіти зберігаються у вашому акаунті та доступні після входу на інших пристроях. Зміни синхронізуються автоматично.'
+            : 'Гостьовий режим: звіти зберігаються лише в цьому браузері. Увійдіть, щоб зберігати роботи в акаунті.';
+        document.getElementById('btnReportsLogin').hidden = Boolean(owner);
+        document.getElementById('btnTransferLocalReports').hidden = !owner;
+        document.getElementById('btnReportsLogin').onclick = () => window.studyAuth?.open();
         dom.workspaceWrapper.inert = true;
         try {
-            draftLibrary = window.ReportDraftStore.createLibrary(await window.ReportDraftStore.openRepository());
+            const repository = owner ? await window.ReportDraftStore.openAccountRepository(owner) : await window.ReportDraftStore.openRepository();
+            draftLibrary = window.ReportDraftStore.createLibrary(repository);
             activeState = await draftLibrary.restore();
         } catch {
             draftLibrary = null;
-            showAppNotice("Сховище чернеток недоступне. Можна працювати зі звітом і зберігати його у файл.", "error");
+            window.ReportAccount.unavailable = Boolean(owner);
+            showAppNotice(owner ? 'Не вдалося завантажити звіти акаунта. Оновіть сторінку, коли з’єднання відновиться. Поточну роботу можна експортувати у файл.' : "Сховище чернеток недоступне. Можна працювати зі звітом і зберігати його у файл.", "error");
         }
         const hasLoadedSaved = loadFromStorage(activeState);
         if (!hasLoadedSaved) {
@@ -210,7 +222,7 @@
                     studentGroup: state.studentGroup, reportYear: state.reportYear, studentTeacher: "" }),
                 flush: async () => {
                     const saved = await saveToStorage();
-                    setSaveStatus(saved ? "Збережено локально" : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
+                    setSaveStatus(saved ? (owner ? 'Збережено в акаунті' : "Збережено локально") : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
                     return saved;
                 },
                 pause: () => { reportSwitching = true; clearTimeout(autoSaveTimer); saveRevision++; },
@@ -261,6 +273,64 @@
             window.ReportStudio.showEditor();
             for (const id of ['btnRenameReport', 'btnDuplicateReport']) document.getElementById(id).disabled = true;
         }
+        document.getElementById('btnTransferLocalReports').onclick = async event => {
+            if (!owner || !draftLibrary || reportSwitching) return;
+            const button = event.currentTarget; button.disabled = true;
+            reportSwitching = true; clearTimeout(autoSaveTimer);
+            try {
+                if (!await saveToStorage()) throw new Error('reports_unavailable');
+                const local = await window.ReportDraftStore.openRepository();
+                const records = await local.list();
+                const remote = await window.ReportDraftStore.openAccountRepository(owner);
+                const existing = new Set((await remote.list()).map(item => item.id));
+                let count = 0;
+                for (const item of records) {
+                    if (existing.has(item.id)) continue;
+                    await remote.commit({ writes: [{ record: { ...item, revision: 1 }, expected: 0 }] }); count++;
+                }
+                showAppNotice(`Перенесено звітів: ${count}. Локальні копії збережено.`, 'success');
+            } catch (error) { showAppNotice(window.studyAuth.errorMessage(error), 'error'); }
+            finally { reportSwitching = false; button.disabled = false; }
+            await draftsUI?.open();
+        };
+        if (owner) {
+            try {
+                const recovery = await window.ReportDraftStore.openRepository(window.indexedDB, `study-report-recovery-${owner}`);
+                const pending = await recovery.active();
+                if (pending) {
+                    const button = document.getElementById('btnRecoverReport'); button.hidden = false;
+                    button.onclick = async () => {
+                        if (!draftLibrary || reportSwitching) return;
+                        button.disabled = true; reportSwitching = true; clearTimeout(autoSaveTimer);
+                        try {
+                            loadFromStorage(await draftLibrary.startNew(state, pending.state));
+                            await recovery.clear(); button.hidden = true;
+                            draftsUI.updateTitle(); window.ReportStudio.showEditor(); triggerLivePreview();
+                        } catch (error) { showAppNotice(window.studyAuth.errorMessage(error), 'error'); }
+                        finally { reportSwitching = false; button.disabled = false; }
+                    };
+                }
+            } catch { /* Recovery must not prevent access to the account library. */ }
+        }
+        let accountTransition = false;
+        const handleAccountChange = async next => {
+            if (next.status !== 'ready' || (next.user?.id || null) === owner || accountTransition) return;
+            accountTransition = true; reportSwitching = true; clearTimeout(autoSaveTimer);
+            dom.workspaceWrapper.inert = true;
+            try {
+                if (!owner) { if (!await saveToStorage()) throw new Error('storage_unavailable'); }
+                else if (JSON.stringify(state) !== window.ReportAccount.saved) {
+                    const repository = await window.ReportDraftStore.openRepository(window.indexedDB, `study-report-recovery-${owner}`);
+                    const recovery = window.ReportDraftStore.createLibrary(repository); await recovery.restore();
+                    await recovery.save(state);
+                }
+                location.reload();
+            } catch {
+                showAppNotice('Акаунт змінено. Експортуйте поточний звіт у файл, потім оновіть сторінку. Автозбереження призупинено.', 'error');
+            }
+        };
+        window.studyAuth?.subscribe(handleAccountChange);
+        if (window.studyAuth) void handleAccountChange(window.studyAuth.snapshot());
     }
 
     // Початкові дані за замовчуванням
@@ -706,6 +776,7 @@
 
     function triggerAutoSave() {
         triggerLivePreview();
+        if (reportSwitching) return;
 
         setSaveStatus("Збереження...", "saving");
 
@@ -713,12 +784,14 @@
         const revision = ++saveRevision;
         autoSaveTimer = setTimeout(async () => {
             const saved = await saveToStorage();
-            if (revision === saveRevision) setSaveStatus(saved ? "Збережено локально" : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
+            if (revision === saveRevision) setSaveStatus(saved ? (window.ReportAccount?.id ? 'Збережено в акаунті' : "Збережено локально") : "Не збережено — експортуйте чернетку", saved ? "saved" : "neutral");
         }, 350);
     }
 
     async function saveToStorage() {
         try {
+            if (window.ReportAccount?.unavailable) throw new Error('reports_unavailable');
+            const savedSnapshot = JSON.stringify(state);
             const dataToSave = {
                 labNumber: state.labNumber,
                 studentName: state.studentName,
@@ -739,10 +812,12 @@
                 await draftLibrary.save(dataToSave);
                 draftsUI?.updateTitle();
                 // Remove the obsolete duplicate only after a successful IndexedDB commit.
-                try { localStorage.removeItem(STORAGE_KEY); } catch { /* IndexedDB remains authoritative. */ }
+                if (!window.ReportAccount?.id) try { localStorage.removeItem(STORAGE_KEY); } catch { /* IndexedDB remains authoritative. */ }
             } else {
+                if (window.ReportAccount?.id) throw new Error('reports_unavailable');
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
             }
+            if (window.ReportAccount) window.ReportAccount.saved = savedSnapshot;
             return true;
         } catch (err) {
             console.warn("Не вдалося зберегти звіт:", err?.name);
@@ -752,7 +827,7 @@
 
     function loadFromStorage(snapshot = null) {
         try {
-            const saved = snapshot || JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+            const saved = snapshot || (!window.ReportAccount?.id && JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"));
             if (!saved) return false;
 
             state.labNumber = saved.labNumber || 1;
@@ -790,7 +865,7 @@
             renderTasks();
             renderQuestions();
             resizeReportTextAreas();
-            setSaveStatus("Збережено локально", "saved");
+            setSaveStatus(window.ReportAccount?.id ? 'Збережено в акаунті' : "Збережено локально", "saved");
             return true;
         } catch (err) {
             console.error("Помилка читання localStorage:", err);
@@ -800,7 +875,7 @@
 
     function clearAllData() {
         clearTimeout(autoSaveTimer);
-        try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage failure must not prevent editing. */ }
+        if (!window.ReportAccount?.id) try { localStorage.removeItem(STORAGE_KEY); } catch { /* Storage failure must not prevent editing. */ }
         loadInitialDefaults(true);
         setSaveStatus("Форма очищена", "neutral");
         showAppNotice("Форму очищено. Можна починати новий звіт.", "success");

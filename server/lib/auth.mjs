@@ -74,9 +74,9 @@ function configuration(env) {
     } catch { return null; }
 }
 
-async function readBody(request) {
+async function readBody(request, limit = BODY_LIMIT) {
     if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) throw new Error('body');
-    if (Number(request.headers.get('content-length')) > BODY_LIMIT) throw new Error('body');
+    if (Number(request.headers.get('content-length')) > limit) throw new Error('body');
     const reader = request.body?.getReader();
     if (!reader) throw new Error('body');
     const chunks = [];
@@ -86,14 +86,14 @@ async function readBody(request) {
             const { value, done } = await reader.read();
             if (done) break;
             size += value.byteLength;
-            if (size > BODY_LIMIT) { await reader.cancel(); throw new Error('body'); }
+            if (size > limit) { await reader.cancel(); throw new Error('body'); }
             chunks.push(Buffer.from(value));
         }
         return JSON.parse(Buffer.concat(chunks).toString('utf8'));
     } finally { reader.releaseLock(); }
 }
 
-export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGoogleProfile, getClassroom, replacements, permissions, presence, reportAuthFailure = () => {}, env = process.env, now = () => Date.now() }) {
+export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGoogleProfile, getClassroom, replacements, permissions, presence, reports, reportAuthFailure = () => {}, env = process.env, now = () => Date.now() }) {
     const accessFor = async user => {
         if (isMainAdmin(user, env)) return { mainAdmin: true, permissions: fullPermissions() };
         if (!user || !permissions) return { mainAdmin: false, permissions: noPermissions() };
@@ -110,9 +110,9 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
             return reply({ error: 'classroom_verification_unavailable', diagnostic }, 502);
         };
         const url = new URL(request.url);
-        const action = url.pathname.match(/^\/api\/auth\/(session|google|google-connect|logout|classroom|classroom-connect|replacements|permissions|presence)$/)?.[1];
+        const action = url.pathname.match(/^\/api\/auth\/(session|google|google-connect|logout|classroom|classroom-connect|replacements|permissions|presence|reports)$/)?.[1];
         if (!action) return fail('not_found', 404);
-        const method = ['session', 'classroom'].includes(action) || (['replacements', 'permissions', 'presence'].includes(action) && request.method === 'GET') ? 'GET' : 'POST';
+        const method = ['session', 'classroom'].includes(action) || (['replacements', 'permissions', 'presence', 'reports'].includes(action) && request.method === 'GET') ? 'GET' : 'POST';
         if (request.method !== method) {
             headers.set('Allow', method);
             return fail('method_not_allowed', 405);
@@ -150,6 +150,19 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
         const access = readAccess(jar[accessName], secret, session?.user, seconds);
         let visitor = readSigned(jar[presenceName], secret, 'presence', seconds);
         const visitorKey = () => createHmac('sha256', secret).update(`presence-v1:${visitor.id}`).digest('hex');
+        const reportsError = error => {
+            const codes = { reports_invalid: 400, reports_limit: 413, draft_conflict: 409, draft_missing: 404, draft_active: 409 };
+            return fail(codes[error.message] ? error.message : 'reports_unavailable', codes[error.message] || 503);
+        };
+        if (action === 'reports') {
+            if (!session?.user) return fail('login_required', 401);
+            // Pin requests to the account that opened the editor, including requests
+            // already queued when another tab signs into a different Google account.
+            if (request.headers.get('x-report-account') !== session.user.id) return fail('report_account_changed', 409);
+            if (method === 'GET') {
+                try { return reply(await reports.list(session.user.id)); } catch (error) { return reportsError(error); }
+            }
+        }
         if (action === 'presence' && method === 'GET') {
             if (!session?.user) return fail('login_required', 401);
             if (!isMainAdmin(session.user, env)) return fail('owner_required', 403);
@@ -188,6 +201,11 @@ export function createAuthHandler({ verifyGoogle, verifyAccessToken, getGooglePr
         }
         if (request.headers.get('origin') !== origin ||
             !challenge || !equal(request.headers.get('x-csrf-token'), challenge.csrf)) return fail('session_expired', 403);
+        if (action === 'reports') {
+            let body;
+            try { body = await readBody(request, 40 * 1024 * 1024); } catch { return fail('reports_invalid', 400); }
+            try { return reply(await reports.commit(session.user.id, body)); } catch (error) { return reportsError(error); }
+        }
         if (action === 'presence') {
             let body;
             try { body = await readBody(request); } catch { return fail('invalid_request', 400); }

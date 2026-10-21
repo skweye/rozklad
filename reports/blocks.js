@@ -288,6 +288,29 @@
             if (e.key !== "Tab" || !e.target.matches(".code-editor-textarea")) return;
             e.preventDefault(); const t = e.target; t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input", { bubbles: true }));
         });
+        function updateTableStructure(card, block, action) {
+            const body = card.querySelector('.rb-edit-table tbody');
+            const addCell = (row, r, c) => {
+                const cell = row.insertCell();
+                const input = document.createElement('textarea');
+                input.className = 'form-control'; input.rows = 2;
+                input.dataset.row = String(r); input.dataset.column = String(c);
+                input.setAttribute('aria-label', `Рядок ${r + 1}, стовпець ${c + 1}`);
+                input.value = block.rows[r][c]; cell.append(input); resize(cell);
+            };
+            // Keep existing fields and the focused toolbar button in the DOM.
+            // Replacing the whole block makes the browser scroll to its beginning.
+            if (action === 'add-row') {
+                const row = body.insertRow();
+                block.rows.at(-1).forEach((_, c) => addCell(row, block.rows.length - 1, c));
+            } else if (action === 'add-column') {
+                [...body.rows].forEach((row, r) => addCell(row, r, block.rows[0].length - 1));
+            } else if (action === 'remove-row') body.deleteRow(-1);
+            else if (action === 'remove-column') [...body.rows].forEach(row => row.deleteCell(-1));
+            for (const [name, disabled] of [['add-column', block.rows[0].length >= 6], ['remove-row', block.rows.length <= 1], ['remove-column', block.rows[0].length <= 1]]) {
+                card.querySelector(`[data-action="${name}"]`).disabled = disabled;
+            }
+        }
         container.addEventListener("click", async e => {
             const button = e.target.closest("button"); if (!button) return;
             if (button.hasAttribute("data-add")) { open(); return; }
@@ -308,6 +331,11 @@
             else if (action === "remove-row" && b.rows.length > 1) b.rows.pop();
             else if (action === "remove-column" && b.rows[0].length > 1) b.rows.forEach(row => row.pop());
             else return;
+            if (['add-row', 'add-column', 'remove-row', 'remove-column'].includes(action)) {
+                updateTableStructure(button.closest('[data-block]'), b, action);
+                onChange();
+                return;
+            }
             changed(true);
             const card = container.querySelector(`[data-block="${id}"]`);
             const restoredButton = card?.querySelector(`[data-action="${action}"]:not(:disabled)`);

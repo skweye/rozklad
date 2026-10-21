@@ -39,6 +39,7 @@ function uiFixture({ configured = true, fail = false, light = false, storeClassr
         if (fail) throw new Error('offline');
         if (url.endsWith('/session')) return Response.json({ configured, user, clientId: 'test-client', nonce: 'test-nonce', csrf: 'test-csrf', classroomConnected, scheduleAdmin: Boolean(user && scheduleAdmin), mainAdmin: Boolean(user && mainAdmin), permissions });
         if (url.endsWith('/permissions')) return Response.json({ owner: 'student@example.com', revision: 'rights-revision', users: [] });
+        if (url.endsWith('/reports')) return Response.json({ items: [], activeId: null });
         if (url.endsWith('/presence')) {
             if (presenceFailures-- > 0) return Response.json({ error: 'session_expired' }, { status: 403 });
             return Response.json(options.method === 'GET' ? { users: [], guests: 0 } : { ok: true });
@@ -91,6 +92,24 @@ test('auth snapshots distinguish pending session, confirmed guest and network fa
     const f = uiFixture(); assert.equal(f.auth.snapshot().status, 'checking');
     await settle(); assert.equal(f.auth.snapshot().status, 'ready'); assert.equal(f.auth.snapshot().user, null);
     const failed = uiFixture({ fail: true }); await settle(); assert.equal(failed.auth.snapshot().status, 'error');
+});
+
+test('account report requests pin the signed-in identity and cannot reuse it after logout', async () => {
+    const f = uiFixture();
+    assert.equal((await f.auth.whenReady()).status, 'ready');
+    await assert.rejects(f.auth.reportsRequest('subject'), /report_account_changed/);
+    f.button.listeners.click(); await settle();
+    f.continueGoogle();
+    await f.googleOptions.callback({ access_token: 'token' });
+    await f.auth.reportsRequest('subject', { writes: [] });
+    const request = f.requests.find(value => value.url.endsWith('/reports'));
+    assert.equal(request.options.headers['X-Report-Account'], 'subject');
+    assert.equal(request.options.headers['X-CSRF-Token'], 'test-csrf');
+    assert.equal(request.options.credentials, 'same-origin');
+    await f.dialog.querySelector('.auth-logout').listeners.click();
+    const count = f.requests.length;
+    await assert.rejects(f.auth.reportsRequest('subject', { writes: [] }), /report_account_changed/);
+    assert.equal(f.requests.length, count);
 });
 
 test('shared UI opens Google, displays profile as text, and logs out without deleting drafts', async () => {

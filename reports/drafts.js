@@ -7,7 +7,7 @@
         const search = el('draftSearch'), filter = el('draftDiscipline'), status = el('draftsStatus');
         let busy = false, items = [], renameId = null;
         const title = item => item.title || window.ReportDraftStore.titleFor(item.state);
-        const message = error => error?.message === 'draft_conflict'
+        const message = error => window.ReportAccount?.id && window.studyAuth ? window.studyAuth.errorMessage(error) : error?.message === 'draft_conflict'
             ? 'Цей звіт змінено в іншій вкладці. Експортуйте поточну роботу, щоб не втратити зміни.'
             : 'Не вдалося зберегти зміни. Експортуйте чернетку та перевірте вільне місце у браузері.';
         function updateTitle() {
@@ -15,6 +15,7 @@
         }
         function setBusy(value) {
             busy = value;
+            el('workspaceWrapper').inert = value;
             el('reportsLibrary').setAttribute('aria-busy', String(value));
             for (const node of document.querySelectorAll('#reportsLibrary button, #draftsDialog button, #draftsDialog input, #btnDraftLibrary, #btnRenameReport, #btnDuplicateReport')) {
                 node.disabled = value || node.dataset.current === 'true';
@@ -24,7 +25,10 @@
             if (busy) return;
             pause(); setBusy(true);
             try { await fn(); updateTitle(); }
-            catch (error) { status.textContent = message(error); notice(status.textContent, 'error'); }
+            catch (error) {
+                status.textContent = message(error); notice(status.textContent, 'error');
+                if (el('reportsEditor').hidden) editor();
+            }
             finally { setBusy(false); resume(); }
         }
         function button(label, handler, className = '') {

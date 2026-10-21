@@ -5,6 +5,7 @@ import { createReplacementService } from './lib/replacements.mjs';
 import { createPermissionsService } from './lib/permissions.mjs';
 import { createPresenceService } from './lib/presence.mjs';
 import { createD1Store } from './d1-store.mjs';
+import { createReportsService } from './lib/reports.mjs';
 import schedule from '../schedule.json' with { type: 'json' };
 
 const google = createGoogleClient();
@@ -12,6 +13,7 @@ export function createWorkerHandler(env) {
     const store = name => () => createD1Store(env.DB, name);
     return createAuthHandler({
         env,
+        reports: createReportsService({ db: env.DB }),
         reportAuthFailure: diagnostic => console.warn(JSON.stringify(diagnostic)),
         presence: createPresenceService({ getStore: store('site-presence') }),
         permissions: createPermissionsService({ getStore: store('site-permissions'), env }),

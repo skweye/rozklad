@@ -60,7 +60,7 @@
     el('btnConfirmExport').addEventListener('click', () => { exportDialog.close(); el('btnGenerateDocx').click(); });
     document.addEventListener('click', event => {
         document.querySelectorAll('.report-file-menu[open]').forEach(menu => {
-            if (!menu.contains(event.target) || event.target.closest('button')) menu.open = false;
+            if (!menu.contains(event.target)) menu.open = false;
         });
     });
     document.addEventListener('keydown', event => {

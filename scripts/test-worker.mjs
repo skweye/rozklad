@@ -73,6 +73,15 @@ try {
     const session = await (await request('/api/auth/session')).json();
     assert.equal(session.user.email, owner);
     const headers = { 'x-csrf-token': session.csrf };
+    const reportHeaders = { ...headers, 'x-report-account': session.user.id };
+    const report = { id: 'integration-report', revision: 1, title: 'ЛР №5', updatedAt: new Date().toISOString(),
+        state: { studentName: 'Test', tasks: [{ kind: 'image', dataUrl: 'data:image/png;base64,' + 'a'.repeat(350000) }] } };
+    const savedReport = await request('/api/auth/reports', { writes: [{ record: report, expected: 0 }], activateId: report.id }, reportHeaders);
+    assert.equal(savedReport.status, 200, await savedReport.text());
+    const savedLibrary = await (await request('/api/auth/reports', undefined, reportHeaders)).json();
+    assert.equal(savedLibrary.items[0].state.tasks[0].dataUrl, report.state.tasks[0].dataUrl);
+    assert.equal((await request('/api/auth/reports', { writes: [{ record: report, expected: 0 }] }, reportHeaders)).status, 409);
+    assert.equal((await request('/api/auth/reports', undefined, { 'x-report-account': 'another-account' })).status, 409);
     const permission = { operation: 'save', revision: null, email: 'student@example.com', permissions: { createReplacements: true, editReplacements: false, cancelReplacements: false } };
     assert.equal((await request('/api/auth/permissions', permission, headers)).status, 200);
     assert.equal((await request('/api/auth/permissions', permission, headers)).status, 409);
@@ -98,6 +107,7 @@ try {
     assert.equal((await request('/api/auth/replacements', { operation: 'remove', date, index: 0, revision: created.replacement.revision }, headers)).status, 200);
     assert.equal((await request('/api/auth/logout', {}, headers)).status, 200);
     assert.equal((await (await request('/api/auth/session')).json()).user, null);
+    assert.equal((await request('/api/auth/reports', undefined, reportHeaders)).status, 401);
     console.log('Workers integration passed: Google transport (offline fixtures), pages, headers, private file isolation, D1 CAS, cookies, CSRF, owner permissions, presence, replacements and logout.');
 } finally {
     await harness.close();

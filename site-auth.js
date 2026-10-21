@@ -40,7 +40,7 @@
             <div class="auth-google-button"></div>
             <p class="auth-provider-note">Пароль Google не передається сайту. Дозволи Classroom можна відхилити — розклад і звіти залишаться доступними.</p>
         </div>
-        <p class="auth-provider-note">Чернетки залишаються в цьому браузері й не синхронізуються. Продовжуючи, ви приймаєте <a href="/terms.html">умови використання</a>. Як ми обробляємо дані: <a href="/privacy.html">політика конфіденційності</a>.</p>
+        <p class="auth-provider-note">Після входу звіти зберігаються у вашому акаунті й доступні на інших пристроях. Гостеві чернетки залишаються в цьому браузері до окремого перенесення. Продовжуючи, ви приймаєте <a href="/terms.html">умови використання</a>. Як ми обробляємо дані: <a href="/privacy.html">політика конфіденційності</a>.</p>
         <p class="auth-provider-note">Коли сайт відкритий у видимій вкладці, головний адміністратор бачить ваш онлайн-статус, ім’я, email і розділ сайту. Вміст звітів та завдання Classroom йому не передаються.</p>
         <button type="button" class="btn auth-logout" hidden>Вийти з акаунта</button>
         <button type="button" class="btn auth-retry" hidden>Спробувати ще раз</button>`;
@@ -67,6 +67,13 @@
     const snapshot = () => ({ status: sessionStatus, user: session?.user || null, clientId: session?.clientId, classroomConnected: Boolean(session?.classroomConnected), scheduleAdmin: Boolean(session?.scheduleAdmin), mainAdmin: Boolean(session?.mainAdmin), permissions: session?.permissions ? { ...session.permissions } : null });
 
     const messages = {
+        reports_unavailable: 'Не вдалося відкрити сховище звітів. Перевірте з’єднання та повторіть спробу.',
+        reports_invalid: 'Не вдалося зберегти звіт: некоректні дані.',
+        reports_limit: 'Ліміт сховища: 100 звітів, 16 МБ на звіт і 64 МБ на акаунт. Експортуйте великий звіт у файл.',
+        draft_conflict: 'Звіт уже змінено на іншому пристрої. Експортуйте поточну версію перед оновленням сторінки.',
+        draft_missing: 'Цей звіт уже видалено. Оновіть список робіт.',
+        draft_active: 'Спочатку відкрийте інший звіт.',
+        report_account_changed: 'Акаунт змінився. Оновіть сторінку, щоб відкрити його звіти.',
         owner_required: 'Керувати правами може лише головний адміністратор.',
         permission_required: 'У вас немає права на цю дію. Зверніться до головного адміністратора.',
         permissions_invalid: 'Перевірте email і вибрані права.',
@@ -123,11 +130,11 @@
         googleContainer.append(googleButton);
     }
 
-    async function api(action, data, csrf = session?.csrf || '') {
+    async function api(action, data, csrf = session?.csrf || '', extraHeaders = {}) {
         try {
             const response = await fetch(`/api/auth/${action}`, {
                 method: data ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
-                headers: data ? { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf } : {},
+                headers: { ...(data ? { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf } : {}), ...extraHeaders },
                 body: data ? JSON.stringify(data) : undefined,
                 signal: AbortSignal.timeout(action === 'classroom' ? 30000 : 20000)
             });
@@ -368,6 +375,32 @@
     }
     window.studyAuth = {
         snapshot,
+        whenReady() {
+            if (sessionStatus !== 'checking') return Promise.resolve(snapshot());
+            return new Promise(resolve => {
+                const finish = value => { clearTimeout(timer); sessionListeners.delete(listener); resolve(value); };
+                const listener = value => { if (value.status !== 'checking') finish(value); };
+                const timer = setTimeout(() => finish({ ...snapshot(), status: 'error' }), 22000);
+                sessionListeners.add(listener);
+            });
+        },
+        async reportsRequest(accountId, data) {
+            const epoch = sessionEpoch;
+            const check = () => {
+                if (epoch !== sessionEpoch || session?.user?.id !== accountId) throw new Error('report_account_changed');
+            };
+            check();
+            let result;
+            try { result = await api('reports', data, session?.csrf, { 'X-Report-Account': accountId }); }
+            catch (error) {
+                if (error.message !== 'session_expired') throw error;
+                const fresh = await api('session');
+                if (epoch !== sessionEpoch || fresh.user?.id !== accountId) throw new Error('report_account_changed');
+                session = fresh;
+                result = await api('reports', data, fresh.csrf, { 'X-Report-Account': accountId });
+            }
+            check(); return result;
+        },
         subscribe(listener) { sessionListeners.add(listener); return () => sessionListeners.delete(listener); },
         open() { if (!dialog.open) dialog.showModal(); refresh(true); },
         prepareGoogle: loadGoogle,

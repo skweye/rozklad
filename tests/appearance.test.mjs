@@ -187,8 +187,11 @@ test('glass primes reflective edges, restores across pages and does not leak int
     for (const page of ['index.html', 'reports/index.html', 'admin/index.html']) {
         const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
         const styles = [...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*>/g)].map(match => match[0]);
-        assert.match(styles.at(-2), /frosted-glass\.css/, 'Theme styling loads before the shared editorial layout');
-        assert.match(styles.at(-1), /editorial\.css/, 'The card-free layout has priority across palettes');
+        const themeIndex = styles.findIndex(style => style.includes('frosted-glass.css'));
+        const layoutIndex = styles.findIndex(style => style.includes('editorial.css'));
+        assert.ok(themeIndex >= 0 && layoutIndex > themeIndex, 'The shared editorial layout loads after theme styling');
+        if (page === 'reports/index.html') assert.match(styles.at(-1), /flow\.css/, 'Report workflow overrides the shared layout');
+        else assert.match(styles.at(-1), /editorial\.css/, 'The card-free layout has priority across palettes');
     }
 });
 

@@ -25,18 +25,44 @@ test('table redraw preserves page, editor and horizontal table scroll after cont
     assert.equal(changes, 1);
 });
 
-test('table tools restore focus to the same action without scrolling to the block heading', async () => {
+test('adding a table row updates its structure without a redraw or moving focus', async () => {
     const start = source.indexOf('        container.addEventListener("click", async e => {');
     const end = source.indexOf('        async function upload(', start);
     const item = { id: 'table-1', rows: [['existing']] };
     const button = { dataset: { action: 'add-row' }, hasAttribute: () => false,
         closest: () => ({ dataset: { block: item.id } }) };
-    let focused, fallback = false, handler;
-    const restored = { focus(options) { focused = options; } };
-    const container = { addEventListener(type, fn) { handler = fn; }, querySelector: () => ({ querySelector: () => restored }) };
-    vm.runInNewContext(source.slice(start, end), { container, getItems: () => [item], changed() {}, focusBlock() { fallback = true; } });
+    let updated = false, notified = false, handler;
+    const container = { addEventListener(type, fn) { handler = fn; } };
+    vm.runInNewContext(source.slice(start, end), { container, getItems: () => [item],
+        changed() { assert.fail('Table structure must not redraw the editor'); },
+        focusBlock() { assert.fail('Table structure must not move focus'); },
+        updateTableStructure(card, block, action) { assert.equal(block, item); assert.equal(action, 'add-row'); updated = true; },
+        onChange() { notified = true; } });
     await handler({ target: { closest: () => button } });
     assert.equal(item.rows.length, 2);
-    assert.equal(focused.preventScroll, true);
-    assert.equal(fallback, false);
+    assert.equal(updated, true);
+    assert.equal(notified, true);
+});
+
+test('table structure changes preserve existing textareas and their selection', () => {
+    function row() { return { cells: [], insertCell() { const cell = { append(input) { this.input = input; } }; this.cells.push(cell); return cell; }, deleteCell() { this.cells.pop(); } }; }
+    const body = { rows: [row()], insertRow() { const next = row(); this.rows.push(next); return next; }, deleteRow() { this.rows.pop(); } };
+    const original = { value: 'Existing text', selectionStart: 4, selectionEnd: 9 };
+    body.rows[0].insertCell().append(original);
+    const controls = {};
+    const card = { querySelector(selector) { if (selector === '.rb-edit-table tbody') return body; return controls[selector] ||= {}; } };
+    const block = { rows: [['Existing text'], ['']] };
+    const start = source.indexOf('        function updateTableStructure(');
+    const end = source.indexOf('        container.addEventListener("click"', start);
+    const scope = { document: { createElement: () => ({ dataset: {}, setAttribute() {} }) }, resize() {}, card, block };
+    vm.runInNewContext(source.slice(start, end) + '\nupdateTableStructure(card, block, "add-row");', scope);
+    assert.equal(body.rows.length, 2);
+    assert.equal(body.rows[0].cells[0].input, original);
+    assert.equal(original.selectionStart, 4);
+    block.rows.forEach(row => row.push(''));
+    vm.runInNewContext('updateTableStructure(card, block, "add-column");', scope);
+    assert.equal(body.rows[0].cells.length, 2);
+    assert.equal(body.rows[0].cells[0].input, original);
+    assert.equal(body.rows[1].cells[1].input.dataset.row, '1');
+    assert.equal(body.rows[1].cells[1].input.dataset.column, '1');
 });

@@ -4,10 +4,10 @@
     const copy = value => JSON.parse(JSON.stringify(value));
     const titleFor = state => `${state.discipline?.trim() || "Новий звіт"} · ЛР №${state.labNumber || 1}`;
 
-    function openRepository(indexedDB = root.indexedDB) {
+    function openRepository(indexedDB = root.indexedDB, databaseName = "study-report-drafts") {
         return new Promise((resolve, reject) => {
             if (!indexedDB) return reject(new Error("storage_unavailable"));
-            const request = indexedDB.open("study-report-drafts", 1);
+            const request = indexedDB.open(databaseName, 1);
             let blocked = false;
             request.onupgradeneeded = () => {
                 request.result.createObjectStore("drafts", { keyPath: "id" });
@@ -29,6 +29,11 @@
                     });
                 }
                 resolve({
+                    clear: () => new Promise((done, fail) => {
+                        const tx = db.transaction(["drafts", "meta"], "readwrite");
+                        tx.objectStore("drafts").clear(); tx.objectStore("meta").clear();
+                        tx.oncomplete = done; tx.onabort = () => fail(tx.error);
+                    }),
                     active: () => read((tx, done) => {
                         const request = tx.objectStore("meta").get("active");
                         request.onsuccess = () => {
@@ -153,5 +158,18 @@
             })
         };
     }
-    root.ReportDraftStore = { openRepository, createLibrary, titleFor };
+    async function openAccountRepository(accountId) {
+        const request = data => root.studyAuth.reportsRequest(accountId, data);
+        // Verify availability and ownership before giving the editor a repository.
+        await request();
+        return {
+            async active() {
+                const { items, activeId } = await request();
+                return items.find(item => item.id === activeId) || null;
+            },
+            async list() { return (await request()).items; },
+            async commit(change) { return (await request(change)).loaded; }
+        };
+    }
+    root.ReportDraftStore = { openRepository, openAccountRepository, createLibrary, titleFor };
 })(typeof window !== "undefined" ? window : globalThis);

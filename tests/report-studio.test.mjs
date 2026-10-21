@@ -7,6 +7,7 @@ const source = await readFile(new URL('../reports/studio.js', import.meta.url), 
 function fixture(hash = '') {
     class Element {
         attrs = {}; events = {}; open = false; scrolls = 0;
+        classList = { toggle() {} };
         addEventListener(type, fn) { this.events[type] = fn; }
         getAttribute(name) { return this.attrs[name]; }
         setAttribute(name, value) { this.attrs[name] = value; }
@@ -23,29 +24,31 @@ function fixture(hash = '') {
         section.open = id === 'reportDetails'; return section;
     });
     const links = sections.map(section => { const link = new Element(); link.attrs.href = `#${section.id}`; return link; });
-    const nodes = Object.fromEntries(['studioHelpDialog', 'btnStudioHelp', 'btnCloseStudioHelp', 'studioSidebar', 'btnStudioSidebar'].map(id => [id, new Element()]));
+    const nodes = new Proxy({}, { get(target, id) { return target[id] ||= new Element(); } });
     const window = new Element(), location = { hash };
     const classes = new Set();
-    const document = { body: { classList: { toggle(name, on) { on ? classes.add(name) : classes.delete(name); } } }, getElementById: id => nodes[id], querySelectorAll: selector => selector === '.studio-section' ? sections : links };
+    window.scrollTo = () => {};
+    const document = { addEventListener() {}, querySelector: () => new Element(), body: { classList: { toggle(name, on) { on ? classes.add(name) : classes.delete(name); } } }, getElementById: id => nodes[id], querySelectorAll: selector => selector === '.studio-section' ? sections : selector === '.report-steps a' ? links : [] };
     vm.runInNewContext(source, { document, window, location, Event });
+    if (hash) window.ReportStudio.showEditor(hash);
     return { sections, links, nodes, window, location, classes };
 }
 
-test('sidebar can be hidden and restored without discarding the editor, and refits the preview', () => {
+test('library and editor views preserve the selected section and refit the preview', () => {
     const f = fixture();
     let resizes = 0;
     f.window.addEventListener('resize', () => resizes++);
-    f.nodes.btnStudioSidebar.events.click();
-    assert.equal(f.nodes.studioSidebar.hidden, true);
-    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-expanded'], 'false');
-    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-label'], 'Показати бічне меню');
-    assert.ok(f.classes.has('studio-sidebar-collapsed'));
-    assert.equal(f.sections[1].open, true);
-    f.nodes.btnStudioSidebar.events.click();
-    assert.equal(f.nodes.studioSidebar.hidden, false);
-    assert.equal(f.nodes.btnStudioSidebar.attrs['aria-expanded'], 'true');
-    assert.equal(f.classes.has('studio-sidebar-collapsed'), false);
-    assert.equal(resizes, 2);
+    f.window.ReportStudio.showEditor('#reportWork');
+    const selected = f.sections[2];
+    f.window.ReportStudio.showLibrary();
+    assert.equal(f.nodes.reportsEditor.hidden, true);
+    assert.equal(f.nodes.reportsLibrary.hidden, false);
+    f.window.ReportStudio.showEditor();
+    assert.equal(f.nodes.reportsEditor.hidden, false);
+    assert.equal(f.nodes.reportsLibrary.hidden, true);
+    assert.equal(f.sections[2], selected);
+    assert.equal(f.sections[2].hidden, false);
+    assert.ok(resizes > 0);
 });
 
 test('studio navigation reveals collapsed sections, marks the active step and moves keyboard focus', () => {
@@ -56,13 +59,13 @@ test('studio navigation reveals collapsed sections, marks the active step and mo
     assert.equal(prevented, true);
     assert.equal(f.sections[2].open, true);
     assert.equal(f.sections[2].summary.focused, true);
-    assert.equal(f.sections[2].scrolls, 1);
+    assert.equal(f.sections[2].hidden, false);
     assert.equal(f.links[2].attrs['aria-current'], 'step');
     assert.equal(f.links[1].attrs['aria-current'], undefined);
-    assert.equal(f.sections[1].open, true, 'Opening another section must not discard or hide current work');
-    f.sections[0].open = true; f.sections[0].events.toggle();
+    assert.equal(f.sections[1].hidden, true, 'Only the selected section is displayed');
+    f.window.ReportStudio.reveal('#reportStudent');
     assert.equal(f.links[0].attrs['aria-current'], 'step');
-    f.sections[1].events.focusin();
+    f.window.ReportStudio.reveal('#reportDetails');
     assert.equal(f.links[1].attrs['aria-current'], 'step');
 });
 

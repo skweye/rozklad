@@ -24,13 +24,13 @@
     <link rel="stylesheet" href="../editorial.css?v=20261020">
     <script src="../site-navigation.js" defer></script>
     <script src="../site-branding.js" defer></script>
-    <script src="../site-auth.js" defer></script>
+    <script src="../site-auth.js?v=20261021-account-reports" defer></script>
     <script src="../site-admin.js" defer></script>
     <script src="../site-presence.js" defer></script>
     <script src="../schedule-time.js" defer></script>
     <script src="../background-notifications.js?v=20260930" defer></script>
     <script src="../schedule-notices.js" defer></script>
-    <link rel="stylesheet" href="flow.css?v=20261021">
+    <link rel="stylesheet" href="flow.css?v=20261021-account-reports">
 </head>
 
 <body data-app="reports" class="report-studio workspace-redesign">
@@ -40,19 +40,20 @@
     <a class="studio-skip" href="#reportDetails">До заповнення звіту</a>
 
     <header class="reports-topbar">
-        <a class="reports-home-link" href="../index.html"><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#calendar"/></svg><span>Навчальний простір</span></a>
+        <a class="reports-home-link" href="../index.html"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#calendar"/></svg><span>Навчальний простір</span></a>
         <nav class="primary-navigation" aria-label="Основні розділи"><a href="../index.html">Розклад</a><a href="index.html" aria-current="page">Звіти</a></nav>
         <div class="nav-links"></div>
     </header>
     <main id="reportsLibrary" class="reports-library" aria-labelledby="reportsTitle">
         <div class="library-heading"><div><p class="eyebrow">НАВЧАЛЬНИЙ ПРОСТІР / ЗВІТИ</p><h1 id="reportsTitle" tabindex="-1">Мої звіти<span class="heading-dot">.</span></h1><p>Усі роботи під рукою. Продовжуй розпочате або створи новий звіт.</p></div>
-        <button type="button" class="btn btn-primary" id="btnNewDraft" disabled><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#plus"/></svg>Новий звіт</button></div>
-        <div class="library-filters"><label>Пошук<input class="form-control" type="search" id="draftSearch" placeholder="Назва або тема роботи"></label><label>Дисципліна<select class="form-control" id="draftDiscipline"><option value="">Усі дисципліни</option></select></label><button class="btn" type="button" id="btnLibraryImport"><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#upload"/></svg>Імпортувати</button></div>
+        <button type="button" class="btn btn-primary" id="btnNewDraft" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт</button></div>
+        <div class="library-filters"><label>Пошук<input class="form-control" type="search" id="draftSearch" placeholder="Назва або тема роботи"></label><label>Дисципліна<select class="form-control" id="draftDiscipline"><option value="">Усі дисципліни</option></select></label><button class="btn" type="button" id="btnLibraryImport"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#upload"/></svg>Імпортувати</button></div>
         <p class="drafts-status" id="draftsStatus" role="status" aria-live="polite">Відкриваємо збережені роботи…</p>
         <div class="library-list-heading"><h2>Збережені роботи <span id="draftCount">0</span></h2><span>Останні зміни спочатку</span></div>
         <div class="drafts-list" id="draftsList"></div>
-        <div class="library-empty" id="draftsEmpty" hidden><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#file"/></svg><h2>Тут будуть твої звіти</h2><p>Створи першу роботу — оформлення документа вже підготовлено.</p><button type="button" class="btn btn-primary" id="btnEmptyNew">Створити звіт</button></div>
-        <p class="drafts-local-note">Звіти зберігаються в цьому браузері. Для іншого пристрою або резервної копії обери «Експорт чернетки» в меню звіту.</p>
+        <div class="library-empty" id="draftsEmpty" hidden><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg><h2>Тут будуть твої звіти</h2><p>Створи першу роботу — оформлення документа вже підготовлено.</p><button type="button" class="btn btn-primary" id="btnEmptyNew">Створити звіт</button></div>
+        <div class="report-account-actions"><button type="button" class="btn" id="btnReportsLogin">Увійти для збереження в акаунті</button><button type="button" class="btn" id="btnTransferLocalReports" hidden>Перенести локальні звіти в акаунт</button><button type="button" class="btn" id="btnRecoverReport" hidden>Відновити незбережений звіт</button></div>
+        <p class="drafts-local-note">Гостьовий режим: звіти зберігаються лише в цьому браузері. Увійдіть, щоб зберігати роботи в акаунті.</p>
     </main>
     <section id="reportsEditor" class="reports-editor" hidden aria-label="Редактор звіту">
     <div class="editor-toolbar">
@@ -63,8 +64,8 @@
             <button type="button" id="btnExportDraft">Експорт чернетки</button><button type="button" id="btnImportDraft">Імпорт чернетки</button>
             <button type="button" id="btnClearForm" class="btn-danger-nav">Очистити звіт</button><button type="button" id="btnStudioHelp">Інструкція</button>
         </div></details>
-        <button type="button" class="btn" id="btnToggleSplitView" aria-pressed="true"><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#eye"/></svg><span id="splitViewText">Перегляд</span></button>
-        <button type="button" class="btn btn-primary" id="btnDownloadReport"><svg class="ui-icon" aria-hidden="true"><use href="../ui-icons.svg#download"/></svg>Скачати</button>
+        <button type="button" class="btn" id="btnToggleSplitView" aria-pressed="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg><span id="splitViewText">Перегляд</span></button>
+        <button type="button" class="btn btn-primary" id="btnDownloadReport"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Скачати</button>
     </div>
     <input type="file" id="draftFileInput" accept=".json" hidden>
     <div class="mobile-editor-tabs" aria-label="Режим роботи"><button type="button" id="btnMobileEdit" aria-pressed="true">Редактор</button><button type="button" id="btnMobilePreview" aria-pressed="false">Перегляд</button></div>
@@ -288,7 +289,7 @@
             <li><strong>Перевір результат.</strong> Перегляд праворуч оновлюється автоматично. Питання та висновок можна відредагувати окремо.</li>
             <li><strong>Завантаж документ.</strong> Кнопка «Скачати» вгорі створює файл .docx. Вміст звіту залишається в редакторі.</li>
         </ol>
-        <p>«Мої звіти» — роботи в цьому браузері. Для резервної копії або іншого пристрою використовуй «Експорт чернетки».</p>
+        <p>Після входу «Мої звіти» зберігаються в акаунті й доступні на інших пристроях. Без входу роботи залишаються в цьому браузері. Для резервної копії використовуй «Експорт чернетки».</p>
     </dialog>
 
     <!-- Модальне вікно попереднього перегляду -->
@@ -361,13 +362,13 @@
 
     <!-- Вільний конструктор блоків -->
     <script src="delete-confirm.js"></script>
-    <script src="blocks.js?v=20261021-scroll-position"></script>
-    <script src="drafts-store.js?v=20261021"></script>
-    <script src="drafts.js?v=20261021"></script>
+    <script src="blocks.js?v=20261021-table-in-place"></script>
+    <script src="drafts-store.js?v=20261021-account-reports"></script>
+    <script src="drafts.js?v=20261021-account-reports"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="studio.js?v=20261021"></script>
-    <script src="script.js?v=20261021-question-lines"></script>
+    <script src="studio.js?v=20261021-account-reports"></script>
+    <script src="script.js?v=20261021-account-reports"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

@@ -36,7 +36,7 @@ test('Classroom cards and their script load only on the schedule, while reports 
     assert.match(schedule, /data-classroom/);
     assert.match(schedule, /src="site-classroom\.js"/);
     assert.doesNotMatch(reports, /data-classroom|site-classroom\.js/);
-    assert.match(reports, /src="\.\.\/site-auth\.js"/);
+    assert.match(reports, /src="\.\.\/site-auth\.js(?:\?[^"]*)?"/);
 });
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const user = { id: 'student', email: 'student@example.com' };

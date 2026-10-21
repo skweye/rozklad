@@ -71,6 +71,7 @@ body.report-studio .reports-settings-menu { left: auto; right: 0; }
 body.workspace-redesign.report-studio .site-legal-footer { max-width: 1600px; margin: 24px auto 0; }
 .mobile-editor-tabs { display: none; }
 .export-hint { color: var(--ui-muted); font-size: 13px; margin: 12px 0; }
+.report-account-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 #exportChecklist { display: grid; gap: 4px; margin: 16px 0 24px; }
 .export-missing { text-align: left; color: var(--ui-accent); background: var(--ui-soft); border: 0; padding: 12px; border-radius: 5px; font: inherit; font-size: 13px; cursor: pointer; }
 @media (max-width: 1150px) {
