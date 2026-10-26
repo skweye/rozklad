@@ -64,28 +64,49 @@ test('columns can be added repeatedly beyond six without a redraw or losing exis
     item.rows.forEach((row, r) => assert.deepEqual(row, [...original[r], ...Array(24).fill('')]));
 });
 
-test('table structure changes preserve existing textareas and their selection', () => {
-    function row() { return { cells: [], insertCell() { const cell = { append(input) { this.input = input; } }; this.cells.push(cell); return cell; }, deleteCell() { this.cells.pop(); } }; }
+test('table coordinates track structure changes without shifting cell data or selection', () => {
+    function row() { return { cells: [], append(cell) { this.cells.push(cell); }, insertCell() { const cell = { append(input) { this.input = input; } }; this.cells.push(cell); return cell; }, deleteCell() { this.cells.pop(); } }; }
     const body = { rows: [row()], insertRow() { const next = row(); this.rows.push(next); return next; }, deleteRow() { this.rows.pop(); } };
+    const header = row();
+    header.append({ textContent: '№' }); header.append({ textContent: '1', scope: 'col' });
+    body.rows[0].append({ textContent: '1', scope: 'row' });
     const original = { value: 'Existing text', selectionStart: 4, selectionEnd: 9 };
     body.rows[0].insertCell().append(original);
     const controls = {};
     const widths = [];
     const table = { style: { setProperty(name, value) { assert.equal(name, '--rb-table-columns'); widths.push(value); } } };
-    const card = { querySelector(selector) { if (selector === '.rb-edit-table tbody') return body; if (selector === '.rb-edit-table') return table; return controls[selector] ||= {}; } };
+    const card = { querySelector(selector) { if (selector === '.rb-edit-table tbody') return body; if (selector === '.rb-edit-table thead tr') return header; if (selector === '.rb-edit-table') return table; return controls[selector] ||= {}; } };
     const block = { rows: [['Existing text'], ['']] };
     const start = source.indexOf('        function updateTableStructure(');
     const end = source.indexOf('        container.addEventListener("click"', start);
     const scope = { document: { createElement: () => ({ dataset: {}, setAttribute() {} }) }, resize() {}, card, block };
     vm.runInNewContext(source.slice(start, end) + '\nupdateTableStructure(card, block, "add-row");', scope);
     assert.equal(body.rows.length, 2);
-    assert.equal(body.rows[0].cells[0].input, original);
+    assert.equal(body.rows[0].cells[1].input, original);
+    assert.equal(body.rows[1].cells[0].textContent, '2');
+    assert.equal(body.rows[1].cells[0].scope, 'row');
+    assert.equal(controls['.rb-table-size'].textContent, 'Рядків: 2 · Стовпців: 1');
     assert.equal(original.selectionStart, 4);
     block.rows.forEach(row => row.push(''));
     vm.runInNewContext('updateTableStructure(card, block, "add-column");', scope);
-    assert.equal(body.rows[0].cells.length, 2);
-    assert.equal(body.rows[0].cells[0].input, original);
-    assert.equal(body.rows[1].cells[1].input.dataset.row, '1');
-    assert.equal(body.rows[1].cells[1].input.dataset.column, '1');
+    assert.equal(body.rows[0].cells.length, 3);
+    assert.equal(body.rows[0].cells[1].input, original);
+    assert.equal(body.rows[1].cells[2].input.dataset.row, '1');
+    assert.equal(body.rows[1].cells[2].input.dataset.column, '1');
+    assert.equal(header.cells[2].textContent, '2');
+    assert.equal(header.cells[2].scope, 'col');
+    assert.equal(controls['.rb-table-size'].textContent, 'Рядків: 2 · Стовпців: 2');
     assert.deepEqual(widths, [1, 2]);
+    block.rows.forEach(row => row.pop());
+    vm.runInNewContext('updateTableStructure(card, block, "remove-column");', scope);
+    assert.equal(header.cells.length, 2);
+    assert.equal(body.rows[0].cells.length, 2);
+    assert.equal(body.rows[0].cells[1].input, original);
+    block.rows.pop();
+    vm.runInNewContext('updateTableStructure(card, block, "remove-row");', scope);
+    assert.equal(body.rows.length, 1);
+    assert.equal(controls['.rb-table-size'].textContent, 'Рядків: 1 · Стовпців: 1');
+    assert.equal(controls['[data-action="remove-row"]'].disabled, true);
+    assert.equal(controls['[data-action="remove-column"]'].disabled, true);
+    assert.deepEqual(block.rows, [['Existing text']]);
 });

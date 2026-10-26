@@ -29,7 +29,11 @@
 .rb-upload input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 .rb-upload:focus-within { outline: 2px solid var(--text-primary); outline-offset: 3px; }
 .rb-table-scroll { overflow: auto; margin-bottom: 10px; }
-.rb-edit-table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: max(300px, calc(var(--rb-table-columns, 2) * 120px)); }
+.rb-edit-table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: max(300px, calc(var(--rb-table-columns, 2) * 120px + 48px)); }
+.rb-table-size { margin: 0 0 6px; font-variant-numeric: tabular-nums; }
+.rb-edit-table th { padding: 6px; text-align: center; font-size: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.rb-edit-table .rb-table-corner { width: 48px; }
+.rb-edit-table .rb-table-corner, .rb-edit-table th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--ui-ground, var(--surface-solid, #16191e)); border-radius: 6px; }
 .rb-edit-table td { min-width: 80px; vertical-align: top; }
 .rb-edit-table textarea { width: 100%; padding: 8px; min-height: 64px; font-size: .8rem; }
 .rb-picker { width: min(660px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid color-mix(in srgb, var(--text-primary) 22%, transparent); border-radius: 22px; color: var(--text-primary); background: var(--surface-solid, #16191e); box-shadow: 0 24px 100px #0006; overflow-y: auto; margin: auto; }
