@@ -44,6 +44,33 @@ test('normalization rejects unsafe images, repairs duplicate IDs and rectangular
     assert.doesNotMatch(b.preview(data), /<script>|javascript:/);
     assert.match(b.preview(data), /&lt;script&gt;/);
 });
+
+test('wide tables retain every column through saving, loading, duplication, preview and Word export', async () => {
+    const rows = Array.from({ length: 40 }, (_, r) => Array.from({ length: 12 }, (_, c) => `R${r}C${c}`));
+    const original = b.create('table', { rows, caption: 'Wide table' });
+    const restored = b.normalize(JSON.parse(JSON.stringify([original])))[0];
+    const copy = b.normalize([restored])[0];
+    assert.deepEqual(plain(restored.rows), rows);
+    assert.deepEqual(plain(copy.rows), rows);
+    assert.notEqual(copy.rows[0], restored.rows[0]);
+    const previewCells = [...b.preview([restored]).matchAll(/<td>([\s\S]*?)<\/td>/g)].map(match => match[1].replace(/<br>/g, ''));
+    assert.deepEqual(previewCells, rows.flat());
+    const xml = await xmlFor([copy]);
+    const wordCells = [...xml.matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)]
+        .filter(([cell]) => !cell.includes('<w:gridSpan'))
+        .map(([cell]) => [...cell.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join(''));
+    assert.deepEqual(wordCells, rows.flat());
+    assert.match(xml, /w:gridSpan w:val="12"/);
+    const uneven = b.normalize([b.create('table', { rows: [rows[0], ['Short'], null, []] })])[0];
+    assert.deepEqual(plain(uneven.rows), [rows[0], ['Short', ...Array(11).fill('')], Array(12).fill('')]);
+});
+
+test('large saved tables normalize without an argument-count limit', () => {
+    const rows = Array.from({ length: 150000 }, (_, r) => [String(r)]);
+    const restored = b.normalize([b.create('table', { rows })])[0];
+    assert.equal(restored.rows.length, rows.length);
+    assert.deepEqual(plain(restored.rows.at(-1)), rows.at(-1));
+});
 test('OS report has no compulsory code or diagram; numbering follows reordered content', () => {
     const blocks = [b.create('step', { text: 'Відкрито Windows' }), b.create('image', { dataUrl: png, caption: 'Середовище' }), b.create('step', { text: 'Перевірено систему' })];
     assert.equal(b.move(blocks, blocks[2].id, -1), true);
@@ -294,7 +321,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20261021-table-in-place"';
+    const blocksAsset = 'src="blocks.js?v=20261026-unlimited-tables"';
     const scriptAsset = 'src="script.js?v=20261021-auto-transfer"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
