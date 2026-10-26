@@ -93,8 +93,10 @@
         return textMeasure ? textMeasure.measureText(text).width : Array.from(text).length * 14;
     }
     function wrapTableText(text, width) {
-        const result = [];
-        for (const line of lines(text)) {
+        // Measure fragments for pagination only. Retain authored line breaks so
+        // rejoining fragments leaves wrapping to the browser and Word.
+        const result = [], sourceLines = lines(text);
+        for (const [index, line] of sourceLines.entries()) {
             let current = "";
             for (const token of line.match(/\s+|\S+/gu) || []) {
                 if (current && measureText(current + token) > width) { result.push(current); current = ""; }
@@ -104,14 +106,14 @@
                     current += char;
                 }
             }
-            result.push(current);
+            result.push(current + (index < sourceLines.length - 1 ? "\n" : ""));
         }
         return result;
     }
     function tableParts(b, number) {
         const columns = b.rows[0].length;
-        // Padding + a font-substitution allowance. Explicit soft line breaks keep
-        // the first part within one page without fixed/clipping row heights.
+        // Padding + a font-substitution allowance conservatively estimate the
+        // first page's height without inserting line breaks into cell content.
         const width = tableWidth / 20 / columns - 20;
         const rows = b.rows.map(row => row.map(cell => wrapTableText(cell, width)));
         const captionHeight = wrapTableText(tableTitle(b, number), tableWidth / 20 - 20).length * 21;
@@ -128,7 +130,7 @@
                 rest.push(row.map(cell => cell.slice(count)));
             } else rest.push(row);
         }
-        return [first, ...(rest.length ? [rest] : [])].map(part => part.map(row => row.map(cell => cell.join("\n"))));
+        return [first, ...(rest.length ? [rest] : [])].map(part => part.map(row => row.map(cell => cell.join(""))));
     }
     function preview(items) {
         let step = 0, figure = 0, table = 0;

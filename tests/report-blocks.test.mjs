@@ -234,16 +234,36 @@ test('long tables start continuation on a new page and repeat its caption on fur
     assert.match(b.preview([table]), /rb-table-continuation[\s\S]*?<thead>[\s\S]*?Продовження таблиці №1/);
 });
 
-test('a page-sized cell is split without dropping text or changing the saved row', async () => {
-    const text = 'Дуже довгий результат перевірки. '.repeat(150);
+test('table text reflows naturally without inserting line breaks into words or spaces', async () => {
+    const cells = ['Перевірка результатів роботи без зайвих переносів.', 'ДовгийІдентифікаторБезПробілів'.repeat(2), 'Перший рядок\n\nДругий рядок  із пробілами\n'];
+    for (const columns of [2, 6]) {
+        for (const text of cells) {
+            const rows = [[text, ...Array(columns - 1).fill('')]];
+            const table = b.create('table', { rows });
+            assert.deepEqual(plain(b.tableParts(table, 1)), [rows]);
+            const html = b.preview([table]);
+            const firstCell = html.match(/<tbody><tr><td>([\s\S]*?)<\/td>/)[1];
+            assert.equal(firstCell, text.replace(/\n/g, '<br>'));
+            const xml = await xmlFor([table]);
+            const wordCell = [...xml.matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)].find(([cell]) => !cell.includes('<w:gridSpan'))[0];
+            const restored = [...wordCell.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<w:br\s*\/>/g)]
+                .map(match => match[1] ?? '\n').join('');
+            assert.equal(restored, text);
+        }
+    }
+});
+
+test('a page-sized cell preserves authored line breaks and text across continuation parts', async () => {
+    const text = 'Перший абзац.\n\n' + 'Дуже довгий результат перевірки. '.repeat(150) + '\nОстанній абзац.\n';
     const table = b.create('table', { rows: [[text, 'Сусідня клітинка']], caption: 'Довга клітинка' });
     const parts = b.tableParts(table, 1);
     assert.equal(parts.length, 2);
-    assert.equal(parts.map(part => part[0][0]).join('').replace(/\n/g, ''), text);
-    assert.equal(parts.map(part => part[0][1]).join('').replace(/\n/g, ''), 'Сусідня клітинка');
+    assert.equal(parts.map(part => part[0][0]).join(''), text);
+    assert.equal(parts.map(part => part[0][1]).join(''), 'Сусідня клітинка');
     assert.equal(table.rows[0][0], text);
     const xml = await xmlFor([table]);
     assert.match(xml, /Продовження таблиці №1/);
+    assert.equal((xml.match(/<w:br\s*\/>/g) || []).length, (text.match(/\n/g) || []).length);
     assert.doesNotMatch(xml, /w:hRule="exact"/); // No row height that could crop text.
 });
 
@@ -321,7 +341,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-    const blocksAsset = 'src="blocks.js?v=20261026-table-coordinates"';
+    const blocksAsset = 'src="blocks.js?v=20261026-table-text-wrap"';
     const scriptAsset = 'src="script.js?v=20261021-auto-transfer"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
