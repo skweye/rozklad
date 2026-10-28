@@ -32,7 +32,12 @@ body[data-app][data-theme] [data-appearance-settings] :is(button,input,select):f
 body[data-app][data-theme] .appearance-accent-row input[type="color"] { width: 48px; padding: 4px; cursor: pointer; }
 body[data-app][data-theme] .appearance-accent-row input[type="text"] { min-width: 0; width: 100%; padding: 8px 12px; font-variant-numeric: tabular-nums; }
 body[data-app][data-theme] .appearance-section select { width: 100%; padding: 8px 12px; }
-.appearance-section option { background: var(--ui-ground); color: var(--ui-text); }
+/* Native popup menus cannot use the translucent field surface: on Windows it
+   becomes white while inheriting light text. Give every menu an opaque,
+   scheme-aware system palette, including browsers that ignore option styling. */
+body[data-app] select { color-scheme: dark; }
+body[data-app].theme-light select { color-scheme: light; }
+body[data-app] select :is(option,optgroup) { background-color: Canvas; color: CanvasText; }
 .appearance-hint { margin: 7px 0 12px; font-size: 11px; color: var(--ui-muted); line-height: 1.5; overflow-wrap: anywhere; }
 .appearance-transparency, .appearance-wallpaper-actions { display: flex; gap: 8px; }
 body[data-app][data-theme] .appearance-transparency button, body[data-app][data-theme] .appearance-wallpaper-actions button { flex: 1; justify-content: center; }

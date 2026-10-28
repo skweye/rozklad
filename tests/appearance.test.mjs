@@ -10,6 +10,17 @@ const themeAccents = {
     minimal: '#334155', green: '#6ed6a0', purple: '#b79aff', sunset: '#ffa575',
     university: '#8a633e', glass: '#c3ced9', coffee: '#cda985', dualshot: '#212222'
 };
+
+test('native select menus use opaque readable colors in light and dark themes', async () => {
+    const css = await readFile(new URL('../appearance.css', import.meta.url), 'utf8');
+    assert.match(css, /body\[data-app\] select\s*\{\s*color-scheme: dark/);
+    assert.match(css, /body\[data-app\]\.theme-light select\s*\{\s*color-scheme: light/);
+    assert.match(css, /select :is\(option,optgroup\)\s*\{\s*background-color: Canvas; color: CanvasText;/);
+    for (const page of ['index.html', 'reports/index.html', 'admin/index.html']) {
+        const html = await readFile(new URL(`../${page}`, import.meta.url), 'utf8');
+        assert.match(html, /appearance\.css\?v=20261028-select-contrast/);
+    }
+});
 test('report input carets follow readable field text rather than a fixed dark or accent color', async () => {
     const css = await readFile(new URL('../reports/style.css', import.meta.url), 'utf8');
     const caretRules = [...css.matchAll(/caret-color:\s*([^;]+);/g)].map(match => match[1]);
