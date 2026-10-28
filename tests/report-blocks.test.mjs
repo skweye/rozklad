@@ -44,6 +44,33 @@ test('normalization rejects unsafe images, repairs duplicate IDs and rectangular
     assert.doesNotMatch(b.preview(data), /<script>|javascript:/);
     assert.match(b.preview(data), /&lt;script&gt;/);
 });
+
+test('wide tables retain every column through saving, loading, duplication, preview and Word export', async () => {
+    const rows = Array.from({ length: 40 }, (_, r) => Array.from({ length: 12 }, (_, c) => `R${r}C${c}`));
+    const original = b.create('table', { rows, caption: 'Wide table' });
+    const restored = b.normalize(JSON.parse(JSON.stringify([original])))[0];
+    const copy = b.normalize([restored])[0];
+    assert.deepEqual(plain(restored.rows), rows);
+    assert.deepEqual(plain(copy.rows), rows);
+    assert.notEqual(copy.rows[0], restored.rows[0]);
+    const previewCells = [...b.preview([restored]).matchAll(/<td>([\s\S]*?)<\/td>/g)].map(match => match[1].replace(/<br>/g, ''));
+    assert.deepEqual(previewCells, rows.flat());
+    const xml = await xmlFor([copy]);
+    const wordCells = [...xml.matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)]
+        .filter(([cell]) => !cell.includes('<w:gridSpan'))
+        .map(([cell]) => [...cell.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join(''));
+    assert.deepEqual(wordCells, rows.flat());
+    assert.match(xml, /w:gridSpan w:val="12"/);
+    const uneven = b.normalize([b.create('table', { rows: [rows[0], ['Short'], null, []] })])[0];
+    assert.deepEqual(plain(uneven.rows), [rows[0], ['Short', ...Array(11).fill('')], Array(12).fill('')]);
+});
+
+test('large saved tables normalize without an argument-count limit', () => {
+    const rows = Array.from({ length: 150000 }, (_, r) => [String(r)]);
+    const restored = b.normalize([b.create('table', { rows })])[0];
+    assert.equal(restored.rows.length, rows.length);
+    assert.deepEqual(plain(restored.rows.at(-1)), rows.at(-1));
+});
 test('OS report has no compulsory code or diagram; numbering follows reordered content', () => {
     const blocks = [b.create('step', { text: 'Відкрито Windows' }), b.create('image', { dataUrl: png, caption: 'Середовище' }), b.create('step', { text: 'Перевірено систему' })];
     assert.equal(b.move(blocks, blocks[2].id, -1), true);
@@ -207,16 +234,36 @@ test('long tables start continuation on a new page and repeat its caption on fur
     assert.match(b.preview([table]), /rb-table-continuation[\s\S]*?<thead>[\s\S]*?Продовження таблиці №1/);
 });
 
-test('a page-sized cell is split without dropping text or changing the saved row', async () => {
-    const text = 'Дуже довгий результат перевірки. '.repeat(150);
+test('table text reflows naturally without inserting line breaks into words or spaces', async () => {
+    const cells = ['Перевірка результатів роботи без зайвих переносів.', 'ДовгийІдентифікаторБезПробілів'.repeat(2), 'Перший рядок\n\nДругий рядок  із пробілами\n'];
+    for (const columns of [2, 6]) {
+        for (const text of cells) {
+            const rows = [[text, ...Array(columns - 1).fill('')]];
+            const table = b.create('table', { rows });
+            assert.deepEqual(plain(b.tableParts(table, 1)), [rows]);
+            const html = b.preview([table]);
+            const firstCell = html.match(/<tbody><tr><td>([\s\S]*?)<\/td>/)[1];
+            assert.equal(firstCell, text.replace(/\n/g, '<br>'));
+            const xml = await xmlFor([table]);
+            const wordCell = [...xml.matchAll(/<w:tc>[\s\S]*?<\/w:tc>/g)].find(([cell]) => !cell.includes('<w:gridSpan'))[0];
+            const restored = [...wordCell.matchAll(/<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<w:br\s*\/>/g)]
+                .map(match => match[1] ?? '\n').join('');
+            assert.equal(restored, text);
+        }
+    }
+});
+
+test('a page-sized cell preserves authored line breaks and text across continuation parts', async () => {
+    const text = 'Перший абзац.\n\n' + 'Дуже довгий результат перевірки. '.repeat(150) + '\nОстанній абзац.\n';
     const table = b.create('table', { rows: [[text, 'Сусідня клітинка']], caption: 'Довга клітинка' });
     const parts = b.tableParts(table, 1);
     assert.equal(parts.length, 2);
-    assert.equal(parts.map(part => part[0][0]).join('').replace(/\n/g, ''), text);
-    assert.equal(parts.map(part => part[0][1]).join('').replace(/\n/g, ''), 'Сусідня клітинка');
+    assert.equal(parts.map(part => part[0][0]).join(''), text);
+    assert.equal(parts.map(part => part[0][1]).join(''), 'Сусідня клітинка');
     assert.equal(table.rows[0][0], text);
     const xml = await xmlFor([table]);
     assert.match(xml, /Продовження таблиці №1/);
+    assert.equal((xml.match(/<w:br\s*\/>/g) || []).length, (text.match(/\n/g) || []).length);
     assert.doesNotMatch(xml, /w:hRule="exact"/); // No row height that could crop text.
 });
 
@@ -295,8 +342,13 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
+<<<<<<< HEAD
     const blocksAsset = 'src="blocks.js?v=20261021-table-in-place"';
     const scriptAsset = 'src="script.js?v=20261028-metadata"';
+=======
+    const blocksAsset = 'src="blocks.js?v=20261026-table-text-wrap"';
+    const scriptAsset = 'src="script.js?v=20261021-auto-transfer"';
+>>>>>>> 217cbf243788d4ea6dfbe20b50913cef56b357cf
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));

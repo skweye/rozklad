@@ -42,8 +42,8 @@
                 b.dataUrl = safeImage(item.dataUrl) ? item.dataUrl : "";
                 b.width = [50, 75, 100].includes(item.width) ? item.width : 100;
                 if (Array.isArray(item.rows) && item.rows.length) {
-                    const rows = item.rows.filter(Array.isArray).map(row => row.slice(0, 6).map(str));
-                    const columns = Math.max(1, ...rows.map(row => row.length));
+                    const rows = item.rows.filter(Array.isArray).map(row => row.map(str));
+                    const columns = rows.reduce((max, row) => Math.max(max, row.length), 1);
                     if (rows.length) b.rows = rows.map(row => Array.from({ length: columns }, (_, i) => row[i] || ""));
                 }
                 result.push(b);
@@ -93,8 +93,10 @@
         return textMeasure ? textMeasure.measureText(text).width : Array.from(text).length * 14;
     }
     function wrapTableText(text, width) {
-        const result = [];
-        for (const line of lines(text)) {
+        // Measure fragments for pagination only. Retain authored line breaks so
+        // rejoining fragments leaves wrapping to the browser and Word.
+        const result = [], sourceLines = lines(text);
+        for (const [index, line] of sourceLines.entries()) {
             let current = "";
             for (const token of line.match(/\s+|\S+/gu) || []) {
                 if (current && measureText(current + token) > width) { result.push(current); current = ""; }
@@ -104,14 +106,14 @@
                     current += char;
                 }
             }
-            result.push(current);
+            result.push(current + (index < sourceLines.length - 1 ? "\n" : ""));
         }
         return result;
     }
     function tableParts(b, number) {
         const columns = b.rows[0].length;
-        // Padding + a font-substitution allowance. Explicit soft line breaks keep
-        // the first part within one page without fixed/clipping row heights.
+        // Padding + a font-substitution allowance conservatively estimate the
+        // first page's height without inserting line breaks into cell content.
         const width = tableWidth / 20 / columns - 20;
         const rows = b.rows.map(row => row.map(cell => wrapTableText(cell, width)));
         const captionHeight = wrapTableText(tableTitle(b, number), tableWidth / 20 - 20).length * 21;
@@ -119,7 +121,7 @@
         const first = [], rest = [];
         let used = 0;
         for (const row of rows) {
-            const height = Math.max(...row.map(cell => cell.length)) * 21 + 8;
+            const height = row.reduce((max, cell) => Math.max(max, cell.length), 1) * 21 + 8;
             if (!rest.length && used + height <= budget) { first.push(row); used += height; }
             else if (!first.length) {
                 // Even a single cell taller than a page must have a continuation.
@@ -128,7 +130,7 @@
                 rest.push(row.map(cell => cell.slice(count)));
             } else rest.push(row);
         }
-        return [first, ...(rest.length ? [rest] : [])].map(part => part.map(row => row.map(cell => cell.join("\n"))));
+        return [first, ...(rest.length ? [rest] : [])].map(part => part.map(row => row.map(cell => cell.join(""))));
     }
     function preview(items) {
         let step = 0, figure = 0, table = 0;
@@ -260,7 +262,8 @@
                     body = `<div class="rb-image-drop" tabindex="0" role="group" aria-label="Зображення: вставте з буфера Ctrl+V або завантажте файл">${safeImage(b.dataUrl) ? `<img src="${escape(b.dataUrl)}" alt="${escape(b.caption)}">` : `<div class="rb-image-placeholder">${icon("image")}<span>Перетягніть зображення або вставте Ctrl+V</span></div>`}<label class="btn btn-secondary rb-upload">${b.dataUrl ? "Замінити зображення" : "Обрати файл"}<input type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif" data-image-file></label></div><label class="rb-field">Підпис рисунка <span class="rb-hint">Кожне фото має окремий номер і підпис</span><textarea class="form-control" rows="1" data-field="caption">${escape(b.caption)}</textarea></label><label class="rb-field">Ширина у документі<select class="form-control" data-field="width">${[50, 75, 100].map(n => `<option value="${n}" ${n === b.width ? "selected" : ""}>${n}%</option>`).join("")}</select></label>`;
                 } else if (b.kind === "table") {
                     body = `<label class="rb-field">Назва таблиці <span class="rb-hint">Наприклад: Результат. Номер додається автоматично.</span><textarea class="form-control" rows="1" data-field="caption" placeholder="Результат">${escape(b.caption)}</textarea></label>`;
-                    body += `<div class="rb-table-scroll"><table class="rb-edit-table"><tbody>${b.rows.map((row, r) => `<tr>${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="rb-table-tools"><button type="button" class="btn btn-sm" data-action="add-row">+ Рядок</button><button type="button" class="btn btn-sm" data-action="add-column" ${b.rows[0].length >= 6 ? "disabled" : ""}>+ Стовпець</button><button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button><button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button></div><p class="rb-hint">У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
+                    // Coordinates belong only to the editor, never to the saved cells or document.
+                    body += `<p class="rb-table-size rb-hint" aria-live="polite">Рядків: ${b.rows.length} · Стовпців: ${b.rows[0].length}</p><div class="rb-table-scroll"><table class="rb-edit-table" style="--rb-table-columns:${b.rows[0].length}"><thead><tr><th class="rb-table-corner" scope="col" aria-label="Номери рядків">№</th>${b.rows[0].map((_, c) => `<th scope="col" aria-label="Стовпець ${c + 1}">${c + 1}</th>`).join("")}</tr></thead><tbody>${b.rows.map((row, r) => `<tr><th scope="row" aria-label="Рядок ${r + 1}">${r + 1}</th>${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="rb-table-tools"><button type="button" class="btn btn-sm" data-action="add-row">+ Рядок</button><button type="button" class="btn btn-sm" data-action="add-column">+ Стовпець</button><button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button><button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button></div><p class="rb-hint">Номери рядків і стовпців видно лише в редакторі. Додавайте стільки рядків і стовпців, скільки потрібно. Широку таблицю можна прокручувати горизонтально. У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
                 } else if (b.kind === "pageBreak") {
                     body = '<p class="rb-hint">Наступний блок почнеться з нової сторінки у Word.</p>';
                 } else {
@@ -290,6 +293,15 @@
         });
         function updateTableStructure(card, block, action) {
             const body = card.querySelector('.rb-edit-table tbody');
+            const header = card.querySelector('.rb-edit-table thead tr');
+            card.querySelector('.rb-edit-table').style.setProperty('--rb-table-columns', block.rows[0].length);
+            card.querySelector('.rb-table-size').textContent = `Рядків: ${block.rows.length} · Стовпців: ${block.rows[0].length}`;
+            const addNumber = (row, scope, number) => {
+                const cell = document.createElement('th');
+                cell.scope = scope; cell.textContent = String(number);
+                cell.setAttribute('aria-label', `${scope === 'row' ? 'Рядок' : 'Стовпець'} ${number}`);
+                row.append(cell);
+            };
             const addCell = (row, r, c) => {
                 const cell = row.insertCell();
                 const input = document.createElement('textarea');
@@ -302,12 +314,17 @@
             // Replacing the whole block makes the browser scroll to its beginning.
             if (action === 'add-row') {
                 const row = body.insertRow();
+                addNumber(row, 'row', block.rows.length);
                 block.rows.at(-1).forEach((_, c) => addCell(row, block.rows.length - 1, c));
             } else if (action === 'add-column') {
+                addNumber(header, 'col', block.rows[0].length);
                 [...body.rows].forEach((row, r) => addCell(row, r, block.rows[0].length - 1));
             } else if (action === 'remove-row') body.deleteRow(-1);
-            else if (action === 'remove-column') [...body.rows].forEach(row => row.deleteCell(-1));
-            for (const [name, disabled] of [['add-column', block.rows[0].length >= 6], ['remove-row', block.rows.length <= 1], ['remove-column', block.rows[0].length <= 1]]) {
+            else if (action === 'remove-column') {
+                header.deleteCell(-1);
+                [...body.rows].forEach(row => row.deleteCell(-1));
+            }
+            for (const [name, disabled] of [['remove-row', block.rows.length <= 1], ['remove-column', block.rows[0].length <= 1]]) {
                 card.querySelector(`[data-action="${name}"]`).disabled = disabled;
             }
         }
@@ -327,7 +344,7 @@
             else if (action === "copy") { const copy = normalize([b])[0]; copy.id = uid(); items.splice(index + 1, 0, copy); }
             else if (action === "remove") items.splice(index, 1);
             else if (action === "add-row") b.rows.push(Array(b.rows[0].length).fill(""));
-            else if (action === "add-column" && b.rows[0].length < 6) b.rows.forEach(row => row.push(""));
+            else if (action === "add-column") b.rows.forEach(row => row.push(""));
             else if (action === "remove-row" && b.rows.length > 1) b.rows.pop();
             else if (action === "remove-column" && b.rows[0].length > 1) b.rows.forEach(row => row.pop());
             else return;
