@@ -261,9 +261,10 @@ test('multi-file upload creates individual image blocks without absorbing follow
 });
 test('full report export retains A4, margins, underlined student fields and title-page footer', async () => {
     const elements = new Map(); let documentModel;
-    const element = id => { if (!elements.has(id)) elements.set(id, { value: '', textContent: '', classList: { add() {}, remove() {} }, appendChild() {}, click() {}, remove() {}, showModal() { this.open = true; } }); return elements.get(id); };
+    const element = id => { if (!elements.has(id)) elements.set(id, { value: '', textContent: '', addEventListener() {}, classList: { add() {}, remove() {} }, appendChild() {}, click() {}, remove() {}, showModal() { this.open = true; } }); return elements.get(id); };
     const document = { readyState: 'loading', getElementById: element, addEventListener() {}, createElement: () => element('download'), body: { appendChild() {}, removeChild() {} } };
     const window = { ReportBlocks: b, docx: { ...docx, Packer: { toBlob: async model => { documentModel = model; return new Blob(); } } } };
+    vm.runInNewContext(await readFile(new URL('../reports/metadata.js', import.meta.url), 'utf8'), { window });
     const instrumented = mainSource.replace('    if (document.readyState === "loading")', '    window.reportTest = { state, generateDocxDocument };\n    if (document.readyState === "loading")');
     vm.runInNewContext(instrumented, { window, document, console, setTimeout() {}, clearTimeout() {}, Blob, URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} } });
     Object.assign(window.reportTest.state, { studentName: 'Test Student', studentGroup: 'GROUP', studentTeacher: 'TEACHER', discipline: 'ОПЕРАЦІЙНІ СИСТЕМИ', tasks: [b.create('step', { text: 'Відкрито Windows' })] });
@@ -295,7 +296,7 @@ test('full report export retains A4, margins, underlined student fields and titl
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
     const blocksAsset = 'src="blocks.js?v=20261021-table-in-place"';
-    const scriptAsset = 'src="script.js?v=20261021-auto-transfer"';
+    const scriptAsset = 'src="script.js?v=20261028-metadata"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));

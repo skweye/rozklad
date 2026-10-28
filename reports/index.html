@@ -120,12 +120,16 @@
                 </div>
                 <div class="meta-item">
                     <label for="disciplineInput">Дисципліна</label>
-                    <textarea id="disciplineInput" class="form-control" rows="1"
-                        style="font-weight: 600; font-size: 0.9rem;"></textarea>
+                    <select id="disciplineInput" class="form-control"><option value="">Оберіть дисципліну</option></select>
+                </div>
+                <div class="meta-item">
+                    <label for="variantInput">Варіант</label>
+                    <input type="number" id="variantInput" class="form-control" min="1" max="99" step="1" placeholder="Наприклад: 6" aria-describedby="cipherHint">
                 </div>
                 <div class="meta-item">
                     <label for="cipherInput">Шифр роботи</label>
-                    <textarea id="cipherInput" class="form-control" rows="1" style="font-size: 0.9rem;"></textarea>
+                    <select id="cipherInput" class="form-control" aria-describedby="cipherHint"><option value="">Оберіть шифр</option></select>
+                    <p id="cipherHint" class="card-subtitle">Шифр формується з дисципліни, варіанта та номера роботи. Наприклад: ФКЗЕ.121БД06.01ЛР.</p>
                 </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem;">
@@ -368,7 +372,8 @@
 
     <!-- Головна логіка додатку -->
     <script src="studio.js?v=20261021-account-reports"></script>
-    <script src="script.js?v=20261021-auto-transfer"></script>
+    <script src="metadata.js?v=20261028"></script>
+    <script src="script.js?v=20261028-metadata"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

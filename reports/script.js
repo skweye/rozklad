@@ -16,6 +16,8 @@
         reportYear: "2026 – 2027 н.р.",
         discipline: "",
         cipher: "",
+        variant: "",
+        cipherMode: "auto",
         labTheme: "",
         labGoal: "",
         labEquipment: "",
@@ -44,6 +46,7 @@
         labNumberInput: document.getElementById("labNumberInput"),
         disciplineInput: document.getElementById("disciplineInput"),
         cipherInput: document.getElementById("cipherInput"),
+        variantInput: document.getElementById("variantInput"),
         labTheme: document.getElementById("labTheme"),
         labGoal: document.getElementById("labGoal"),
         labEquipment: document.getElementById("labEquipment"),
@@ -99,6 +102,7 @@
         appNoticeStack: document.getElementById("appNoticeStack")
     };
 
+    const metadata = window.ReportMetadata.mount(state, dom, triggerAutoSave);
     const AUTO_GROW_TEXTAREA_SELECTOR = "textarea.form-control, textarea.code-editor-textarea";
 
     function resizeTextArea(textarea) {
@@ -346,6 +350,8 @@
         state.labNumber = 1;
         state.discipline = "";
         state.cipher = "";
+        state.variant = "";
+        state.cipherMode = "auto";
         state.labTheme = "";
         state.labGoal = "";
         state.labEquipment = "";
@@ -366,6 +372,7 @@
         dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
         dom.disciplineInput.value = state.discipline;
         dom.cipherInput.value = state.cipher;
+        metadata.restore();
         dom.labTheme.value = state.labTheme;
         dom.labGoal.value = state.labGoal;
         dom.labEquipment.value = state.labEquipment;
@@ -637,17 +644,10 @@
         dom.labNumberInput.addEventListener("input", (e) => {
             state.labNumber = parseInt(e.target.value, 10) || 1;
             dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
+            metadata.update();
             triggerAutoSave();
         });
 
-        dom.disciplineInput.addEventListener("input", (e) => {
-            state.discipline = e.target.value;
-            triggerAutoSave();
-        });
-        dom.cipherInput.addEventListener("input", (e) => {
-            state.cipher = e.target.value;
-            triggerAutoSave();
-        });
         dom.labTheme.addEventListener("input", (e) => {
             state.labTheme = e.target.value;
             triggerAutoSave();
@@ -808,6 +808,8 @@
                 reportYear: state.reportYear,
                 discipline: state.discipline,
                 cipher: state.cipher,
+                variant: state.variant,
+                cipherMode: state.cipherMode,
                 labTheme: state.labTheme,
                 labGoal: state.labGoal,
                 labEquipment: state.labEquipment,
@@ -845,6 +847,8 @@
             state.reportYear = saved.reportYear || "2026 – 2027 н.р.";
             state.discipline = saved.discipline ?? "ОБ’ЄКТНО-ОРІЄНТОВАНЕ ПРОГРАМУВАННЯ";
             state.cipher = saved.cipher ?? "ФКЗЕ. 121ООП12. 01ЛР / ФКЗЕ. F2ПЗ24. 01ЛР";
+            state.variant = saved.variant ?? "";
+            state.cipherMode = saved.cipherMode || "";
             state.labTheme = saved.labTheme || "";
             state.labGoal = saved.labGoal || "";
             state.labEquipment = saved.labEquipment || "";
@@ -864,6 +868,7 @@
             dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
             dom.disciplineInput.value = state.discipline;
             dom.cipherInput.value = state.cipher;
+            metadata.restore();
             dom.labTheme.value = state.labTheme;
             dom.labGoal.value = state.labGoal;
             dom.labEquipment.value = state.labEquipment;
@@ -959,6 +964,8 @@
                 dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber || 1}`;
                 dom.disciplineInput.value = state.discipline || "";
                 dom.cipherInput.value = state.cipher || "";
+                state.variant = loadedState.variant ?? "";
+                metadata.restore();
                 dom.labTheme.value = state.labTheme || "";
                 dom.labGoal.value = state.labGoal || "";
                 dom.labEquipment.value = state.labEquipment || "";

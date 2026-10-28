@@ -132,6 +132,8 @@ test('legacy single-report migration preserves content and deletes the old copy 
         localStorage: { getItem: key => storage.get(key), removeItem: key => storage.delete(key) },
         conclusionDetails() {}, syncConclusionFromGoal() {}, renderTasks() {}, renderQuestions() {}, resizeReportTextAreas() {}, setSaveStatus() {},
         console: { warn() {}, error() {} } });
+    vm.runInContext(await readFile(new URL('../reports/metadata.js', import.meta.url), 'utf8'), ctx);
+    ctx.metadata = { restore: () => ctx.window.ReportMetadata.restore(state) };
     vm.runInContext(helpers, ctx);
     assert.equal(ctx.loadFromStorage(), true);
     assert.deepEqual(copy(state.tasks), os.tasks);

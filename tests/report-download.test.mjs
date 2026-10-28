@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../reports/script.js', import.meta.url), 'utf8');
+const metadataSource = await readFile(new URL('../reports/metadata.js', import.meta.url), 'utf8');
 function fixture() {
     const elements = new Map(), downloads = [], blobs = [], revoked = [], timers = [];
     const element = id => {
@@ -21,6 +22,7 @@ function fixture() {
         createElement: () => ({ click() { downloads.push({ filename: this.download, url: this.href }); } })
     };
     const window = {};
+    vm.runInNewContext(metadataSource, { window });
     const instrumented = source.replace('    if (document.readyState === "loading")',
         '    window.downloadTest = { setupDownloadDialog, showReportDownload, state };\n    if (document.readyState === "loading")');
     vm.runInNewContext(instrumented, {
