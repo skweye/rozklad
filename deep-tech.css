@@ -1,0 +1,127 @@
+/* Shared workspace surfaces. Document sheets keep their own colors and typography. */
+body.workspace-redesign[data-app] {
+    --tech-mono: "JetBrains Mono", Consolas, monospace;
+    --tech-surface: color-mix(in srgb, var(--ui-panel) 86%, var(--ui-ground));
+    --tech-tint: color-mix(in srgb, var(--ui-accent) 10%, transparent);
+    --tech-grid: color-mix(in srgb, var(--ui-accent) 13%, transparent);
+}
+
+body.workspace-redesign[data-app] :is(.workspace-hero, .admin-hero, .library-heading) {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(24px, 5vw, 56px);
+    margin: 24px 0 28px;
+    border: 1px solid var(--ui-line);
+    border-radius: 12px;
+    background: var(--tech-surface);
+}
+body.workspace-redesign[data-app] :is(.workspace-hero, .admin-hero, .library-heading)::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background:
+        linear-gradient(var(--tech-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--tech-grid) 1px, transparent 1px),
+        radial-gradient(ellipse at right top, var(--tech-tint), transparent 72%);
+    background-size: 28px 28px, 28px 28px, 100% 100%;
+    mask-image: linear-gradient(105deg, transparent 30%, #000 96%);
+    pointer-events: none;
+}
+body.workspace-redesign[data-app] :is(.workspace-hero, .admin-hero, .library-heading) h1 {
+    color: var(--ui-text);
+    font-size: clamp(34px, 5.3vw, 72px);
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: -.06em;
+    margin-block: 12px 14px;
+}
+body.workspace-redesign[data-app] :is(.eyebrow, .card-title, .structure-label, .draft-subject, .section-heading > span) {
+    font-family: var(--tech-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .065em;
+    text-transform: uppercase;
+}
+body.workspace-redesign[data-app] :is(.eyebrow, .heading-dot) { color: var(--ui-accent); }
+body.workspace-redesign[data-app] :is(.hero-link, .schedule-day-navigation a) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--ui-line);
+    border-radius: 7px;
+    background: var(--ui-ground);
+    color: var(--ui-text);
+    text-decoration: none;
+}
+body.workspace-redesign[data-app] :is(.hero-link, .schedule-day-navigation a):hover { border-color: var(--ui-accent); color: var(--ui-accent); }
+body.workspace-redesign[data-app] :is(.timer, .lesson-hours, .lesson-number, .classroom-countdown, .week-indicator, #draftCount) {
+    font-family: var(--tech-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+body.workspace-redesign[data-app] .status-grid { gap: 12px; padding: 0; border: 0; }
+body.workspace-redesign[data-app] .status-grid > .card,
+body.workspace-redesign[data-app] .status-grid > .card:first-child,
+body.workspace-redesign[data-app] .status-grid > .card + .card {
+    padding: 18px;
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 10px !important;
+    background: var(--tech-surface) !important;
+}
+body.workspace-redesign[data-app] .status-grid .highlight-info { overflow-wrap: anywhere; }
+body.workspace-redesign[data-app] .overview-sidebar > .links-grid { gap: 8px; }
+body.workspace-redesign[data-app] .overview-layout .link-card,
+body.workspace-redesign[data-app] .overview-layout .link-card + .link-card {
+    padding: 7px 12px;
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 7px;
+    background: var(--tech-surface);
+}
+body.workspace-redesign[data-app] .overview-layout .link-card:hover { border-color: var(--ui-accent) !important; }
+body.workspace-redesign[data-app] .schedule-grid { gap: 10px; }
+body.workspace-redesign[data-app] .schedule-grid > .day-card,
+body.workspace-redesign[data-app] .schedule-grid > .day-card:first-child,
+body.workspace-redesign[data-app] .schedule-grid > .day-card:last-child,
+body.workspace-redesign[data-app] .schedule-grid > .day-card + .day-card {
+    padding: 10px 12px !important;
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 9px !important;
+    background: var(--tech-surface) !important;
+}
+body.workspace-redesign[data-app] .schedule-grid > .day-card.is-today { border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line)) !important; }
+body.workspace-redesign[data-app] .day-card.is-today .day-header { border-color: var(--ui-accent); }
+body.workspace-redesign[data-app] .day-header { padding: 10px 0; border-bottom-width: 1px; }
+body.workspace-redesign[data-app] .subject-name { font-weight: 600; }
+
+body.workspace-redesign.report-studio[data-app] .reports-library { padding-top: 0; }
+body.workspace-redesign.report-studio[data-app] :is(.draft-card, .editor-toolbar, .library-empty) {
+    border: 1px solid var(--ui-line);
+    border-radius: 10px;
+    background: var(--tech-surface);
+}
+body.workspace-redesign.report-studio[data-app] .draft-card:hover { border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--ui-line)); }
+body.workspace-redesign.report-studio[data-app] .editor-toolbar { margin-top: 16px; padding: 12px; }
+body.workspace-redesign.report-studio[data-app] .document-sheet { box-shadow: 0 12px 42px #0004; }
+body.workspace-redesign[data-app="admin"] .admin-gate,
+body.workspace-redesign[data-app="admin"] .admin-widget {
+    padding: clamp(16px, 3vw, 28px);
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 10px !important;
+    background: var(--tech-surface) !important;
+}
+
+@media (max-width: 1150px) {
+    body.workspace-redesign[data-app] .schedule-grid > .day-card { gap: 0 16px; }
+}
+@media (max-width: 600px) {
+    body.workspace-redesign[data-app] :is(.workspace-hero, .admin-hero, .library-heading) {
+        align-items: flex-start;
+        padding: 20px;
+        margin-top: 16px;
+        gap: 16px;
+    }
+}

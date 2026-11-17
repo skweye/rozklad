@@ -3,6 +3,11 @@
     'use strict';
     const key = 'studyAppearanceV1';
     const themes = {
+        'deep-tech': {
+            name: 'Deep Tech', ground: '#0b1019', panel: '19,28,42', shade: '#162b43',
+            accent: '#85e5f7', text: '#eef4fc', muted: '#a7b7cb',
+            line: '#2b3a50', inset: '#0d1522', soft: '#152134'
+        },
         neumorphism: { name: 'Neumorphism', ground: '#e6ebf2', panel: '230,235,242', shade: '#edf1f7', accent: '#506894', light: true },
         'neumorphism-dark': { name: 'Neumorphism Dark', ground: '#252b34', panel: '37,43,52', shade: '#303946', accent: '#93b4ee' },
         cyber: { name: 'Cyber / Neon', ground: '#080d14', panel: '15,23,34', shade: '#12322e', accent: '#00ff88' },
@@ -20,7 +25,7 @@
     const read = name => { try { return localStorage.getItem(name); } catch { return null; } };
     const cookie = name => { try { return decodeURIComponent(document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))?.[1] || ''); } catch { return ''; } };
     function normalize(value = {}) {
-        const theme = value.theme === 'graphite' ? 'dualshot' : Object.hasOwn(themes, value.theme) ? value.theme : 'neumorphism';
+        const theme = value.theme === 'graphite' ? 'dualshot' : Object.hasOwn(themes, value.theme) ? value.theme : 'deep-tech';
         const accent = value.theme === 'graphite' && typeof value.accent === 'string' && value.accent.toLowerCase() === '#bdbdbd' ? themes.dualshot.accent : value.accent;
         return {
             theme,

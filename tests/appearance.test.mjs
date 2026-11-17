@@ -4,8 +4,9 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../site-appearance.js', import.meta.url), 'utf8');
 const key = 'studyAppearanceV1';
-const themeNames = ['neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'dualshot'];
+const themeNames = ['deep-tech', 'neumorphism', 'neumorphism-dark', 'cyber', 'amoled', 'minimal', 'green', 'purple', 'sunset', 'university', 'glass', 'coffee', 'dualshot'];
 const themeAccents = {
+    'deep-tech': '#85e5f7',
     neumorphism: '#506894', 'neumorphism-dark': '#93b4ee', cyber: '#00ff88', amoled: '#f2f2f2',
     minimal: '#334155', green: '#6ed6a0', purple: '#b79aff', sunset: '#ffa575',
     university: '#8a633e', glass: '#c3ced9', coffee: '#cda985', dualshot: '#212222'
@@ -66,7 +67,7 @@ function fixture({ saved = new Map(), blocked = false, quietMode = false, cores 
 
 test('every theme applies its own accent while retaining background and transparency', () => {
     const f = fixture();
-    assert.equal(f.api.snapshot().accent, themeAccents.neumorphism);
+    assert.equal(f.api.snapshot().accent, themeAccents['deep-tech']);
     f.control('[name="accentHex"]').events.change({ target: { value: '#AABBCC' } });
     f.control('[name="background"]').events.change({ target: { value: 'solid' } });
     f.opacity[2].events.click();
@@ -132,7 +133,7 @@ test('legacy settings migrate, invalid settings fall back, blocked writes leave 
     const old = f.api.snapshot().accent;
     f.control('[name="accentHex"]').events.change({ target: { value: 'red;url(x)' } });
     assert.equal(f.api.snapshot().accent, old);
-    assert.equal(f.api.normalize({ theme: '__proto__', accent: 'red', transparency: 99 }).theme, 'neumorphism');
+    assert.equal(f.api.normalize({ theme: '__proto__', accent: 'red', transparency: 99 }).theme, 'deep-tech');
 });
 
 test('soft coffee theme uses its warm accent; manual changes persist until selecting a theme', () => {
@@ -201,8 +202,8 @@ test('glass primes reflective edges, restores across pages and does not leak int
         const themeIndex = styles.findIndex(style => style.includes('frosted-glass.css'));
         const layoutIndex = styles.findIndex(style => style.includes('editorial.css'));
         assert.ok(themeIndex >= 0 && layoutIndex > themeIndex, 'The shared editorial layout loads after theme styling');
-        if (page === 'reports/index.html') assert.match(styles.at(-1), /flow\.css/, 'Report workflow overrides the shared layout');
-        else assert.match(styles.at(-1), /editorial\.css/, 'The card-free layout has priority across palettes');
+        if (page === 'reports/index.html') assert.ok(styles.findIndex(style => style.includes('flow.css')) > layoutIndex);
+        assert.match(styles.at(-1), /deep-tech\.css/, 'Shared workspace styling loads after layout and theme styles');
     }
 });
 
@@ -264,16 +265,18 @@ test('accent text retains contrast even for black, white and neon accents', () =
     }
 });
 
-test('neumorphism is the fresh default without overwriting saved appearance; every app loads its stylesheet', async () => {
+test('Deep Tech is the fresh default without overwriting saved appearance', async () => {
     const fresh = fixture();
-    assert.equal(fresh.api.snapshot().theme, 'neumorphism');
-    assert.equal(fresh.body.style.colorScheme, 'light');
-    assert.equal(fresh.body.style.values.get('--ui-ground'), '#e6ebf2');
+    assert.equal(fresh.api.snapshot().theme, 'deep-tech');
+    assert.equal(fresh.body.style.colorScheme, 'dark');
+    assert.equal(fresh.body.style.values.get('--ui-ground'), '#0b1019');
     const existing = fixture({ saved: new Map([[key, JSON.stringify({ theme: 'purple', accent: '#abcdef', background: 'solid', transparency: 30 })]]) });
     assert.equal(existing.api.snapshot().theme, 'purple');
     assert.equal(existing.api.snapshot().accent, '#abcdef');
     for (const file of ['index.html', 'reports/index.html', 'admin/index.html']) {
-        assert.match(await readFile(new URL(`../${file}`, import.meta.url), 'utf8'), /href="[^"\n]*neumorphism\.css"/);
+        const html = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
+        assert.match(html, /href="[^"\n]*neumorphism\.css"/);
+        assert.match(html, /href="[^"\n]*deep-tech\.css\?v=20261117"/);
     }
     const css = await readFile(new URL('../neumorphism.css', import.meta.url), 'utf8');
     assert.match(css, /--neu-inset: inset/);
@@ -344,7 +347,7 @@ test('early application handles wallpapers, corrupt storage and disabled storage
     assert.match(f.body.style.values.get('background'), /data:image\/png/);
     const corrupt = fixture({ early: true, blocked: true, saved: new Map([[key, '{broken']]) });
     corrupt.startBody(); corrupt.domReady();
-    assert.equal(corrupt.body.dataset.theme, 'neumorphism');
+    assert.equal(corrupt.body.dataset.theme, 'deep-tech');
     assert.equal(corrupt.body.style.values.has('visibility'), false);
     assert.equal(corrupt.body.style.values.has('opacity'), false);
 });
