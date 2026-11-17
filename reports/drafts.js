@@ -36,7 +36,7 @@
             button.className = `draft-action ${className}`; button.textContent = label;
             button.addEventListener('click', handler); return button;
         }
-        function editor(section = '#reportDetails') { window.ReportStudio.showEditor(section); updateTitle(); }
+        function editor(section = '#reportStudent') { window.ReportStudio.showEditor(section); updateTitle(); }
         function isBlank(state) {
             return !state.discipline?.trim() && !state.labTheme?.trim() && !state.labGoal?.trim()
                 && !state.labEquipment?.trim() && !state.cipher?.trim() && !state.studentTeacher?.trim()

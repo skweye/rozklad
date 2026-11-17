@@ -30,7 +30,7 @@
     <script src="../schedule-time.js" defer></script>
     <script src="../background-notifications.js?v=20260930" defer></script>
     <script src="../schedule-notices.js" defer></script>
-    <link rel="stylesheet" href="flow.css?v=20261021-account-reports">
+    <link rel="stylesheet" href="flow.css?v=20261117-document-editor">
 </head>
 
 <body data-app="reports" class="report-studio workspace-redesign">
@@ -64,116 +64,59 @@
             <button type="button" id="btnExportDraft">Експорт чернетки</button><button type="button" id="btnImportDraft">Імпорт чернетки</button>
             <button type="button" id="btnClearForm" class="btn-danger-nav">Очистити звіт</button><button type="button" id="btnStudioHelp">Інструкція</button>
         </div></details>
-        <button type="button" class="btn" id="btnToggleSplitView" aria-pressed="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg><span id="splitViewText">Перегляд</span></button>
+        <button type="button" class="btn" id="btnOpenPreview">Перегляд</button>
         <button type="button" class="btn btn-primary" id="btnDownloadReport"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Скачати</button>
     </div>
     <input type="file" id="draftFileInput" accept=".json" hidden>
-    <div class="mobile-editor-tabs" aria-label="Режим роботи"><button type="button" id="btnMobileEdit" aria-pressed="true">Редактор</button><button type="button" id="btnMobilePreview" aria-pressed="false">Перегляд</button></div>
     <div class="report-editor-layout">
     <nav class="report-steps" aria-label="Розділи звіту"><p class="structure-label">СТРУКТУРА ЗВІТУ</p>
         <a href="#reportStudent"><span>01</span> Титульна сторінка</a><a href="#reportDetails"><span>02</span> Відомості про роботу</a><a href="#reportWork"><span>03</span> Хід роботи</a><a href="#reportQuestions"><span>04</span> Контрольні питання</a><a href="#reportConclusion"><span>05</span> Висновок</a>
         <p class="structure-note">Обери розділ і додай зміст. Оформлення застосовується автоматично.</p>
     </nav>
     <div class="workspace-wrapper" id="workspaceWrapper">
-        <main class="main-container editor-pane">
+        <main class="main-container editor-pane document-editor" aria-label="Документ звіту">
         
 
-        <!-- 1. Дані студента (Титульний аркуш) -->
-        <details class="report-section studio-section" id="reportStudent">
-            <summary><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#user"/></svg><h2>Титульна сторінка</h2><span class="studio-chevron" aria-hidden="true"></span></summary>
-            <div class="studio-section-body">
-            <div class="form-grid-2">
-                <div class="form-group">
-                    <label for="studentName">Студент (ПІБ) <span class="req">*</span></label>
-                    <input type="text" id="studentName" class="form-control" placeholder="Наприклад: Гриженко Я. М."
-                        required>
-                </div>
-                <div class="form-group">
-                    <label for="studentGroup">Група <span class="req">*</span></label>
-                    <input type="text" id="studentGroup" class="form-control" placeholder="Наприклад: ПЗ-24-1/9"
-                        required>
-                </div>
-                <div class="form-group">
-                    <label for="studentTeacher">Перевірив (Викладач) <span class="req">*</span></label>
-                    <input type="text" id="studentTeacher" class="form-control"
-                        placeholder="Наприклад: Саприкіна І.Г." required>
-                </div>
-                <div class="form-group">
-                    <label for="reportYear">Навчальний рік (у самому низу сторінки) <span class="req">*</span></label>
-                    <input type="text" id="reportYear" class="form-control" value="2026 – 2027 н.р."
-                        placeholder="2026 – 2027 н.р." required>
-                </div>
+        <section class="document-sheet document-cover studio-section" id="reportStudent" tabindex="-1" aria-label="Титульна сторінка">
+            <header class="document-institution">
+                <strong>Міністерство освіти і науки України</strong><br>
+                Фаховий коледж зварювання та електроніки імені Є.О. Патона
+            </header>
+            <div class="document-title">
+                <h1>ЗВІТ</h1>
+                <div class="document-lab"><label for="labNumberInput">З ЛАБОРАТОРНОЇ РОБОТИ №</label><input type="number" id="labNumberInput" class="form-control" value="1" min="1" max="50" aria-label="Номер лабораторної роботи"></div>
+                <p>навчальної дисципліни</p>
+                <select id="disciplineInput" class="form-control" aria-label="Дисципліна"><option value="">Оберіть дисципліну</option></select>
+                <select id="cipherInput" class="form-control" aria-label="Шифр роботи"><option value="">Оберіть шифр</option></select>
+                <div class="document-variant"><label for="variantInput">Варіант для шифру</label><input type="number" id="variantInput" class="form-control" min="1" max="99" step="1" placeholder="№"></div>
             </div>
+            <div class="document-student">
+                <label for="studentName">Студент</label><input type="text" id="studentName" class="form-control" placeholder="ПІБ студента" required>
+                <label for="studentGroup">Група</label><input type="text" id="studentGroup" class="form-control" placeholder="Група" required>
+                <label for="studentTeacher">Перевірив</label><input type="text" id="studentTeacher" class="form-control" placeholder="ПІБ викладача" required>
+            </div>
+            <input type="text" id="reportYear" class="form-control document-year" value="2026 – 2027 н.р." aria-label="Навчальний рік" required>
+        </section>
 
-            </div>
-        </details>
-
-        <!-- 2. Інформація про лабораторну роботу -->
-        <details class="report-section studio-section" id="reportDetails" open>
-            <summary><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg><h2 id="labTitleDisplay">Лабораторна робота №1</h2><span class="studio-chevron" aria-hidden="true"></span></summary>
-            <div class="studio-section-body">
-            <div class="lab-meta-display">
-                <div class="meta-item" style="max-width: 160px;">
-                    <label for="labNumberInput">Номер роботи</label>
-                    <input type="number" id="labNumberInput" class="form-control" value="1" min="1" max="50"
-                        style="font-weight: 700; font-size: 0.95rem;">
-                </div>
-                <div class="meta-item">
-                    <label for="disciplineInput">Дисципліна</label>
-                    <select id="disciplineInput" class="form-control"><option value="">Оберіть дисципліну</option></select>
-                </div>
-                <div class="meta-item">
-                    <label for="variantInput">Варіант</label>
-                    <input type="number" id="variantInput" class="form-control" min="1" max="99" step="1" placeholder="Наприклад: 6" aria-describedby="cipherHint">
-                </div>
-                <div class="meta-item">
-                    <label for="cipherInput">Шифр роботи</label>
-                    <select id="cipherInput" class="form-control" aria-describedby="cipherHint"><option value="">Оберіть шифр</option></select>
-                    <p id="cipherHint" class="card-subtitle">Шифр формується з дисципліни, варіанта та номера роботи. Наприклад: ФКЗЕ.121БД06.01ЛР.</p>
-                </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem;">
-                <div class="form-group">
-                    <label for="labTheme">Тема роботи:</label>
-                    <textarea id="labTheme" class="form-control" rows="1"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="labGoal">Мета роботи:</label>
-                    <textarea id="labGoal" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="labEquipment">Обладнання:</label>
-                    <textarea id="labEquipment" class="form-control" rows="1"></textarea>
-                </div>
-            </div>
-            </div>
-        </details>
+        <article class="document-sheet document-body">
+            <section class="studio-section" id="reportDetails" tabindex="-1" aria-label="Відомості про роботу">
+                <div class="document-line"><label for="labTheme">Тема роботи:</label><textarea id="labTheme" class="form-control" rows="1" placeholder="Введіть тему"></textarea></div>
+                <div class="document-line"><label for="labGoal">Мета роботи:</label><textarea id="labGoal" class="form-control" rows="1" placeholder="Введіть мету"></textarea></div>
+                <div class="document-line"><label for="labEquipment">Обладнання:</label><textarea id="labEquipment" class="form-control" rows="1" placeholder="Вкажіть обладнання"></textarea></div>
+            </section>
 
         <!-- 4. Хід роботи -->
-        <details class="report-section studio-section" id="reportWork">
-            <summary><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#list"/></svg><h2>Хід роботи</h2><span class="studio-chevron" aria-hidden="true"></span></summary>
+        <section class="studio-section" id="reportWork" tabindex="-1" aria-labelledby="reportWorkTitle">
+            <h2 class="document-heading" id="reportWorkTitle">Хід роботи</h2>
             <div class="studio-section-body">
-            <div class="card-section-header work-section-header">
-                <div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
-                        Додавайте лише потрібні блоки та змінюйте їх порядок.
-                    </p>
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm" id="btnAddCustomTask">
-                    <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Додати блок
-                </button>
-            </div>
-
-            <p class="rb-rules">Вільний зміст, єдине оформлення: A4 · Times New Roman 14 · інтервал 1,5.
-                Описуйте дії безособово: «Відкрито…», «Створено…», «Перевірено…».
-                Пункти та рисунки нумеруються автоматично.</p>
+            <div class="document-insert"><button type="button" class="btn btn-secondary btn-sm" id="btnAddCustomTask">+ Додати блок</button></div>
             <div id="tasksContainer" aria-label="Блоки ходу роботи"></div>
             </div>
-        </details>
+        </section>
 
         <!-- 5. Відповіді на контрольні питання -->
-        <details class="report-section studio-section" id="reportQuestions">
-            <summary><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#book"/></svg><h2>Контрольні питання</h2><span class="studio-chevron" aria-hidden="true"></span></summary>
+        <section class="studio-section" id="reportQuestions" tabindex="-1" aria-labelledby="reportQuestionsTitle">
+            <h2 class="document-heading" id="reportQuestionsTitle">Відповіді на контрольні питання</h2>
             <div class="studio-section-body">
             <div class="card-section-header">
                 <div>
@@ -203,11 +146,11 @@
                 </button>
             </div>
             </div>
-        </details>
+        </section>
 
         <!-- 6. Висновок -->
-        <details class="report-section studio-section" id="reportConclusion">
-            <summary><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg><h2>Висновок</h2><span class="studio-chevron" aria-hidden="true"></span></summary>
+        <section class="studio-section" id="reportConclusion" tabindex="-1" aria-labelledby="reportConclusionTitle">
+            <h2 class="document-heading" id="reportConclusionTitle">Висновок</h2>
             <div class="studio-section-body">
             <div class="conclusion-header">
                 <button type="button" class="btn btn-secondary btn-sm" id="btnAutoConclusion"
@@ -224,55 +167,14 @@
                     placeholder="Введіть висновок до роботи..."></textarea>
             </div>
             </div>
-        </details>
+        </section>
 
-        <!-- Нижні головні кнопки -->
-        <div class="actions-footer">
-            <button type="button" class="btn btn-secondary btn-lg" id="btnOpenPreview">
-                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#eye"/></svg>Попередній перегляд (A4)
-            </button>
-            <button type="button" class="btn btn-primary btn-lg" id="btnGenerateDocx">
-                <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Завантажити звіт .docx
-            </button>
-        </div>
+        </article>
     </main>
-
-    <!-- Права колонка: Перегляд файлу в реальному часі -->
-    <aside class="live-preview-pane" id="livePreviewPane">
-        <div class="live-preview-card">
-            <div class="live-preview-header">
-                <div class="live-preview-title">
-                    <span>Попередній перегляд <small>Документ A4 · зміни наживо</small></span>
-                </div>
-                <span class="studio-document-tag"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg>Документ</span>
-            </div>
-            <div class="live-preview-viewport" id="livePreviewViewport">
-                <div class="live-preview-scaler" id="livePreviewScaler">
-                    <div class="live-preview-content" id="livePreviewContent">
-                        <!-- Тут наживо рендериться A4 документ у реальному часі -->
-                    </div>
-                </div>
-            </div>
-            <div class="studio-preview-footer">
-                <div class="live-preview-tools">
-                    <button type="button" class="btn-tool" id="btnZoomOut" title="Зменшити масштабування">−</button>
-                    <span class="zoom-badge" id="zoomBadge">75%</span>
-                    <button type="button" class="btn-tool" id="btnZoomIn" title="Збільшити масштабування">+</button>
-                    <button type="button" class="btn-tool" id="btnZoomFit" title="Вписати по ширині">Fit</button>
-                    <button type="button" class="btn btn-primary btn-sm btn-quick-docx" id="btnLiveDocx" title="Сформувати та скачати готовий звіт DOCX">
-                        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#download"/></svg>Завантажити .docx
-                    </button>
-                </div>
-            </div>
-        </div>
-    </aside>
-</div>
-
-</div></section>
-<!-- Мобільна плаваюча кнопка для швидкого перегляду -->
-<button type="button" class="floating-preview-btn" id="btnFloatingPreview" title="Перегляд наживо">
-    <span class="live-pulse-dot"></span> Перегляд
-</button>
+    </div>
+    </div>
+    <button type="button" id="btnGenerateDocx" hidden>Завантажити звіт .docx</button>
+    </section>
 
 <!-- Налаштування, синхронізовані з сайтом розкладу (без авто-відкриття) -->
 <div class="reports-settings-fab-container">
@@ -289,19 +191,18 @@
         <div class="studio-help-heading"><h2 id="studioHelpTitle">Як створити звіт</h2><button type="button" class="btn-tool" id="btnCloseStudioHelp" aria-label="Закрити інструкцію">×</button></div>
         <ol>
             <li><strong>Заповни дані.</strong> Вкажи ПІБ, групу, дисципліну, тему та мету роботи.</li>
-            <li><strong>Додай свій зміст.</strong> У розділі «Хід роботи» обирай текст, пункти, фото, код або таблиці. Змінюй їх порядок як потрібно.</li>
-            <li><strong>Перевір результат.</strong> Перегляд праворуч оновлюється автоматично. Питання та висновок можна відредагувати окремо.</li>
+            <li><strong>Додай свій зміст.</strong> Клацни правою кнопкою в документі або натисни «Додати блок», щоб вставити текст, пункти, фото, код чи таблиці.</li>
+            <li><strong>Перевір результат.</strong> Натисни «Перегляд», щоб побачити оформлений звіт перед завантаженням.</li>
             <li><strong>Завантаж документ.</strong> Кнопка «Скачати» вгорі створює файл .docx. Вміст звіту залишається в редакторі.</li>
         </ol>
         <p>Після входу «Мої звіти» зберігаються в акаунті й доступні на інших пристроях. Без входу роботи залишаються в цьому браузері. Для резервної копії використовуй «Експорт чернетки».</p>
     </dialog>
 
     <!-- Модальне вікно попереднього перегляду -->
-    <div class="modal-overlay" id="previewModal">
-        <div class="modal-sheet">
+    <dialog class="modal-sheet report-preview-dialog" id="previewModal" aria-labelledby="reportPreviewTitle">
             <div class="modal-header">
-                <h2>Попередній перегляд звіту (A4)</h2>
-                <button type="button" class="modal-close-btn" id="btnClosePreview">&times;</button>
+                <h2 id="reportPreviewTitle">Попередній перегляд звіту (A4)</h2>
+                <button type="button" class="modal-close-btn" id="btnClosePreview" aria-label="Закрити перегляд">&times;</button>
             </div>
             <div class="modal-body" id="previewContainer">
                 <!-- Тут рендериться віртуальний документ А4 -->
@@ -310,8 +211,7 @@
                 <button type="button" class="btn btn-secondary" id="btnClosePreviewBottom">Закрити</button>
                 <button type="button" class="btn btn-primary" id="btnGenerateFromPreview">Сформувати DOCX</button>
             </div>
-        </div>
-    </div>
+    </dialog>
 
 
     <dialog class="drafts-dialog" id="draftsDialog" aria-labelledby="draftsTitle">
@@ -366,14 +266,14 @@
 
     <!-- Вільний конструктор блоків -->
     <script src="delete-confirm.js"></script>
-    <script src="blocks.js?v=20261026-table-text-wrap"></script>
+    <script src="blocks.js?v=20261117-document-editor"></script>
     <script src="drafts-store.js?v=20261021-auto-transfer"></script>
-    <script src="drafts.js?v=20261021-account-reports"></script>
+    <script src="drafts.js?v=20261117-document-editor"></script>
 
     <!-- Головна логіка додатку -->
-    <script src="studio.js?v=20261021-account-reports"></script>
+    <script src="studio.js?v=20261117-document-editor"></script>
     <script src="metadata.js?v=20261028"></script>
-    <script src="script.js?v=20261028-metadata"></script>
+    <script src="script.js?v=20261117-document-editor"></script>
     <script>
         (() => {
             const fab = document.getElementById('reportsSettingsFab');

@@ -4,29 +4,22 @@
     const el = id => document.getElementById(id);
     const sections = [...document.querySelectorAll('.studio-section')];
     const links = [...document.querySelectorAll('.report-steps a')];
-    let active = '#reportDetails';
-    function mobilePreview(preview) {
-        el('reportsEditor').classList.toggle('mobile-preview', preview);
-        el('btnMobileEdit').setAttribute('aria-pressed', String(!preview));
-        el('btnMobilePreview').setAttribute('aria-pressed', String(preview));
-        window.dispatchEvent(new Event('resize'));
-    }
+    let active = '#reportStudent';
     function reveal(hash, focus = false) {
         const target = sections.find(section => `#${section.id}` === hash);
         if (!target) return;
         active = hash;
-        for (const section of sections) { section.hidden = section !== target; section.open = section === target; }
         for (const link of links) {
             if (link.getAttribute('href') === hash) link.setAttribute('aria-current', 'step');
             else link.removeAttribute('aria-current');
         }
-        mobilePreview(false);
-        if (focus) target.querySelector('summary').focus({ preventScroll: true });
-        window.dispatchEvent(new Event('resize'));
+        if (focus) target.focus({ preventScroll: true });
+        if (!el('reportsEditor').hidden) target.scrollIntoView({ block: 'start' });
     }
     function showEditor(hash = active) {
         el('reportsLibrary').hidden = true; el('reportsEditor').hidden = false;
-        reveal(hash, true); window.scrollTo({ top: 0 });
+        reveal(hash, true);
+        if (hash === '#reportStudent') window.scrollTo({ top: 0 });
     }
     function showLibrary(focus = true) {
         el('reportsEditor').hidden = true; el('reportsLibrary').hidden = false;
@@ -34,13 +27,9 @@
     }
     links.forEach(link => link.addEventListener('click', event => { event.preventDefault(); reveal(link.getAttribute('href'), true); }));
     document.querySelector('.studio-skip').addEventListener('click', event => { event.preventDefault(); showEditor(); });
-    // Native details remain keyboard accessible, but a selected section stays expanded.
-    sections.forEach(section => section.querySelector('summary').addEventListener('click', event => event.preventDefault()));
     const help = el('studioHelpDialog');
     el('btnStudioHelp').addEventListener('click', () => help.showModal());
     el('btnCloseStudioHelp').addEventListener('click', () => help.close());
-    el('btnMobileEdit').addEventListener('click', () => mobilePreview(false));
-    el('btnMobilePreview').addEventListener('click', () => mobilePreview(true));
     el('btnLibraryImport').addEventListener('click', () => el('btnImportDraft').click());
     const exportDialog = el('reportExportDialog');
     el('btnDownloadReport').addEventListener('click', () => {

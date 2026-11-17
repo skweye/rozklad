@@ -42,7 +42,6 @@
         studentGroup: document.getElementById("studentGroup"),
         studentTeacher: document.getElementById("studentTeacher"),
         reportYear: document.getElementById("reportYear"),
-        labTitleDisplay: document.getElementById("labTitleDisplay"),
         labNumberInput: document.getElementById("labNumberInput"),
         disciplineInput: document.getElementById("disciplineInput"),
         cipherInput: document.getElementById("cipherInput"),
@@ -80,19 +79,6 @@
         btnClearForm: document.getElementById("btnClearForm"),
         saveStatusIndicator: document.getElementById("saveStatusIndicator"),
         workspaceWrapper: document.getElementById("workspaceWrapper"),
-        livePreviewPane: document.getElementById("livePreviewPane"),
-        livePreviewViewport: document.getElementById("livePreviewViewport"),
-        livePreviewScaler: document.getElementById("livePreviewScaler"),
-        livePreviewContent: document.getElementById("livePreviewContent"),
-        btnToggleSplitView: document.getElementById("btnToggleSplitView"),
-        btnFloatingPreview: document.getElementById("btnFloatingPreview"),
-        btnZoomIn: document.getElementById("btnZoomIn"),
-        btnZoomOut: document.getElementById("btnZoomOut"),
-        btnZoomFit: document.getElementById("btnZoomFit"),
-        zoomBadge: document.getElementById("zoomBadge"),
-        btnLiveDocx: document.getElementById("btnLiveDocx"),
-        splitViewIcon: document.getElementById("splitViewIcon"),
-        splitViewText: document.getElementById("splitViewText"),
         appDialog: document.getElementById("appDialog"),
         appDialogIcon: document.getElementById("appDialogIcon"),
         appDialogTitle: document.getElementById("appDialogTitle"),
@@ -236,7 +222,7 @@
         }
         if (draftLibrary) {
             draftsUI = window.ReportDrafts.mount({ library: draftLibrary, getState: () => state,
-                applyState: saved => { loadFromStorage(saved); triggerLivePreview(); },
+                applyState: loadFromStorage,
                 blankState: () => ({ ...emptyReport, tasks: [], questions: [], studentName: state.studentName,
                     studentGroup: state.studentGroup, reportYear: state.reportYear, studentTeacher: "" }),
                 flush: async () => {
@@ -259,17 +245,6 @@
         }
         dom.workspaceWrapper.inert = false;
 
-        // Відновлення налаштувань режиму розділеного екрану
-        if (dom.workspaceWrapper) {
-            let savedSplit;
-            try { savedSplit = localStorage.getItem("reportsSplitView"); } catch { /* Private mode may block storage. */ }
-            if (savedSplit === "single") {
-                dom.workspaceWrapper.classList.add("single-column");
-                if (dom.btnToggleSplitView) dom.btnToggleSplitView.setAttribute("aria-pressed", "false");
-                if (dom.splitViewText) dom.splitViewText.textContent = "Показати перегляд";
-            }
-        }
-
         bindEvents();
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden" && !reportSwitching) { clearTimeout(autoSaveTimer); void saveToStorage(); }
@@ -283,8 +258,6 @@
                 resizeTextArea(event.target);
             }
         });
-        triggerLivePreview();
-        setTimeout(fitZoom, 200);
         if (draftsUI) {
             if (/^#report(Student|Details|Work|Questions|Conclusion)$/.test(location.hash)) window.ReportStudio.showEditor(location.hash);
             else await draftsUI.open(false);
@@ -317,7 +290,7 @@
                         try {
                             loadFromStorage(await draftLibrary.startNew(state, pending.state));
                             await recovery.clear(); button.hidden = true;
-                            draftsUI.updateTitle(); window.ReportStudio.showEditor(); triggerLivePreview();
+                            draftsUI.updateTitle(); window.ReportStudio.showEditor();
                         } catch (error) { showAppNotice(window.studyAuth.errorMessage(error), 'error'); }
                         finally { reportSwitching = false; button.disabled = false; }
                     };
@@ -369,7 +342,6 @@
         }
 
         dom.labNumberInput.value = state.labNumber;
-        dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
         dom.disciplineInput.value = state.discipline;
         dom.cipherInput.value = state.cipher;
         metadata.restore();
@@ -393,10 +365,9 @@
         if (!blockEditor) blockEditor = window.ReportBlocks.editor({
             container: dom.tasksContainer, getItems: () => state.tasks,
             onChange: triggerAutoSave, confirm: window.ReportDeleteConfirm.request, notice: showAppNotice,
-            resize: resizeReportTextAreas
+            resize: resizeReportTextAreas, addQuestion: addNewQuestion
         });
         blockEditor.render();
-        triggerLivePreview();
     }
 
     function addNewQuestion() {
@@ -552,7 +523,6 @@
             });
         });
         resizeReportTextAreas(dom.questionsContainer);
-        triggerLivePreview();
     }
 
     function conclusionFromGoal(value) {
@@ -643,7 +613,6 @@
 
         dom.labNumberInput.addEventListener("input", (e) => {
             state.labNumber = parseInt(e.target.value, 10) || 1;
-            dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
             metadata.update();
             triggerAutoSave();
         });
@@ -671,6 +640,20 @@
         dom.btnAutoConclusion.addEventListener("click", fillConclusionFromGoal);
 
         dom.btnAddCustomTask.addEventListener("click", () => blockEditor.open());
+        function openInsertMenu(event, point) {
+            if (!event.target.closest(".document-sheet")) return;
+            event.preventDefault();
+            const block = event.target.closest("#tasksContainer [data-block]");
+            blockEditor.open(block?.dataset.block, point);
+        }
+        dom.workspaceWrapper.addEventListener("contextmenu", event => {
+            if (!event.shiftKey) openInsertMenu(event, { x: event.clientX, y: event.clientY });
+        });
+        dom.workspaceWrapper.addEventListener("keydown", event => {
+            if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
+            const rect = event.target.getBoundingClientRect();
+            openInsertMenu(event, { x: rect.left, y: rect.bottom });
+        });
 
         if (dom.btnAddQuestion) {
             dom.btnAddQuestion.addEventListener("click", addNewQuestion);
@@ -731,35 +714,6 @@
             }
         });
 
-        // Слухачі для живого перегляду праворуч
-        if (dom.btnToggleSplitView) {
-            dom.btnToggleSplitView.addEventListener("click", toggleSplitView);
-        }
-        if (dom.btnFloatingPreview) {
-            dom.btnFloatingPreview.addEventListener("click", () => {
-                if (dom.livePreviewPane) {
-                    dom.livePreviewPane.scrollIntoView({ behavior: "smooth" });
-                }
-            });
-        }
-        if (dom.btnZoomIn) {
-            dom.btnZoomIn.addEventListener("click", () => applyZoom(currentZoom + 0.08));
-        }
-        if (dom.btnZoomOut) {
-            dom.btnZoomOut.addEventListener("click", () => applyZoom(currentZoom - 0.08));
-        }
-        if (dom.btnZoomFit) {
-            dom.btnZoomFit.addEventListener("click", fitZoom);
-        }
-        if (dom.btnLiveDocx) {
-            dom.btnLiveDocx.addEventListener("click", () => generateDocxDocument());
-        }
-
-        window.addEventListener("resize", () => {
-            if (autoFitZoom) {
-                fitZoom();
-            }
-        });
     }
 
     function setSaveStatus(text, statusType = "saved") {
@@ -783,7 +737,6 @@
     }
 
     function triggerAutoSave() {
-        triggerLivePreview();
         if (reportSwitching) return;
 
         setSaveStatus("Збереження...", "saving");
@@ -865,7 +818,6 @@
             dom.studentTeacher.value = state.studentTeacher;
             dom.reportYear.value = state.reportYear;
             dom.labNumberInput.value = state.labNumber;
-            dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber}`;
             dom.disciplineInput.value = state.discipline;
             dom.cipherInput.value = state.cipher;
             metadata.restore();
@@ -961,7 +913,6 @@
                 dom.studentTeacher.value = state.studentTeacher || "";
                 dom.reportYear.value = state.reportYear || "2026 – 2027 н.р.";
                 dom.labNumberInput.value = state.labNumber || 1;
-                dom.labTitleDisplay.textContent = `Лабораторна робота №${state.labNumber || 1}`;
                 dom.disciplineInput.value = state.discipline || "";
                 dom.cipherInput.value = state.cipher || "";
                 state.variant = loadedState.variant ?? "";
@@ -1099,98 +1050,11 @@
 
     function openPreview() {
         dom.previewContainer.innerHTML = generateReportPreviewHtml();
-        dom.previewModal.classList.add("active");
-    }
-
-    // =========================================================================
-    // LIVE PREVIEW REAL-TIME ENGINE
-    // =========================================================================
-    let livePreviewTimer = null;
-    let livePreviewDebounce = null;
-    let currentZoom = 0.72;
-    let autoFitZoom = true;
-
-    function triggerLivePreview(immediate = false) {
-        if (!dom.livePreviewContent) return;
-        if (livePreviewDebounce) clearTimeout(livePreviewDebounce);
-        if (livePreviewTimer) cancelAnimationFrame(livePreviewTimer);
-
-        const render = () => {
-            livePreviewTimer = requestAnimationFrame(() => {
-                dom.livePreviewContent.innerHTML = generateReportPreviewHtml();
-                if (autoFitZoom) {
-                    fitZoom();
-                } else {
-                    adjustScalerHeight();
-                }
-            });
-        };
-
-        if (immediate) {
-            render();
-        } else {
-            // 350ms debounce eliminates synchronous layout thrashing and prevents caret freezing while typing
-            livePreviewDebounce = setTimeout(render, 350);
-        }
-    }
-
-    function adjustScalerHeight() {
-        if (!dom.livePreviewScaler || !dom.livePreviewContent) return;
-        const unscaledHeight = dom.livePreviewContent.offsetHeight;
-        dom.livePreviewScaler.style.height = `${unscaledHeight}px`;
-        dom.livePreviewScaler.style.marginBottom = `${(unscaledHeight * currentZoom - unscaledHeight)}px`;
-    }
-
-    function calculateFitZoom() {
-        if (!dom.livePreviewViewport) return 0.72;
-        const availableWidth = dom.livePreviewViewport.clientWidth - 28;
-        const targetWidth = 800; // standard width of .preview-page
-        let scale = availableWidth / targetWidth;
-        if (scale > 1) scale = 1;
-        if (scale < 0.35) scale = 0.35;
-        return parseFloat(scale.toFixed(2));
-    }
-
-    function applyZoom(newZoom, isAuto = false) {
-        if (newZoom !== undefined) currentZoom = newZoom;
-        if (!isAuto) autoFitZoom = false;
-        currentZoom = Math.max(0.3, Math.min(1.4, currentZoom));
-
-        if (dom.livePreviewScaler) {
-            dom.livePreviewScaler.style.transform = `scale(${currentZoom})`;
-            adjustScalerHeight();
-        }
-        if (dom.zoomBadge) {
-            dom.zoomBadge.textContent = `${Math.round(currentZoom * 100)}%`;
-        }
-    }
-
-    function fitZoom() {
-        autoFitZoom = true;
-        const fitScale = calculateFitZoom();
-        applyZoom(fitScale, true);
-    }
-
-    function toggleSplitView() {
-        if (!dom.workspaceWrapper) return;
-        const isCurrentlySingle = dom.workspaceWrapper.classList.contains("single-column");
-        if (isCurrentlySingle) {
-            dom.workspaceWrapper.classList.remove("single-column");
-            if (dom.btnToggleSplitView) dom.btnToggleSplitView.setAttribute("aria-pressed", "true");
-            if (dom.splitViewText) dom.splitViewText.textContent = "Перегляд наживо";
-            localStorage.setItem("reportsSplitView", "split");
-            triggerLivePreview();
-            setTimeout(fitZoom, 150);
-        } else {
-            dom.workspaceWrapper.classList.add("single-column");
-            if (dom.btnToggleSplitView) dom.btnToggleSplitView.setAttribute("aria-pressed", "false");
-            if (dom.splitViewText) dom.splitViewText.textContent = "Показати перегляд";
-            localStorage.setItem("reportsSplitView", "single");
-        }
+        dom.previewModal.showModal();
     }
 
     function closePreview() {
-        dom.previewModal.classList.remove("active");
+        dom.previewModal.close();
     }
 
     function getDocxFileName() {

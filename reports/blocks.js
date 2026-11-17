@@ -211,7 +211,7 @@
         }
         return out;
     }
-    function editor({ container, getItems, onChange, confirm, notice, resize }) {
+    function editor({ container, getItems, onChange, confirm, notice, resize, addQuestion }) {
         let selectedId = null, insertAfter = null, returnFocus = null;
         const dialog = document.createElement("dialog");
         dialog.className = "rb-picker";
@@ -221,8 +221,36 @@
         dialog.querySelector("[data-close]").onclick = () => dialog.close();
         dialog.addEventListener("click", e => { if (e.target === dialog) { const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
         dialog.addEventListener("close", () => returnFocus?.isConnected && returnFocus.focus({ preventScroll: true }));
-        const open = (after = null) => { insertAfter = after; returnFocus = document.activeElement; dialog.showModal(); };
-        const focusBlock = id => { const card = container.querySelector(`[data-block="${id}"]`); (card?.querySelector("textarea, input, button") || container.querySelector("[data-add]"))?.focus({ preventScroll: true }); };
+        const question = document.createElement("button");
+        question.type = "button";
+        question.className = "rb-choice";
+        question.textContent = "Контрольне питання";
+        question.hidden = !addQuestion;
+        question.onclick = () => {
+            returnFocus = null;
+            dialog.close();
+            addQuestion();
+        };
+        dialog.querySelector(".rb-picker-grid").append(question);
+        const open = (after = null, point = null) => {
+            if (dialog.open) return;
+            insertAfter = after;
+            returnFocus = document.activeElement;
+            dialog.classList.toggle("rb-context-picker", Boolean(point));
+            dialog.style.removeProperty("left");
+            dialog.style.removeProperty("top");
+            dialog.showModal();
+            if (point) {
+                const { width, height } = dialog.getBoundingClientRect();
+                dialog.style.left = `${Math.max(8, Math.min(point.x, root.innerWidth - width - 8))}px`;
+                dialog.style.top = `${Math.max(8, Math.min(point.y, root.innerHeight - height - 8))}px`;
+            }
+        };
+        const focusBlock = (id, preventScroll = true) => {
+            const card = container.querySelector(`[data-block="${id}"]`);
+            const field = card?.querySelector("textarea, .rb-image-drop, input:not([type=file])");
+            (field || card?.querySelector("button") || container.querySelector("[data-add]"))?.focus({ preventScroll });
+        };
         const changed = (redraw = false) => {
             if (redraw) {
                 // Replacing the editor temporarily shrinks the document. Restore all
@@ -250,7 +278,8 @@
             const items = getItems(), blocks = preset(button.dataset.kind);
             const afterIndex = items.findIndex(b => b.id === insertAfter);
             items.splice(afterIndex < 0 ? items.length : afterIndex + 1, 0, ...blocks);
-            dialog.close(); changed(true); focusBlock(blocks[0].id);
+            returnFocus = null;
+            dialog.close(); changed(true); focusBlock(blocks[0].id, false);
         });
         function render() {
             const items = getItems(); let step = 0, figure = 0;

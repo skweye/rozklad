@@ -342,13 +342,8 @@ test('full report export retains A4, margins, underlined student fields and titl
 });
 test('builder assets exist and are included in production build in dependency order', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
-<<<<<<< HEAD
-    const blocksAsset = 'src="blocks.js?v=20261021-table-in-place"';
-    const scriptAsset = 'src="script.js?v=20261028-metadata"';
-=======
-    const blocksAsset = 'src="blocks.js?v=20261026-table-text-wrap"';
-    const scriptAsset = 'src="script.js?v=20261021-auto-transfer"';
->>>>>>> 217cbf243788d4ea6dfbe20b50913cef56b357cf
+    const blocksAsset = 'src="blocks.js?v=20261117-document-editor"';
+    const scriptAsset = 'src="script.js?v=20261117-document-editor"';
     assert.ok(html.includes(blocksAsset));
     assert.ok(html.includes(scriptAsset));
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));

@@ -34,10 +34,8 @@ function fixture(hash = '') {
     return { sections, links, nodes, window, location, classes };
 }
 
-test('library and editor views preserve the selected section and refit the preview', () => {
+test('library and editor views return to the selected section of the document', () => {
     const f = fixture();
-    let resizes = 0;
-    f.window.addEventListener('resize', () => resizes++);
     f.window.ReportStudio.showEditor('#reportWork');
     const selected = f.sections[2];
     f.window.ReportStudio.showLibrary();
@@ -47,22 +45,20 @@ test('library and editor views preserve the selected section and refit the previ
     assert.equal(f.nodes.reportsEditor.hidden, false);
     assert.equal(f.nodes.reportsLibrary.hidden, true);
     assert.equal(f.sections[2], selected);
-    assert.equal(f.sections[2].hidden, false);
-    assert.ok(resizes > 0);
+    assert.equal(selected.scrolls, 2);
 });
 
-test('studio navigation reveals collapsed sections, marks the active step and moves keyboard focus', () => {
+test('studio navigation scrolls and focuses a section without hiding the rest of the document', () => {
     const f = fixture();
-    assert.equal(f.links[1].attrs['aria-current'], 'step');
+    assert.equal(f.links[0].attrs['aria-current'], 'step');
     let prevented = false;
     f.links[2].events.click({ preventDefault() { prevented = true; } });
     assert.equal(prevented, true);
-    assert.equal(f.sections[2].open, true);
-    assert.equal(f.sections[2].summary.focused, true);
-    assert.equal(f.sections[2].hidden, false);
+    assert.equal(f.sections[2].scrolls, 1);
+    assert.equal(f.sections[2].focused, true);
     assert.equal(f.links[2].attrs['aria-current'], 'step');
     assert.equal(f.links[1].attrs['aria-current'], undefined);
-    assert.equal(f.sections[1].hidden, true, 'Only the selected section is displayed');
+    assert.ok(f.sections.every(section => !section.hidden));
     f.window.ReportStudio.reveal('#reportStudent');
     assert.equal(f.links[0].attrs['aria-current'], 'step');
     f.window.ReportStudio.reveal('#reportDetails');
@@ -71,9 +67,9 @@ test('studio navigation reveals collapsed sections, marks the active step and mo
 
 test('deep links and help dialog work without changing report state', () => {
     const f = fixture('#reportConclusion');
-    assert.equal(f.sections[4].open, true);
+    assert.equal(f.sections[4].focused, true);
     f.location.hash = '#reportQuestions'; f.window.events.hashchange();
-    assert.equal(f.sections[3].open, true);
+    assert.equal(f.sections[3].focused, true);
     f.location.hash = '#not-a-section'; assert.doesNotThrow(() => f.window.events.hashchange());
     f.nodes.btnStudioHelp.events.click(); assert.equal(f.nodes.studioHelpDialog.open, true);
     f.nodes.btnCloseStudioHelp.events.click(); assert.equal(f.nodes.studioHelpDialog.open, false);
@@ -97,16 +93,14 @@ test('textareas in closed sections retain their minimum size and grow when revea
     assert.equal(textarea.style.height, '36px');
 });
 
-test('studio keeps unique editor controls, accessible native sections and bundled local assets', async () => {
+test('the editable sheets contain the report controls and have a separate preview dialog', async () => {
     const html = await readFile(new URL('../reports/index.html', import.meta.url), 'utf8');
     const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
     assert.equal(ids.length, new Set(ids).size);
     for (const id of ['reportStudent', 'reportDetails', 'reportWork', 'reportQuestions', 'reportConclusion']) {
-        assert.match(html, new RegExp(`<details[^>]*id="${id}"[^>]*>\\s*<summary>`));
+        assert.match(html, new RegExp(`<section[^>]*id="${id}"[^>]*tabindex="-1"`));
     }
-    for (const id of ['btnDraftLibrary', 'btnNewDraft', 'btnGenerateDocx', 'btnLiveDocx', 'btnExportDraft', 'btnImportDraft', 'btnAddCustomTask']) assert.ok(ids.includes(id));
-    const footer = html.slice(html.indexOf('class="studio-preview-footer"'), html.indexOf('<!-- Мобільна'));
-    assert.ok(footer.includes('id="btnLiveDocx"'));
+    for (const id of ['btnDraftLibrary', 'btnNewDraft', 'btnGenerateDocx', 'btnOpenPreview', 'previewModal', 'btnExportDraft', 'btnImportDraft', 'btnAddCustomTask']) assert.ok(ids.includes(id));
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
     assert.ok(build.includes("'reports/studio.css'")); assert.ok(build.includes("'reports/studio.js'"));
 });
