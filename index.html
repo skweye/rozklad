@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="site-appearance.js?v=20261119-glass"></script>
-    <script src="site-notifications.js?v=20260930"></script>
+    <script src="site-notifications.js?v=20261119"></script>
     <link rel="icon" id="siteFavicon" href="brand-icon.svg" type="image/svg+xml">
     <title>Розклад ПЗ-24-1/9</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,14 +14,15 @@
     <link rel="stylesheet" href="workspace.css">
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="editorial.css?v=20261020">
-    <link rel="stylesheet" href="glass-workspace.css?v=20261119">
+    <link rel="stylesheet" href="glass-workspace.css?v=20261119-settings-blur">
+    <script src="site-settings.js" defer></script>
     <script src="schedule-time.js" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
     <script src="site-auth.js?v=20261021-auto-transfer" defer></script>
     <script src="site-admin.js" defer></script>
     <script src="site-presence.js" defer></script>
-    <script src="background-notifications.js?v=20260930" defer></script>
+    <script src="background-notifications.js?v=20261119" defer></script>
     <script src="schedule-notices.js" defer></script>
     <script src="schedule-replacements.js?v=20261007-no-debt-choices" defer></script>
     <script src="site-classroom.js" defer></script>
@@ -66,31 +67,25 @@
 
     <!-- Settings stay outside main's stacking context, above the sticky header. -->
         <div class="settings-fab-container">
-            <div class="settings-menu" id="settingsMenu">
+            <div class="settings-menu" id="settingsMenu" role="region" aria-labelledby="settingsTitle" aria-hidden="true" inert>
+            <div class="settings-panel-heading">
+                <h2 id="settingsTitle">Налаштування</h2>
+                <button type="button" class="settings-close" data-settings-close aria-label="Закрити налаштування"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#close"/></svg></button>
+            </div>
                 <div class="settings-menu-inner">
                     <div data-appearance-settings></div>
 
-                    <h3 class="settings-menu-title">Функції</h3>
-                    <div class="settings-card">
-
-                        <div class="settings-toggle-item">
-                            <div class="info-wrapper">
-                                <span class="info-icon" data-tooltip="Автоматично відкриває посилання на урок у новій вкладці за 2 хвилини до початку пари.">i</span>
-                                <span class="toggle-label">Авто-відкриття</span>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="autoOpenToggle">
-                                <span class="slider"></span>
-                            </label>
+                    <fieldset class="appearance-section settings-feature">
+                        <legend>Розклад</legend>
+                        <div class="settings-group">
+                            <label class="notification-setting"><span>Автоматично відкривати пару</span><input type="checkbox" role="switch" id="autoOpenToggle" aria-describedby="autoOpenHint"></label>
                         </div>
-                    </div>
-
-                    <button class="settings-action-btn" id="fabTestSound" style="margin-top: 0.5rem;">
-                        <span>Перевірити звук</span>
-                    </button>
+                        <p id="autoOpenHint" class="appearance-hint">Відкриває посилання за 2 хв до початку пари.</p>
+                    </fieldset>
+                    <div data-settings-sound><button type="button" class="settings-action-btn" id="fabTestSound">Перевірити звук</button></div>
                 </div>
             </div>
-            <button class="settings-fab" id="fabBtn" aria-label="Налаштування">
+            <button type="button" class="settings-fab" id="fabBtn" data-settings-trigger aria-label="Налаштування" aria-controls="settingsMenu" aria-expanded="false">
                 <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#sliders"/></svg>
             </button>
         </div>
@@ -831,23 +826,6 @@
             setInterval(() => { updateUI(); checkNotifications(); fetchAnnouncement(); }, 10000);
             document.addEventListener('visibilitychange', () => { if (!document.hidden) updateUI(); });
             
-            // FAB Settings logic
-            const fabBtn = document.getElementById('fabBtn');
-            const settingsMenu = document.getElementById('settingsMenu');
-
-            fabBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                fabBtn.classList.toggle('active');
-                settingsMenu.classList.toggle('active');
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!settingsMenu.contains(e.target) && !fabBtn.contains(e.target)) {
-                    fabBtn.classList.remove('active');
-                    settingsMenu.classList.remove('active');
-                }
-            });
-
             document.getElementById('fabTestSound').addEventListener('click', () => {
                 playNotifySound(true);
                 showToast('Тест звуку', 'Перевірка не вмикає сповіщення', 'info', 3000, 'test');
@@ -895,13 +873,6 @@
                 localStorage.setItem('hasSeenClassroomHint', 'true');
             });
 
-            // Escape closes the settings menu.
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    fabBtn.classList.remove('active');
-                    settingsMenu.classList.remove('active');
-                }
-            });
             const enableAudio = () => {
                 hasInteracted = true;
                 ['click', 'keydown', 'touchstart'].forEach(evt => 

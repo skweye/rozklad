@@ -15,13 +15,16 @@ function fixture({ storage = new Map(), blocked = false, loading = false } = {})
         insertAdjacentElement(position, el) { assert.equal(position, 'afterend'); this.after = el; }
     }
     const appearance = new Element(), events = {}, domEvents = {}, emitted = [];
-    const document = { readyState: loading ? 'loading' : 'complete', querySelector: () => appearance,
+    const document = { readyState: loading ? 'loading' : 'complete', querySelector: selector => selector === '[data-appearance-settings]' ? appearance : null,
         createElement: () => new Element(), addEventListener(name, fn) { domEvents[name] = fn; } };
     const window = { addEventListener(name, fn) { events[name] = fn; }, dispatchEvent(event) { emitted.push(event.type); } };
     vm.runInNewContext(source, { window, document, Event,
         localStorage: { getItem(k) { if (blocked) throw Error('blocked'); return storage.get(k) ?? null; }, setItem(k, v) { if (blocked) throw Error('blocked'); storage.set(k, v); } } });
     return { api: window.studyNotifications, window, appearance, storage, events, domEvents, emitted,
-        input(kind) { return appearance.after.children.find(el => el.children?.[1]?.attrs['data-notification-kind'] === kind).children[1]; },
+        input(kind) {
+            const groups = appearance.after.children.filter(el => el.className === 'settings-group');
+            return groups.flatMap(el => el.children).find(el => el.children[1]?.attrs['data-notification-kind'] === kind).children[1];
+        },
         change(kind, value) { const input = this.input(kind); input.checked = value; input.listeners.change(); } };
 }
 
@@ -31,7 +34,10 @@ test('every type starts off even with legacy preferences, mounting after appeara
     assert.equal(f.appearance.after, undefined);
     f.domEvents.DOMContentLoaded();
     assert.equal(f.appearance.after.attrs['data-notification-settings'], '');
-    for (const kind of kinds) assert.equal(f.input(kind).checked, false);
+    for (const kind of kinds) {
+        assert.equal(f.input(kind).checked, false);
+        assert.equal(f.input(kind).attrs.role, 'switch');
+    }
 });
 
 test('every independent toggle persists and restores across pages, and can be switched off', () => {
@@ -69,7 +75,7 @@ test('disable-all clears every preference and also disables the background chann
     const f = fixture(); let disabled = 0;
     f.window.studyBackgroundNotifications = { disable() { disabled++; } };
     for (const kind of kinds) f.change(kind, true);
-    f.appearance.after.children.find(el => el.textContent === 'Вимкнути всі сповіщення').listeners.click();
+    f.appearance.after.children.find(el => el.className === 'settings-notification-actions').children[0].listeners.click();
     for (const kind of kinds) { assert.equal(f.api.enabled(kind), false); assert.equal(f.input(kind).checked, false); }
     assert.equal(disabled, 1);
 });
@@ -79,6 +85,8 @@ test('all app pages share settings and build publishes the script', async () => 
         const html = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
         assert.match(html, /<script src="(?:\.\.\/|\/)?site-notifications\.js(?:\?v=\d+)?"><\/script>/);
         assert.ok(html.indexOf('site-notifications.js') < html.indexOf('background-notifications.js'));
+        assert.match(html, /data-settings-trigger[^>]*aria-(?:controls|expanded)/);
+        assert.match(html, /data-settings-close/);
     }
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
     assert.match(build, /'site-notifications.js'/);

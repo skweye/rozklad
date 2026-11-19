@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="../site-appearance.js?v=20261119-glass"></script>
-    <script src="../site-notifications.js?v=20260930"></script>
+    <script src="../site-notifications.js?v=20261119"></script>
     <title>Автоматизація створення звіту</title>
     <link rel="icon" id="siteFavicon" href="../brand-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,10 +26,11 @@
     <script src="../site-admin.js" defer></script>
     <script src="../site-presence.js" defer></script>
     <script src="../schedule-time.js" defer></script>
-    <script src="../background-notifications.js?v=20260930" defer></script>
+    <script src="../background-notifications.js?v=20261119" defer></script>
     <script src="../schedule-notices.js" defer></script>
     <link rel="stylesheet" href="flow.css?v=20261117-document-editor">
-    <link rel="stylesheet" href="../glass-workspace.css?v=20261119">
+    <link rel="stylesheet" href="../glass-workspace.css?v=20261119-settings-blur">
+    <script src="../site-settings.js" defer></script>
 </head>
 
 <body data-app="reports" class="report-studio workspace-redesign">
@@ -181,13 +182,17 @@
 
 <!-- Налаштування, синхронізовані з сайтом розкладу (без авто-відкриття) -->
 <div class="reports-settings-fab-container">
-    <div class="reports-settings-menu" id="reportsSettingsMenu" aria-hidden="true">
+    <div class="reports-settings-menu" id="reportsSettingsMenu" role="region" aria-labelledby="reportsSettingsTitle" aria-hidden="true" inert>
+            <div class="settings-panel-heading">
+                <h2 id="reportsSettingsTitle">Налаштування</h2>
+                <button type="button" class="settings-close" data-settings-close aria-label="Закрити налаштування"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#close"/></svg></button>
+            </div>
         <div class="reports-settings-menu-inner">
             <div data-appearance-settings></div>
-            <button type="button" class="reports-settings-action-btn reports-test-sound" id="reportsTestSound">Перевірити звук</button>
+            <div data-settings-sound><button type="button" class="reports-settings-action-btn reports-test-sound" id="reportsTestSound">Перевірити звук</button></div>
         </div>
     </div>
-    <button type="button" class="reports-settings-fab" id="reportsSettingsFab" aria-label="Налаштування" aria-expanded="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#sliders"/></svg></button>
+    <button type="button" class="reports-settings-fab" id="reportsSettingsFab" data-settings-trigger aria-label="Налаштування" aria-controls="reportsSettingsMenu" aria-expanded="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#sliders"/></svg></button>
 </div>
 
     <dialog class="studio-help-dialog modal-sheet" id="studioHelpDialog" aria-labelledby="studioHelpTitle">
@@ -279,24 +284,6 @@
     <script src="script.js?v=20261117-document-editor"></script>
     <script>
         (() => {
-            const fab = document.getElementById('reportsSettingsFab');
-            const menu = document.getElementById('reportsSettingsMenu');
-            function closeSettings() {
-                fab.classList.remove('active');
-                menu.classList.remove('active');
-                fab.setAttribute('aria-expanded', 'false');
-                menu.setAttribute('aria-hidden', 'true');
-            }
-            fab.addEventListener('click', () => {
-                const open = menu.classList.toggle('active');
-                fab.classList.toggle('active', open);
-                fab.setAttribute('aria-expanded', String(open));
-                menu.setAttribute('aria-hidden', String(!open));
-            });
-            document.addEventListener('click', event => {
-                if (!menu.contains(event.target) && !fab.contains(event.target)) closeSettings();
-            });
-            document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSettings(); });
             document.getElementById('reportsTestSound').addEventListener('click', () => {
                 const sound = new Audio('sound.mp3');
                 sound.play().catch(() => {

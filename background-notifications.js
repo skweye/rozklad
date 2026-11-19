@@ -15,14 +15,22 @@
     const button = document.createElement('button'); button.type = 'button';
     const hint = document.createElement('p'); hint.className = 'appearance-hint'; hint.setAttribute('role', 'status');
     section.append(legend, button, hint);
-    const mount = () => (document.querySelector('[data-notification-settings]') || document.querySelector('[data-appearance-settings]'))?.append(section);
+    const mount = () => {
+        const container = document.querySelector('[data-notification-settings]') || document.querySelector('[data-appearance-settings]');
+        const actions = container?.querySelector?.('[data-notification-actions]');
+        if (actions) actions.before(section);
+        else container?.append(section);
+    };
     if (document.readyState === 'loading' || document.readyState === 'interactive') document.addEventListener('DOMContentLoaded', mount, { once: true });
     else mount();
     function paint(message) {
         button.disabled = !supported || working;
         button.textContent = working ? 'Підключаємо…' : enabled() ? 'Вимкнути фонові сповіщення' : 'Увімкнути фонові сповіщення';
         button.setAttribute('aria-pressed', String(enabled()));
-        hint.textContent = message || (!supported ? 'Цей браузер не підтримує системні сповіщення. Відкрийте сайт через HTTPS у підтримуваному браузері.' : Notification.permission === 'denied' ? 'Сповіщення заблоковано. Дозвольте їх у налаштуваннях цього сайту в браузері.' : enabled() ? 'Увімкнено для відкритої фонової вкладки. Закрита або призупинена браузером вкладка не перевіряє зміни. Звук залежить від налаштувань системи.' : 'Отримуйте сповіщення про заміни, коли вкладка відкрита у фоні. Браузер може затримувати перевірки. Після закриття вкладки сповіщень не буде.');
+        if (message) hint.textContent = message;
+        else if (!supported) hint.textContent = 'Системні сповіщення недоступні в цьому браузері.';
+        else if (Notification.permission === 'denied') hint.textContent = 'Дозвольте сповіщення в налаштуваннях сайту в браузері.';
+        else hint.textContent = 'Сповіщення про заміни, поки вкладка відкрита у фоні.';
     }
     function changed() { paint(); window.dispatchEvent(new Event('study-background-notifications-change')); }
     function disable() { intent++; optedIn = false; write(preferenceKey, 'false'); changed(); }

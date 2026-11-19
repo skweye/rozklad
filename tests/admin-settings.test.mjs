@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../admin/settings.js', import.meta.url), 'utf8');
+const panelSource = await readFile(new URL('../site-settings.js', import.meta.url), 'utf8');
 function fixture() {
     class Element {
         listeners = {}; attrs = {}; focused = false; disabled = false;
@@ -10,21 +11,26 @@ function fixture() {
         classList = { contains: name => this.classes.has(name), toggle: (name, value) => value ? this.classes.add(name) : this.classes.delete(name) };
         addEventListener(name, fn) { this.listeners[name] = fn; }
         setAttribute(name, value) { this.attrs[name] = value; }
+        getAttribute(name) { return this.attrs[name]; }
         contains(node) { return node === this || node === this.child; }
         querySelector() { return this.child; }
         focus() { this.focused = true; }
     }
     const nodes = Object.fromEntries(['adminSettingsFab', 'adminSettingsMenu', 'adminTestSound', 'adminSoundStatus'].map(id => [id, new Element()]));
+    nodes.adminSettingsFab.attrs['aria-controls'] = 'adminSettingsMenu';
     nodes.adminSettingsMenu.child = new Element();
-    const document = { listeners: {}, getElementById: id => nodes[id], addEventListener(name, fn) { this.listeners[name] = fn; } };
-    const window = { listeners: {}, addEventListener(name, fn) { this.listeners[name] = fn; } };
+    const document = { listeners: {}, querySelector: () => nodes.adminSettingsFab, getElementById: id => nodes[id], addEventListener(name, fn) { this.listeners[name] = fn; } };
+    const window = { listeners: {}, addEventListener(name, fn) {
+        const previous = this.listeners[name];
+        this.listeners[name] = event => { previous?.(event); fn(event); };
+    } };
     let sound, fail = false;
     class Audio {
         constructor(path) { this.path = path; sound = this; }
         async play() { if (fail) throw new Error('blocked'); }
         pause() { this.paused = true; }
     }
-    vm.runInNewContext(source, { document, window, Audio });
+    vm.runInNewContext(panelSource + '\n' + source, { document, window, Audio });
     return { ...nodes, document, window, sound, fail() { fail = true; } };
 }
 
@@ -38,6 +44,7 @@ test('admin settings toggle, outside click and Escape keep accessibility and key
     assert.equal(menu.inert, true); assert.equal(fab.focused, true); assert.equal(fab.attrs['aria-expanded'], 'false');
     fab.listeners.click(); f.document.listeners.click({ target: {} }); assert.equal(menu.inert, true);
     fab.listeners.click(); f.document.listeners.focusin({ target: {} }); assert.equal(menu.inert, true);
+    fab.listeners.click(); menu.child.listeners.click(); assert.equal(menu.inert, true);
     fab.listeners.click(); f.window.listeners.pagehide(); assert.equal(menu.inert, true); assert.equal(f.sound.paused, true);
 });
 
@@ -55,7 +62,7 @@ test('admin shares footer markup and settings assets, with no old inline appeara
     assert.doesNotMatch(admin, /admin-appearance|Оформлення панелі|class="site-footer"/);
     assert.equal([...admin.matchAll(/data-appearance-settings/g)].length, 1);
     assert.match(admin, /id="adminSettingsMenu"[^>]*aria-hidden="true" inert/);
-    for (const script of ['site-appearance.js', 'background-notifications.js', 'schedule-notices.js', 'admin/settings.js']) assert.ok(admin.includes(script));
+    for (const script of ['site-settings.js', 'site-appearance.js', 'background-notifications.js', 'schedule-notices.js', 'admin/settings.js']) assert.ok(admin.includes(script));
     assert.match(admin, /glass-workspace\.css/);
     assert.match(await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8'), /admin\/settings\.js/);
 });

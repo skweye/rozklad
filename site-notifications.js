@@ -2,15 +2,17 @@
 (() => {
     'use strict';
     const prefix = 'study-notification-';
-    const labels = {
-        replacements: 'Заміни в розкладі — на сайті',
-        lessonStart: 'Початок пари',
-        lessonEnd: 'Завершення пари',
-        nextLesson: 'Нагадування про наступну пару',
-        announcements: 'Оголошення',
-        success: 'Повідомлення про успішні дії',
-        sound: 'Звук сповіщень'
-    };
+    const groups = [
+        ['Розклад і пари', {
+            replacements: 'Заміни в розкладі',
+            lessonStart: 'Початок пари',
+            lessonEnd: 'Завершення пари',
+            nextLesson: 'Нагадування про наступну пару'
+        }],
+        ['Сайт', { announcements: 'Оголошення', success: 'Успішні дії' }],
+        ['Звук', { sound: 'Звук сповіщень' }]
+    ];
+    const labels = Object.assign({}, ...groups.map(([, items]) => items));
     const key = kind => `${prefix}${kind}-v1`;
     const read = kind => { try { return localStorage.getItem(key(kind)) === 'true'; } catch { return false; } };
     const state = Object.fromEntries(Object.keys(labels).map(kind => [kind, read(kind)]));
@@ -37,15 +39,42 @@
         section.setAttribute('data-notification-settings', '');
         const legend = document.createElement('legend'); legend.textContent = 'Сповіщення';
         const hint = document.createElement('p'); hint.className = 'appearance-hint';
-        hint.textContent = 'За замовчуванням усе вимкнено. Вибір спільний для розкладу, звітів і адмін-панелі в цьому браузері. Нагадування — за 10 хв до першої пари та за 5 хв до наступних. Помилки та підтвердження видалення залишаються видимими.';
+        hint.textContent = 'Ці налаштування спільні для всіх розділів сайту в цьому браузері.';
         section.append(legend, hint);
-        for (const [kind, text] of Object.entries(labels)) {
-            const label = document.createElement('label'); label.className = 'notification-setting';
-            const span = document.createElement('span'); span.textContent = text;
-            const input = document.createElement('input'); input.type = 'checkbox';
-            input.checked = enabled(kind); input.setAttribute('data-notification-kind', kind);
-            input.addEventListener('change', () => set(kind, input.checked));
-            controls.set(kind, input); label.append(span, input); section.append(label);
+        for (const [title, items] of groups) {
+            const heading = document.createElement('h3');
+            heading.textContent = title;
+            heading.className = 'settings-group-title';
+            const group = document.createElement('div');
+            group.className = 'settings-group';
+            for (const [kind, text] of Object.entries(items)) {
+                const label = document.createElement('label');
+                label.className = 'notification-setting';
+                const span = document.createElement('span');
+                span.textContent = text;
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = enabled(kind);
+                input.setAttribute('role', 'switch');
+                input.setAttribute('data-notification-kind', kind);
+                if (kind === 'nextLesson') input.setAttribute('aria-describedby', 'nextLessonNoticeHint');
+                input.addEventListener('change', () => set(kind, input.checked));
+                controls.set(kind, input);
+                label.append(span, input);
+                group.append(label);
+            }
+            if (Object.hasOwn(items, 'sound')) {
+                const sound = document.querySelector('[data-settings-sound]');
+                if (sound) group.append(sound);
+            }
+            section.append(heading, group);
+            if (Object.hasOwn(items, 'nextLesson')) {
+                const timing = document.createElement('p');
+                timing.id = 'nextLessonNoticeHint';
+                timing.className = 'appearance-hint';
+                timing.textContent = 'За 10 хв до першої пари й за 5 хв до наступних.';
+                section.append(timing);
+            }
         }
         status = document.createElement('p'); status.className = 'appearance-notice'; status.setAttribute('role', 'status');
         const disableAll = document.createElement('button'); disableAll.type = 'button'; disableAll.textContent = 'Вимкнути всі сповіщення';
@@ -53,7 +82,11 @@
             for (const kind of Object.keys(labels)) set(kind, false);
             window.studyBackgroundNotifications?.disable();
         });
-        section.append(disableAll);
+        const actions = document.createElement('div');
+        actions.className = 'settings-notification-actions';
+        actions.setAttribute('data-notification-actions', '');
+        actions.append(disableAll);
+        section.append(actions);
         section.append(status); appearance.insertAdjacentElement('afterend', section);
     }
     window.studyNotifications = { enabled, set };

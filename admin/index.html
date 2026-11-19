@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="/site-appearance.js?v=20261119-glass"></script>
-    <script src="/site-notifications.js?v=20260930"></script>
+    <script src="/site-notifications.js?v=20261119"></script>
     <meta name="robots" content="noindex, nofollow">
     <title>Адмін-панель — Навчальний простір</title>
     <link rel="icon" id="siteFavicon" href="/brand-icon.svg" type="image/svg+xml">
@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="/appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="/admin/style.css">
     <link rel="stylesheet" href="/editorial.css?v=20261020">
-    <link rel="stylesheet" href="/glass-workspace.css?v=20261119">
+    <link rel="stylesheet" href="/glass-workspace.css?v=20261119-settings-blur">
+    <script src="/site-settings.js" defer></script>
     <script src="/site-navigation.js" defer></script>
     <script src="/site-branding.js" defer></script>
     <script src="/site-auth.js" defer></script>
@@ -22,9 +23,9 @@
     <script src="/site-permissions.js" defer></script>
     <script src="/admin/online.js" defer></script>
     <script src="/schedule-time.js" defer></script>
-    <script src="/background-notifications.js?v=20260930" defer></script>
+    <script src="/background-notifications.js?v=20261119" defer></script>
     <script src="/schedule-notices.js" defer></script>
-    <script src="/admin/settings.js" defer></script>
+    <script src="/admin/settings.js?v=20261119" defer></script>
 </head>
 <body data-app="admin" class="workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
@@ -49,14 +50,20 @@
         </div>
     </header>
     <div class="settings-fab-container">
-        <div class="settings-menu" id="adminSettingsMenu" role="region" aria-label="Налаштування" aria-hidden="true" inert>
+        <div class="settings-menu" id="adminSettingsMenu" role="region" aria-labelledby="adminSettingsTitle" aria-hidden="true" inert>
+            <div class="settings-panel-heading">
+                <h2 id="adminSettingsTitle">Налаштування</h2>
+                <button type="button" class="settings-close" data-settings-close aria-label="Закрити налаштування"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#close"/></svg></button>
+            </div>
             <div class="settings-menu-inner">
                 <div data-appearance-settings></div>
-                <button type="button" class="settings-action-btn" id="adminTestSound">Перевірити звук</button>
-                <p class="appearance-notice" id="adminSoundStatus" role="status"></p>
+                <div data-settings-sound>
+                    <button type="button" class="settings-action-btn" id="adminTestSound">Перевірити звук</button>
+                    <p class="appearance-notice" id="adminSoundStatus" role="status"></p>
+                </div>
             </div>
         </div>
-        <button type="button" class="settings-fab" id="adminSettingsFab" aria-label="Налаштування" aria-expanded="false" aria-controls="adminSettingsMenu">
+        <button type="button" class="settings-fab" id="adminSettingsFab" data-settings-trigger aria-label="Налаштування" aria-expanded="false" aria-controls="adminSettingsMenu">
             <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#sliders"/></svg>
         </button>
     </div>

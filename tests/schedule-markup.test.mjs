@@ -8,7 +8,7 @@ test('schedule has no legacy administration panel, hidden entry points or local 
     assert.doesNotMatch(html, /adminBtn|adminModal|adminpanel|adminSecretTrigger|scheduleEditor|visualEditor|customSchedule|applyPreviewBtn|importSchedule|exportSchedule|announcementText|testNotifyBtn|exportAnnouncementBtn|clearAnnouncementCacheBtn|e\.ctrlKey\s*&&\s*e\.altKey/i);
     assert.match(html, /fetch\('schedule\.json'\)/);
     assert.match(html, /fetch\('announcement\.json'/);
-    assert.match(html, /e\.key === 'Escape'/);
+    assert.match(await readFile(new URL('../site-settings.js', import.meta.url), 'utf8'), /event\.key === 'Escape'/);
     assert.match(html, /id="autoOpenToggle"/);
     const inlineScripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(match => match[1]).filter(source => source.trim());
     assert.ok(inlineScripts.length > 0);
