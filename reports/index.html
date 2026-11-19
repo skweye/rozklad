@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../site-appearance.js?v=20261117-deep-tech"></script>
+    <script src="../site-appearance.js?v=20261119-glass"></script>
     <script src="../site-notifications.js?v=20260930"></script>
     <title>Автоматизація створення звіту</title>
     <link rel="icon" id="siteFavicon" href="../brand-icon.svg" type="image/svg+xml">
@@ -17,10 +17,8 @@
     <link rel="stylesheet" href="../workspace.css">
     <link rel="stylesheet" href="../appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="blocks.css?v=20261026-table-coordinates">
-    <link rel="stylesheet" href="../neumorphism.css">
     <link rel="stylesheet" href="drafts.css?v=20261006">
     <link rel="stylesheet" href="studio.css?v=20261012">
-    <link rel="stylesheet" href="../frosted-glass.css?v=20261007-liquid-glass">
     <link rel="stylesheet" href="../editorial.css?v=20261020">
     <script src="../site-navigation.js" defer></script>
     <script src="../site-branding.js" defer></script>
@@ -31,13 +29,11 @@
     <script src="../background-notifications.js?v=20260930" defer></script>
     <script src="../schedule-notices.js" defer></script>
     <link rel="stylesheet" href="flow.css?v=20261117-document-editor">
-    <link rel="stylesheet" href="../deep-tech.css?v=20261117">
+    <link rel="stylesheet" href="../glass-workspace.css?v=20261119">
 </head>
 
 <body data-app="reports" class="report-studio workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
-    <video id="reportsBgVideo" class="reports-bg-video" muted autoplay loop playsinline preload="auto"></video>
-    <div class="studio-backdrop" aria-hidden="true"></div>
     <a class="studio-skip" href="#reportDetails">До заповнення звіту</a>
 
     <header class="reports-topbar">
@@ -46,19 +42,26 @@
         <div class="nav-links"></div>
     </header>
     <main id="reportsLibrary" class="reports-library" aria-labelledby="reportsTitle">
-        <div class="library-heading"><div><p class="eyebrow">НАВЧАЛЬНИЙ ПРОСТІР / ЗВІТИ</p><h1 id="reportsTitle" tabindex="-1">Мої звіти<span class="heading-dot">.</span></h1><p>Усі роботи під рукою. Продовжуй розпочате або створи новий звіт.</p></div>
+        <div class="library-heading"><h1 id="reportsTitle" tabindex="-1">Мої звіти</h1>
         <button type="button" class="btn btn-primary" id="btnNewDraft" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт</button></div>
+        <div class="library-layout">
+        <section class="library-collection" aria-labelledby="savedReportsTitle">
         <div class="library-filters"><label>Пошук<input class="form-control" type="search" id="draftSearch" placeholder="Назва або тема роботи"></label><label>Дисципліна<select class="form-control" id="draftDiscipline"><option value="">Усі дисципліни</option></select></label><button class="btn" type="button" id="btnLibraryImport"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#upload"/></svg>Імпортувати</button></div>
         <p class="drafts-status" id="draftsStatus" role="status" aria-live="polite">Відкриваємо збережені роботи…</p>
-        <div class="library-list-heading"><h2>Збережені роботи <span id="draftCount">0</span></h2><span>Останні зміни спочатку</span></div>
+        <div class="library-list-heading"><h2 id="savedReportsTitle">Збережені роботи <span id="draftCount">0</span></h2></div>
         <div class="drafts-list" id="draftsList"></div>
         <div class="library-empty" id="draftsEmpty" hidden><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg><h2>Тут будуть твої звіти</h2><p>Створи першу роботу — оформлення документа вже підготовлено.</p><button type="button" class="btn btn-primary" id="btnEmptyNew">Створити звіт</button></div>
-        <div class="report-account-actions"><button type="button" class="btn" id="btnReportsLogin">Увійти для збереження в акаунті</button><button type="button" class="btn" id="btnTransferLocalReports" hidden>Перенести локальні звіти в акаунт</button><button type="button" class="btn" id="btnRecoverReport" hidden>Відновити незбережений звіт</button></div>
+        </section>
+        <aside class="library-account" aria-labelledby="reportStorageTitle">
+        <h2 id="reportStorageTitle">Збереження</h2>
         <p class="drafts-local-note">Гостьовий режим: звіти зберігаються лише в цьому браузері. Увійдіть, щоб зберігати роботи в акаунті.</p>
+        <div class="report-account-actions"><button type="button" class="btn" id="btnReportsLogin">Увійти для збереження в акаунті</button><button type="button" class="btn" id="btnTransferLocalReports" hidden>Перенести локальні звіти в акаунт</button><button type="button" class="btn" id="btnRecoverReport" hidden>Відновити незбережений звіт</button></div>
+        </aside>
+        </div>
     </main>
     <section id="reportsEditor" class="reports-editor" hidden aria-label="Редактор звіту">
     <div class="editor-toolbar">
-        <button type="button" class="btn editor-back" id="btnDraftLibrary">← Мої звіти</button>
+        <button type="button" class="btn editor-back" id="btnDraftLibrary"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#folder"/></svg>Мої звіти</button>
         <div class="editor-document-name"><strong id="currentDraftTitle">Новий звіт</strong><div class="header-save-badge saved" id="saveStatusIndicator" role="status" aria-live="polite"><span class="save-status-dot" aria-hidden="true"></span><span class="save-status-text">Збережено локально</span></div></div>
         <details class="report-file-menu" id="reportFileMenu"><summary aria-label="Дії зі звітом">⋯</summary><div class="report-file-actions">
             <button type="button" id="btnRenameReport">Перейменувати</button><button type="button" id="btnDuplicateReport">Створити копію</button>
@@ -71,8 +74,7 @@
     <input type="file" id="draftFileInput" accept=".json" hidden>
     <div class="report-editor-layout">
     <nav class="report-steps" aria-label="Розділи звіту"><p class="structure-label">СТРУКТУРА ЗВІТУ</p>
-        <a href="#reportStudent"><span>01</span> Титульна сторінка</a><a href="#reportDetails"><span>02</span> Відомості про роботу</a><a href="#reportWork"><span>03</span> Хід роботи</a><a href="#reportQuestions"><span>04</span> Контрольні питання</a><a href="#reportConclusion"><span>05</span> Висновок</a>
-        <p class="structure-note">Обери розділ і додай зміст. Оформлення застосовується автоматично.</p>
+        <a href="#reportStudent">Титульна сторінка</a><a href="#reportDetails">Відомості про роботу</a><a href="#reportWork">Хід роботи</a><a href="#reportQuestions">Контрольні питання</a><a href="#reportConclusion">Висновок</a>
     </nav>
     <div class="workspace-wrapper" id="workspaceWrapper">
         <main class="main-container editor-pane document-editor" aria-label="Документ звіту">

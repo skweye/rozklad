@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="site-appearance.js?v=20261117-deep-tech"></script>
+    <script src="site-appearance.js?v=20261119-glass"></script>
     <script src="site-notifications.js?v=20260930"></script>
     <link rel="icon" id="siteFavicon" href="brand-icon.svg" type="image/svg+xml">
     <title>Розклад ПЗ-24-1/9</title>
@@ -13,10 +13,8 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="workspace.css">
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
-    <link rel="stylesheet" href="neumorphism.css">
-    <link rel="stylesheet" href="frosted-glass.css?v=20261007-liquid-glass">
     <link rel="stylesheet" href="editorial.css?v=20261020">
-    <link rel="stylesheet" href="deep-tech.css?v=20261117">
+    <link rel="stylesheet" href="glass-workspace.css?v=20261119">
     <script src="schedule-time.js" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
@@ -31,7 +29,6 @@
 <body data-app="schedule" class="workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
     <a class="workspace-skip" href="#weeklySchedule">До розкладу</a>
-    <video id="bgVideo" class="bg-video" muted autoplay loop playsinline preload="auto"></video>
     <div id="onboardingHint" class="onboarding-bubble hidden">
         <div class="bubble-content">
             <div class="bubble-icon">i</div>
@@ -98,18 +95,16 @@
             </button>
         </div>
 
+    <div id="toastContainer" class="toast-container"></div>
     <main>
-        <div id="toastContainer" class="toast-container"></div>
         <section class="workspace-hero" aria-labelledby="workspaceTitle">
             <div>
-                <p class="eyebrow">ПЗ-24-1/9 · Навчальний простір</p>
-                <h1 id="workspaceTitle">Твій тиждень<span class="heading-dot">.</span></h1>
-                <p class="hero-description">Розклад перед очима. Усе інше — під рукою.</p>
+                <p class="eyebrow">Група ПЗ-24-1/9</p>
+                <h1 id="workspaceTitle">Розклад занять</h1>
             </div>
-            <a class="hero-link" href="#assignments">До завдань <span aria-hidden="true">↓</span></a>
+            <nav class="dashboard-jumps" aria-label="На цій сторінці"><a href="#weeklySchedule">Тиждень</a><a href="#assignments">Завдання</a></nav>
         </section>
 
-        <div class="section-heading"><p class="eyebrow">Сьогодні та далі</p><span>ПЗ-24-1/9</span></div>
         <div class="overview-layout">
         <div class="overview-sidebar">
         <div class="status-grid">
@@ -175,9 +170,10 @@
 
         </div>
 
+        <div class="dashboard-layout">
+        <section class="timetable-pane" aria-labelledby="weeklyTitle">
         <div class="section-heading schedule-heading" id="weeklySchedule">
-            <div><p class="eyebrow">01 / План тижня</p><h2>Розклад занять</h2></div>
-            <span class="section-hint">Натисни на предмет, щоб відкрити Classroom</span>
+            <h2 id="weeklyTitle">Цього тижня</h2>
         </div>
         <div class="replacement-status-bar">
             <p id="replacementStatus" role="status">Перевіряємо заміни…</p>
@@ -192,12 +188,13 @@
         <div id="scheduleGrid" class="schedule-grid">
             <!-- JS generated cards -->
         </div>
+        </section>
         <section id="assignments" class="assignments-section" aria-label="Завдання">
-            <div class="section-heading"><p class="eyebrow">02 / Завдання</p><span>Google Classroom</span></div>
             <section class="classroom-panel" data-classroom data-icons="ui-icons.svg" aria-label="Найближчі здачі в Classroom">
                 <noscript>Увімкніть JavaScript, щоб увійти та побачити роботи з Classroom.</noscript>
             </section>
         </section>
+        </div>
     </main>
 
     <script>

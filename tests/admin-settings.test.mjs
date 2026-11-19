@@ -56,6 +56,6 @@ test('admin shares footer markup and settings assets, with no old inline appeara
     assert.equal([...admin.matchAll(/data-appearance-settings/g)].length, 1);
     assert.match(admin, /id="adminSettingsMenu"[^>]*aria-hidden="true" inert/);
     for (const script of ['site-appearance.js', 'background-notifications.js', 'schedule-notices.js', 'admin/settings.js']) assert.ok(admin.includes(script));
-    assert.match(admin, /id="bgVideo"/);
+    assert.match(admin, /glass-workspace\.css/);
     assert.match(await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8'), /admin\/settings\.js/);
 });

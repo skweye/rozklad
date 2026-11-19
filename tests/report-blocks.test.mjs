@@ -349,7 +349,7 @@ test('builder assets exist and are included in production build in dependency or
     assert.ok(html.indexOf(blocksAsset) < html.indexOf(scriptAsset));
     assert.match(html, /Додати блок/);
     const build = await readFile(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
-    for (const asset of ['reports/blocks.js', 'reports/blocks.css', 'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css', 'reports/studio.js', 'reports/studio.css', 'neumorphism.css']) {
+    for (const asset of ['reports/blocks.js', 'reports/blocks.css', 'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css', 'reports/studio.js', 'reports/studio.css', 'glass-workspace.css']) {
         assert.ok(build.includes(`'${asset}'`));
         assert.ok((await readFile(new URL(`../${asset}`, import.meta.url))).length > 0);
     }

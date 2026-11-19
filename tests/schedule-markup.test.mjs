@@ -32,7 +32,7 @@ test('direct event bindings on schedule reference existing markup elements', asy
 
 test('summary and resource links precede the timetable, assignments follow it in reading order', async () => {
     const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-    const overview = html.slice(html.indexOf('<div class="overview-layout">'), html.indexOf('<div class="section-heading schedule-heading"'));
+    const overview = html.slice(html.indexOf('<div class="overview-layout">'), html.indexOf('<div class="dashboard-layout">'));
     const stack = [], children = [], sidebarChildren = [];
     // Inspect nesting rather than only checking that the blocks occur somewhere on the page.
     for (const [token, closing, tag, attrs] of overview.matchAll(/<(\/?)(div|nav|section)\b([^>]*)>/g)) {
@@ -48,12 +48,10 @@ test('summary and resource links precede the timetable, assignments follow it in
     assert.match(overview, /id="statusCard"/);
     assert.ok(html.indexOf('id="scheduleGrid"') < html.indexOf('data-classroom'));
     assert.match(html, /href="#assignments"/);
-    const css = await readFile(new URL('../workspace.css', import.meta.url), 'utf8');
-    assert.match(css, /grid-template-areas: "sidebar classroom"/);
-    assert.match(css, /grid-template-areas: "sidebar" "classroom"/);
-    assert.match(css, /grid-template-areas: "status resources"/);
-    assert.match(css, /grid-template-areas: "status" "resources"/);
-    assert.match(css, /\.status-grid\s*\{[^}]*grid-template-columns: minmax\(0,1fr\)/);
+    assert.match(html, /class="dashboard-layout">\s*<section class="timetable-pane"/);
+    const css = await readFile(new URL('../glass-workspace.css', import.meta.url), 'utf8');
+    assert.match(css, /\.dashboard-layout\s*\{[^}]*align-items: start/);
+    assert.match(css, /\.dashboard-layout,\.management-layout\s*\{\s*grid-template-columns: minmax\(0,1fr\)/);
 });
 
 test('overview sidebar stays content-sized independently of the number of assignments', async () => {

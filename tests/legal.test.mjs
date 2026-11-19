@@ -10,7 +10,7 @@ test('legal pages are public static documents with real owner details and naviga
         assert.match(html, /Ярослав/);
         assert.match(html, /skweye\.su@gmail\.com/);
         assert.match(html, /https:\/\/newrozklad\.pp\.ua\//);
-        assert.ok(!html.includes('<script'));
+        assert.doesNotMatch(html.replace(/<script src="\/site-appearance\.js\?v=20261119-glass"><\/script>/, ''), /<script/);
         assert.match(html, /href="\/"/);
     }
     const privacy = await readFile(new URL('../privacy.html', import.meta.url), 'utf8');

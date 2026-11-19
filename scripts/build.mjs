@@ -7,8 +7,8 @@ const output = new URL('dist/', root);
 await mkdir(output, { recursive: true });
 const assets = [
     '_headers',
-    'index.html', 'styles.css', 'workspace.css', 'frosted-glass.css', 'editorial.css', 'deep-tech.css',
-    'appearance.css', 'neumorphism.css', 'site-appearance.js', 'schedule-time.js', 'schedule-replacements.js', 'schedule-notices.js',
+    'index.html', 'styles.css', 'workspace.css', 'editorial.css', 'glass-workspace.css',
+    'appearance.css', 'site-appearance.js', 'schedule-time.js', 'schedule-replacements.js', 'schedule-notices.js',
     'site-notifications.js', 'background-notifications.js', 'schedule-notification-sw.js', 'site-permissions.js', 'site-presence.js',
     'site-admin.js', 'admin/index.html', 'admin/style.css', 'admin/online.js', 'admin/settings.js',
     'privacy.html', 'terms.html', 'legal.css',

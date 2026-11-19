@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="/site-appearance.js?v=20261117-deep-tech"></script>
+    <script src="/site-appearance.js?v=20261119-glass"></script>
     <script src="/site-notifications.js?v=20260930"></script>
     <meta name="robots" content="noindex, nofollow">
     <title>Адмін-панель — Навчальний простір</title>
@@ -11,11 +11,9 @@
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/workspace.css">
     <link rel="stylesheet" href="/appearance.css?v=20261028-select-contrast">
-    <link rel="stylesheet" href="/neumorphism.css">
     <link rel="stylesheet" href="/admin/style.css">
-    <link rel="stylesheet" href="/frosted-glass.css?v=20261007-liquid-glass">
     <link rel="stylesheet" href="/editorial.css?v=20261020">
-    <link rel="stylesheet" href="/deep-tech.css?v=20261117">
+    <link rel="stylesheet" href="/glass-workspace.css?v=20261119">
     <script src="/site-navigation.js" defer></script>
     <script src="/site-branding.js" defer></script>
     <script src="/site-auth.js" defer></script>
@@ -31,7 +29,6 @@
 <body data-app="admin" class="workspace-redesign">
     <script>window.studyAppearance?.prime(document.body);</script>
     <a class="workspace-skip" href="#admin-title">До керування</a>
-    <video id="bgVideo" class="bg-video" muted loop playsinline preload="none"></video>
     <header>
         <details class="site-switcher">
             <summary class="site-switcher-toggle" aria-label="Навігація між сторінками" title="Навігація">
@@ -65,8 +62,7 @@
     </div>
     <main class="admin-main">
         <section class="admin-hero" aria-labelledby="admin-title">
-            <div><p class="eyebrow">Керування навчальним простором</p><h1 id="admin-title">Адмін-панель<span class="heading-dot">.</span></h1><p class="hero-description">Користувачі, доступ і активність — в одному місці.</p></div>
-            <a class="hero-link" href="/#weeklySchedule">До розкладу <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#calendar"/></svg></a>
+            <h1 id="admin-title">Керування сайтом</h1>
         </section>
         <section class="admin-gate" data-admin-gate aria-labelledby="access-title">
             <h2 id="access-title">Доступ адміністратора</h2>
@@ -74,7 +70,7 @@
             <button type="button" class="btn" data-admin-login hidden>Повторити перевірку</button>
             <noscript><p>Для входу й керування потрібен JavaScript. Без нього дані користувачів не завантажуються.</p></noscript>
         </section>
-        <div data-admin-content hidden>
+        <div class="management-layout" data-admin-content hidden>
             <nav class="admin-sections" aria-label="Розділи панелі"><a href="#online">Користувачі онлайн</a><a href="#permissions">Права доступу</a><span>Лише головний адміністратор</span></nav>
             <div class="admin-grid">
                 <div id="online" data-admin-presence></div>
