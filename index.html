@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="workspace.css">
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="editorial.css?v=20261020">
-    <link rel="stylesheet" href="glass-workspace.css?v=20261119-settings-blur">
+    <link rel="preload" href="schedule-glass-hero.webp" as="image">
+    <link rel="stylesheet" href="glass-workspace.css?v=20261120-open-heading">
     <script src="site-settings.js" defer></script>
     <script src="schedule-time.js" defer></script>
     <script src="site-navigation.js" defer></script>
@@ -58,8 +59,8 @@
             </a>
             <div class="nav-links">
                 <nav class="primary-navigation" aria-label="Основні розділи">
-                    <a href="index.html" aria-current="page">Розклад</a>
-                    <a href="reports/index.html">Звіти</a>
+                    <a href="index.html" aria-current="page"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>Розклад</a>
+                    <a href="reports/index.html"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#file"/></svg>Звіти</a>
                 </nav>
             </div>
         </div>
@@ -93,11 +94,12 @@
     <div id="toastContainer" class="toast-container"></div>
     <main>
         <section class="workspace-hero" aria-labelledby="workspaceTitle">
-            <div>
-                <p class="eyebrow">Група ПЗ-24-1/9</p>
-                <h1 id="workspaceTitle">Розклад занять</h1>
-            </div>
-            <nav class="dashboard-jumps" aria-label="На цій сторінці"><a href="#weeklySchedule">Тиждень</a><a href="#assignments">Завдання</a></nav>
+            <p class="eyebrow">Група ПЗ-24-1/9</p>
+            <h1 id="workspaceTitle">Розклад занять</h1>
+            <nav class="dashboard-jumps" aria-label="На цій сторінці">
+                <a href="#weeklySchedule"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>Розклад на тиждень</a>
+                <a href="#assignments">Завдання<svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#arrow-right"/></svg></a>
+            </nav>
         </section>
 
         <div class="overview-layout">
@@ -105,6 +107,7 @@
         <div class="status-grid">
             <div class="card" style="animation-delay: 0.1s">
                 <div class="card-header">
+                    <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>
                     <span class="card-title">Сьогодні</span>
                 </div>
                 <div class="highlight-info" id="currentDate">
@@ -117,6 +120,7 @@
 
             <div class="card next-class-card" id="statusCard" style="animation-delay: 0.2s">
                 <div class="card-header">
+                    <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#clock"/></svg>
                     <span class="card-title" id="statusLabel">Статус</span>
                     <span class="timer" id="timer">--:--</span>
                 </div>
@@ -128,7 +132,10 @@
                 <div class="sub-info" id="statusSubtitle">...</div>
             </div>
             <div class="card upcoming-lesson-card" id="nextLessonCard">
-                <div class="card-header"><span class="card-title">Наступна пара</span></div>
+                <div class="card-header">
+                    <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#arrow-right"/></svg>
+                    <span class="card-title">Наступна пара</span>
+                </div>
                 <div class="highlight-info" id="nextLessonTitle">Завантаження…</div>
                 <p class="next-lesson-time" id="nextLessonTime"></p>
                 <div class="sub-info" id="nextLessonDetails"></div>

@@ -13,7 +13,7 @@ const assets = [
     'site-admin.js', 'admin/index.html', 'admin/style.css', 'admin/online.js', 'admin/settings.js',
     'privacy.html', 'terms.html', 'legal.css',
     'background-particles.js', 'site-navigation.js', 'site-branding.js', 'site-auth.js', 'site-classroom.js',
-    'brand-icon.svg', 'ui-icons.svg', 'icon.png', 'sound.mp3', 'schedule.json', 'announcement.json',
+    'brand-icon.svg', 'ui-icons.svg', 'icon.png', 'sound.mp3', 'schedule-glass-hero.webp', 'schedule.json', 'announcement.json',
     'reports/index.html', 'reports/style.css', 'reports/script.js', 'reports/metadata.js', 'reports/blocks.js', 'reports/blocks.css', 'reports/delete-confirm.js',
     'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css',
     'reports/studio.css', 'reports/studio.js', 'reports/flow.css',
