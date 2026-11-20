@@ -1,9 +1,13 @@
 :root {
+    --legal-banner: #0a302b;
+    --legal-banner-accent: #e5fa88;
     color-scheme: light dark;
     font: 16px/1.65 Manrope, system-ui, sans-serif;
     color: var(--ui-text,CanvasText);
     background: var(--ui-ground,Canvas);
 }
+:root[data-theme="gray"] { --legal-banner: #292a2e; --legal-banner-accent: #e9e9ed; }
+:root[data-theme="gray"] .brand img { filter: grayscale(1); }
 * { box-sizing: border-box; }
 body { margin: 0; }
 header {
@@ -29,8 +33,8 @@ main { padding-block: 24px 44px; }
     margin: 0;
     padding: 25px clamp(18px,4.5vw,42px) 0;
     border-radius: 15px 15px 0 0;
-    background: #0a302b;
-    color: #e5fa88;
+    background: var(--legal-banner);
+    color: var(--legal-banner-accent);
     font-size: .8125rem;
     font-weight: 800;
 }
@@ -38,7 +42,7 @@ h1 {
     margin: 0 0 20px;
     padding: 7px clamp(18px,4.5vw,42px) 27px;
     border-radius: 0 0 15px 15px;
-    background: #0a302b;
+    background: var(--legal-banner);
     color: #f7faef;
     font-size: clamp(1.8rem,5vw,3.375rem);
     line-height: 1.14;

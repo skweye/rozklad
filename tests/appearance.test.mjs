@@ -17,7 +17,7 @@ function fixture({ saved = new Map(), systemDark = false, blocked = false, early
         addEventListener(name, fn) { this.events[name] = fn; }
     }
     const body = new Element(), root = new Element(), status = new Element();
-    const buttons = ['light', 'dark'].map(mode => {
+    const buttons = ['light', 'dark', 'gray'].map(mode => {
         const button = new Element();
         button.dataset.themeChoice = mode;
         return button;
@@ -34,9 +34,9 @@ function fixture({ saved = new Map(), systemDark = false, blocked = false, early
     return { api: window.studyAppearance, body, root, status, settings, buttons, media, saved, window, document };
 }
 
-test('only light and dark are offered, saved and marked selected', () => {
+test('light, dark and gray are offered, saved and marked selected', () => {
     const f = fixture();
-    assert.deepEqual([...f.settings.innerHTML.matchAll(/data-theme-choice="([^"]+)"/g)].map(m => m[1]), ['light', 'dark']);
+    assert.deepEqual([...f.settings.innerHTML.matchAll(/data-theme-choice="([^"]+)"/g)].map(m => m[1]), ['light', 'dark', 'gray']);
     assert.equal(f.buttons[0].attrs['aria-pressed'], 'true');
     f.buttons[1].events.click();
     assert.deepEqual(JSON.parse(f.saved.get(key)), { theme: 'dark' });
@@ -45,6 +45,14 @@ test('only light and dark are offered, saved and marked selected', () => {
     assert.equal(f.buttons[1].attrs['aria-pressed'], 'true');
     assert.equal(f.buttons[0].attrs['aria-pressed'], 'false');
     assert.equal(fixture({ saved: f.saved }).api.snapshot().theme, 'dark');
+    f.buttons[2].events.click();
+    assert.deepEqual(JSON.parse(f.saved.get(key)), { theme: 'gray' });
+    assert.equal(f.root.style.colorScheme, 'light');
+    assert.equal(f.buttons[2].attrs['aria-pressed'], 'true');
+    assert.equal(f.buttons[1].attrs['aria-pressed'], 'false');
+    const restored = fixture({ saved: f.saved, systemDark: true });
+    assert.equal(restored.body.dataset.theme, 'gray');
+    assert.equal(restored.root.style.values.get('--ui-ground'), '#ececee');
 });
 
 test('legacy themes retain their light or dark character and obsolete settings do not affect the palette', () => {
@@ -98,7 +106,7 @@ test('native menus and the white report paper keep readable input colors', async
 test('all app pages prime before rendering and share the last-loaded campus stylesheet', async () => {
     for (const file of pages) {
         const html = await read(file);
-        const script = html.match(/<script src="[^"]*site-appearance\.js\?v=20261120-campus"><\/script>/);
+        const script = html.match(/<script src="[^"]*site-appearance\.js\?v=20261120-gray"><\/script>/);
         assert.ok(script && script.index < html.indexOf('rel="stylesheet"'));
         assert.match(html, /<body[^>]*>\s*<script>window\.studyAppearance\?\.prime\(document\.body\);<\/script>/);
         assert.match(html, /data-appearance-settings/);

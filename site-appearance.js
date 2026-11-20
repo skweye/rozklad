@@ -12,6 +12,11 @@
             label: 'Темна', ground: '#101b18', panel: '#182923', inset: '#15221e', soft: '#233831',
             text: '#eef6ec', muted: '#b0c4bb', line: '#3a5048',
             accent: '#b7e6ac', accentRgb: '183,230,172', onAccent: '#132820', danger: '#ffb2b4'
+        },
+        gray: {
+            label: 'Сіра', scheme: 'light', ground: '#ececee', panel: '#fff', inset: '#f5f5f6', soft: '#e9e9ec',
+            text: '#232427', muted: '#565960', line: '#d3d4d8',
+            accent: '#44474e', accentRgb: '68,71,78', onAccent: '#ffffff', danger: '#a22d36'
         }
     };
     const legacyLight = new Set(['light', 'minimal', 'neumorphism', 'university', 'dualshot', 'graphite']);
@@ -30,6 +35,7 @@
             catch { /* Fall back to the old preference. */ }
             const cookie = document.cookie?.match(/(?:^|;\s*)theme=([^;]+)/)?.[1];
             const previous = stored?.theme || localStorage.getItem('theme') || cookie;
+            if (previous === 'gray') return 'gray';
             if (legacyLight.has(previous)) return 'light';
             if (legacyDark.has(previous)) return 'dark';
         } catch { /* Storage may be unavailable. */ }
@@ -39,11 +45,11 @@
     function prime(target) {
         if (!target) return;
         const palette = themes[theme];
-        const light = theme === 'light';
-        target.classList.toggle('theme-light', light);
+        const scheme = palette.scheme ?? theme;
+        target.classList.toggle('theme-light', scheme === 'light');
         target.dataset.theme = theme;
         target.dataset.lowPower = String(lowPower);
-        target.style.colorScheme = theme;
+        target.style.colorScheme = scheme;
         const values = {
             '--ui-ground': palette.ground, '--ui-panel': palette.panel, '--ui-inset': palette.inset, '--ui-soft': palette.soft,
             '--ui-text': palette.text, '--ui-muted': palette.muted, '--ui-line': palette.line,

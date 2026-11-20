@@ -5,7 +5,9 @@
     const dock = document.querySelector('.week-dock');
     const navigation = document.querySelector('.schedule-day-navigation');
     const grid = document.getElementById('scheduleGrid');
-    if (!header || !dock || !navigation || !grid) return;
+    const story = grid?.closest('.week-story');
+    const stage = story?.querySelector('.week-stage');
+    if (!header || !dock || !navigation || !stage) return;
 
     const pane = dock.parentElement;
     const links = [...navigation.querySelectorAll('a[href^="#"]')];
@@ -25,6 +27,11 @@
     let sceneAnimation;
     let frame = 0;
     let readingLine = 0;
+    let stageTop = 0;
+    let stepWidth = 0;
+    let storyLength = 0;
+    let steps = [];
+    const clamp = (value, max) => Math.min(max, Math.max(0, value));
 
     function setActiveDay(day) {
         if (activeDay === day) return;
@@ -37,7 +44,7 @@
 
     function showDay(day) {
         if (shownDay === day) return;
-        const dayChanged = shownDay && day && shownDay.link !== day.link;
+        const direction = day && shownDay ? Math.sign(day.number - shownDay.number) : 0;
         shownDay = day;
         scene.hidden = !day;
         lessonIndex.hidden = !day?.lessons.length;
@@ -57,17 +64,30 @@
             return link;
         }));
 
-        if (dayChanged && scene.offsetWidth && !reduceMotion.matches && document.body.dataset.lowPower !== 'true') {
+        if (direction && scene.offsetWidth && !reduceMotion.matches && document.body.dataset.lowPower !== 'true') {
             sceneAnimation = sceneCopy.animate(
-                [{ opacity: .25, translate: '0 14px' }, { opacity: 1, translate: '0 0' }],
-                { duration: 320, easing: 'cubic-bezier(.2,.75,.2,1)' }
+                [{ opacity: .35, translate: `${direction * 12}px 0` }, { opacity: 1, translate: '0 0' }],
+                { duration: 240, easing: 'ease-out' }
             );
         }
     }
 
-    function update() {
-        frame = 0;
-        const viewportHeight = document.documentElement.clientHeight;
+    function updateStory(viewportHeight) {
+        const bounds = story.getBoundingClientRect();
+        const offset = clamp(stageTop - bounds.top, storyLength);
+        const step = steps.findLast(item => offset >= item.start);
+        const transition = step.travel ? clamp((offset - step.transitionStart) / step.travel, 1) : 0;
+        grid.style.setProperty('--week-track-x', `${-(step.index + transition) * stepWidth}px`);
+        for (const { day, start, overflow } of steps) {
+            day.card.style.setProperty('--week-day-y', `${-clamp(offset - start, overflow)}px`);
+        }
+        dock.style.setProperty('--week-progress', offset / storyLength);
+        const day = steps[step.index + Number(transition >= .5)].day;
+        setActiveDay(bounds.top < viewportHeight && bounds.bottom > stageTop ? day : null);
+        showDay(day);
+    }
+
+    function updateStack(viewportHeight) {
         const week = grid.getBoundingClientRect();
 
         // The bar is full once the end of the last day is in view.
@@ -88,23 +108,92 @@
         showDay(days[index]);
     }
 
+    function update() {
+        frame = 0;
+        const viewportHeight = document.documentElement.clientHeight;
+        if (steps.length) updateStory(viewportHeight);
+        else updateStack(viewportHeight);
+    }
+
     function requestUpdate() {
         if (!frame) frame = requestAnimationFrame(update);
     }
 
-    function measureDock() {
+    function measure() {
         const top = header.offsetHeight + 8;
         pane.style.setProperty('--schedule-dock-top', `${top}px`);
         pane.style.setProperty('--schedule-dock-height', `${dock.offsetHeight}px`);
         const dockTop = parseFloat(getComputedStyle(dock).top);
         readingLine = dockTop + dock.offsetHeight + 18;
+        stageTop = readingLine - 8;
+        const available = document.documentElement.clientHeight - stageTop - 12;
+        const enabled = !reduceMotion.matches && Number.isFinite(available) && available >= 180 && days.length > 1;
+        pane.toggleAttribute('data-week-story', enabled);
+        steps = [];
+        if (enabled) {
+            const stageHeight = Math.min(available, Math.max(...days.map(({ card }) => card.offsetHeight)));
+            const travel = Math.min(360, Math.max(160, Math.round(stageHeight * .55)));
+            stepWidth = grid.getBoundingClientRect().width + parseFloat(getComputedStyle(grid).columnGap);
+            let start = 0;
+            steps = days.map((day, index) => {
+                const overflow = Math.max(0, day.card.offsetHeight - stageHeight);
+                const transitionStart = start + overflow + 72;
+                const duration = index === days.length - 1 ? 0 : travel;
+                const step = { day, index, start, overflow, transitionStart, travel: duration };
+                start = transitionStart + duration;
+                return step;
+            });
+            storyLength = start;
+            story.style.setProperty('--week-stage-top', `${stageTop}px`);
+            story.style.setProperty('--week-stage-height', `${stageHeight}px`);
+            story.style.setProperty('--week-story-height', `${stageHeight + storyLength}px`);
+        }
         requestUpdate();
     }
 
+    function scrollToTarget(target) {
+        const step = steps.find(({ day }) => day.card.contains(target));
+        if (!step) return false;
+        const depth = target.getBoundingClientRect().top - step.day.card.getBoundingClientRect().top;
+        const start = window.scrollY + story.getBoundingClientRect().top - stageTop;
+        const top = Math.ceil(start + step.start + clamp(depth - 12, step.overflow));
+        window.scrollTo({ top, behavior: 'instant' });
+        requestUpdate();
+        return true;
+    }
+
+    function followHash() {
+        const target = document.getElementById(location.hash.slice(1));
+        if (target) scrollToTarget(target);
+    }
+
+    dock.addEventListener('click', event => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const link = event.target.closest('a[href^="#"]');
+        if (!link) return;
+        const target = document.getElementById(link.hash.slice(1));
+        if (!target || !scrollToTarget(target)) return;
+        event.preventDefault();
+        if (location.hash !== link.hash) history.pushState(null, '', link.hash);
+        target.focus({ preventScroll: true });
+    });
+
+    grid.addEventListener('focusin', ({ target }) => {
+        if (!steps.length || target.classList.contains('day-card')) return;
+        const content = target.getBoundingClientRect();
+        const viewport = stage.getBoundingClientRect();
+        if (content.left < viewport.left || content.right > viewport.right ||
+            content.top < viewport.top || content.bottom > viewport.bottom) scrollToTarget(target);
+    });
+
+    const resize = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
     function collectDays() {
+        const firstRender = !days.length;
+        for (const { card } of days) resize?.unobserve(card);
         days = links.flatMap((link, index) => {
             const card = document.getElementById(link.hash.slice(1));
             if (!card || !grid.contains(card)) return [];
+            resize?.observe(card);
             const date = card.querySelector('.day-date').dateTime;
             const lessons = [...card.querySelectorAll('.lesson-item[id] .lesson-hours[data-start]')].map(hours => ({
                 id: hours.closest('.lesson-item').id,
@@ -113,20 +202,24 @@
             }));
             return [{ link, card, date, lessons, number: index + 1, name: card.querySelector('.day-name').textContent.trim(), dateParts: dateFormat.formatToParts(new Date(date)) }];
         });
-        requestUpdate();
+        if (firstRender && days.length) showDay(days[0]);
+        measure();
+        if (firstRender && days.length) followHash();
     }
 
     // Schedule updates replace the cards, including when a replacement is refreshed.
     new MutationObserver(collectDays).observe(grid, { childList: true });
-    if ('ResizeObserver' in window) {
-        const resize = new ResizeObserver(measureDock);
-        resize.observe(header);
-        resize.observe(grid);
-        resize.observe(dock);
-    }
+    resize?.observe(header);
+    resize?.observe(grid);
+    resize?.observe(dock);
     window.addEventListener('scroll', requestUpdate, { passive: true });
-    window.addEventListener('resize', measureDock);
-    window.addEventListener('pageshow', measureDock);
-    measureDock();
+    window.addEventListener('resize', measure);
+    window.addEventListener('pageshow', measure);
+    window.addEventListener('hashchange', followHash);
+    reduceMotion.addEventListener('change', () => {
+        const card = activeDay?.card;
+        measure();
+        if (card && !scrollToTarget(card)) card.scrollIntoView({ block: 'start' });
+    });
     collectDays();
 })();
