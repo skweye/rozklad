@@ -778,7 +778,15 @@ body.workspace-redesign[data-app] .site-legal-footer > span { margin-inline-end:
     body.workspace-redesign[data-app="schedule"] .week-dock { top: 4px; }
     body.workspace-redesign[data-app="schedule"] .schedule-grid :is(.day-card,.lesson-item) { scroll-margin-top: calc(var(--schedule-dock-offset) + 16px); }
     body.workspace-redesign[data-app="schedule"] .week-lesson-index { display: none; }
-    body.workspace-redesign[data-app="schedule"] :is(.lesson-item,.lesson-item:hover) { grid-template-columns: 75px minmax(0,1fr); gap: 8px; }
+    body.workspace-redesign[data-app="schedule"] :is(.lesson-item,.lesson-item:hover) {
+        grid-template-columns: minmax(0,1fr);
+        gap: 6px;
+    }
+    body.workspace-redesign[data-app="schedule"] .lesson-hours {
+        margin-top: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
     body.workspace-redesign[data-app="reports"] .library-heading { flex-wrap: wrap; }
     body.workspace-redesign[data-app="reports"] .editor-toolbar {
         display: grid;
