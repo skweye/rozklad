@@ -192,7 +192,7 @@ body.workspace-redesign[data-app] .eyebrow {
     font-weight: 600;
     letter-spacing: 0;
 }
-body.workspace-redesign[data-app] :is(#weeklySchedule,#assignments,#online,#permissions,.studio-section,.day-card) { scroll-margin-top: 104px; }
+body.workspace-redesign[data-app] :is(#weeklySchedule,#assignments,#online,#permissions,.studio-section) { scroll-margin-top: 104px; }
 
 /* Schedule: daily summary and quick links, then week and assignments side by side. */
 body.workspace-redesign[data-app] .status-grid { grid-template-columns: minmax(0,.8fr) repeat(2,minmax(0,1fr)); gap: 14px; border: 0; padding: 0; }
@@ -458,6 +458,7 @@ body.workspace-redesign[data-app][data-low-power="true"] { --glass-blur-radius: 
 /* The timetable heading, summary cards and resource links. */
 body.workspace-redesign[data-app="schedule"] {
     --schedule-width: min(1280px, calc(100% - clamp(28px, 8vw, 112px)));
+    --schedule-dock-top: 94px;
     --glass-header-width: var(--schedule-width);
     --glass-header-padding: 8px 16px;
     --schedule-accent: #d8caff;
@@ -613,13 +614,45 @@ body.workspace-redesign[data-app="schedule"] .replacement-status-bar {
 }
 body.workspace-redesign[data-app="schedule"] .replacement-status-bar p { color: var(--ui-text); }
 body.workspace-redesign[data-app="schedule"] .schedule-day-navigation {
+    position: sticky;
+    inset-block-start: var(--schedule-dock-top);
+    z-index: 4;
+    flex-wrap: nowrap;
+    padding: 4px 5px 10px;
     border: 1px solid var(--glass-stroke);
     background: var(--glass-card);
     box-shadow: var(--glass-control-shadow);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
 }
-body.workspace-redesign[data-app="schedule"] .schedule-day-navigation a[aria-current] { color: var(--schedule-accent); }
+body.workspace-redesign[data-app="schedule"] .schedule-day-navigation::after {
+    content: '';
+    position: absolute;
+    inset: auto 16px 5px;
+    height: 2px;
+    border-radius: 999px;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, var(--schedule-accent), var(--schedule-teal)) left / calc(var(--week-progress, 0) * 100%) 100% no-repeat,
+        var(--ui-line);
+}
+body.workspace-redesign[data-app="schedule"] .schedule-day-navigation a {
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 9px;
+    font-weight: 650;
+}
+body.workspace-redesign[data-app="schedule"] .schedule-day-navigation a[aria-current] {
+    color: var(--schedule-accent);
+    background: color-mix(in srgb, var(--schedule-accent) 15%, var(--ui-panel));
+    box-shadow: inset 0 1px 2px var(--glass-sheen), inset 0 0 0 1px var(--ui-line);
+}
+body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card {
+    scroll-margin-top: calc(var(--schedule-dock-top) + var(--schedule-dock-height, 60px) + 14px);
+}
+body.workspace-redesign[data-app="schedule"][data-theme] .day-card[data-day-in-view]:not(.is-today) {
+    border-color: color-mix(in srgb, var(--schedule-accent) 48%, var(--glass-stroke)) !important;
+}
 body.workspace-redesign[data-app="schedule"] .day-header { flex-direction: row; align-items: center; }
 body.workspace-redesign[data-app="schedule"] .day-name { font-size: 1.125rem; font-weight: 700; letter-spacing: -.025em; }
 body.workspace-redesign[data-app="schedule"] .day-card.is-today :is(.day-header,.day-name) { color: var(--schedule-accent); border-color: var(--schedule-accent); }
@@ -628,6 +661,20 @@ body.workspace-redesign[data-app="schedule"] .classroom-heading h2 { font-size: 
 body.workspace-redesign[data-app="schedule"] .classroom-heading { gap: 10px; }
 body.workspace-redesign[data-app="schedule"] .classroom-status { font-size: .875rem; margin: 15px 0; }
 body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem; }
+
+@keyframes schedule-day-enter {
+    from { opacity: .55; translate: 0 12px; }
+    to { opacity: 1; translate: 0 0; }
+}
+@supports (animation-timeline: view()) and (animation-range: entry 0px entry 120px) {
+    @media (prefers-reduced-motion: no-preference) {
+        body.workspace-redesign[data-app="schedule"]:not([data-low-power="true"]) .schedule-grid > .day-card:not(:focus-within) {
+            animation: schedule-day-enter linear both !important;
+            animation-timeline: view() !important;
+            animation-range: entry 0px entry 120px !important;
+        }
+    }
+}
 
 @media (hover: hover) {
     body.workspace-redesign[data-app="schedule"] :is(.dashboard-jumps a,.link-card,.btn.classroom-action,.settings-fab,.site-switcher-toggle) {
@@ -643,6 +690,7 @@ body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem
 }
 @media (max-width: 740px) {
     body.workspace-redesign[data-app="schedule"] {
+        --schedule-dock-top: 78px;
         --glass-header-padding: 5px 8px;
         --glass-header-gap: 4px;
         --glass-header-height: 58px;
@@ -692,6 +740,12 @@ body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem
     body.workspace-redesign[data-app][data-theme] { --glass-blur: none; --glass-grain: none; }
     body.workspace-redesign[data-app][data-theme]::before { display: none !important; }
 }
+@media print {
+    body.workspace-redesign[data-app="schedule"] .schedule-day-navigation { display: none; }
+}
 @media (forced-colors: active) {
-    body.workspace-redesign[data-app] .primary-navigation a[aria-current] { outline: 1px solid LinkText; outline-offset: -2px; }
+    body.workspace-redesign[data-app] :is(.primary-navigation,.schedule-day-navigation) a[aria-current] {
+        outline: 1px solid LinkText;
+        outline-offset: -2px;
+    }
 }

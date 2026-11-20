@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="editorial.css?v=20261020">
     <link rel="preload" href="schedule-glass-hero.webp" as="image">
-    <link rel="stylesheet" href="glass-workspace.css?v=20261120-open-heading">
+    <link rel="stylesheet" href="glass-workspace.css?v=20261120-week-scroll">
     <script src="site-settings.js" defer></script>
     <script src="schedule-time.js" defer></script>
+    <script src="schedule-scroll.js" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
     <script src="site-auth.js?v=20261021-auto-transfer" defer></script>
@@ -185,7 +186,11 @@
             </div>
         </div>
         <nav class="schedule-day-navigation" aria-label="Перейти до дня">
-            <a href="#scheduleDay1">Пн</a><a href="#scheduleDay2">Вт</a><a href="#scheduleDay3">Ср</a><a href="#scheduleDay4">Чт</a><a href="#scheduleDay5">Пт</a>
+            <a href="#scheduleDay1" aria-label="Понеділок">Пн</a>
+            <a href="#scheduleDay2" aria-label="Вівторок">Вт</a>
+            <a href="#scheduleDay3" aria-label="Середа">Ср</a>
+            <a href="#scheduleDay4" aria-label="Четвер">Чт</a>
+            <a href="#scheduleDay5" aria-label="П’ятниця">Пт</a>
         </nav>
         <div id="scheduleGrid" class="schedule-grid">
             <!-- JS generated cards -->

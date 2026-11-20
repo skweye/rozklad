@@ -8,7 +8,7 @@ await mkdir(output, { recursive: true });
 const assets = [
     '_headers',
     'index.html', 'styles.css', 'workspace.css', 'editorial.css', 'glass-workspace.css',
-    'appearance.css', 'site-appearance.js', 'schedule-time.js', 'schedule-replacements.js', 'schedule-notices.js',
+    'appearance.css', 'site-appearance.js', 'schedule-time.js', 'schedule-scroll.js', 'schedule-replacements.js', 'schedule-notices.js',
     'site-settings.js', 'site-notifications.js', 'background-notifications.js', 'schedule-notification-sw.js', 'site-permissions.js', 'site-presence.js',
     'site-admin.js', 'admin/index.html', 'admin/style.css', 'admin/online.js', 'admin/settings.js',
     'privacy.html', 'terms.html', 'legal.css',
