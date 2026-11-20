@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="site-appearance.js?v=20261119-glass"></script>
+    <script src="site-appearance.js?v=20261120-campus"></script>
     <script src="site-notifications.js?v=20261119"></script>
     <link rel="icon" id="siteFavicon" href="brand-icon.svg" type="image/svg+xml">
     <title>Розклад ПЗ-24-1/9</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="workspace.css">
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="editorial.css?v=20261020">
-    <link rel="preload" href="schedule-glass-hero.webp" as="image">
-    <link rel="stylesheet" href="glass-workspace.css?v=20261120-week-scene">
+    <link rel="preload" href="schedule-hero.webp" as="image">
+    <link rel="stylesheet" href="campus.css?v=20261120">
     <script src="site-settings.js" defer></script>
     <script src="schedule-time.js" defer></script>
-    <script src="schedule-scroll.js?v=20261120-week-scene" defer></script>
+    <script src="schedule-scroll.js?v=20261120-campus" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
     <script src="site-auth.js?v=20261021-auto-transfer" defer></script>
@@ -55,7 +55,7 @@
         </details>
         <div class="header-inner">
             <a class="workspace-brand" href="index.html" aria-label="Навчальний простір — розклад">
-                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 10h8v20h-8zM21 10h9v8h-9zM21 21h9v9h-9z"/></svg></span>
                 <span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span>
             </a>
             <div class="nav-links">
@@ -95,18 +95,18 @@
     <div id="toastContainer" class="toast-container"></div>
     <main>
         <section class="workspace-hero" aria-labelledby="workspaceTitle">
-            <p class="eyebrow">Група ПЗ-24-1/9</p>
+            <p class="eyebrow">ПЗ-24-1/9</p>
             <h1 id="workspaceTitle">Розклад занять</h1>
             <nav class="dashboard-jumps" aria-label="На цій сторінці">
                 <a href="#weeklySchedule"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>Розклад на тиждень</a>
-                <a href="#assignments">Завдання<svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#arrow-right"/></svg></a>
+                <a href="#assignments">Завдання</a>
             </nav>
         </section>
 
         <div class="overview-layout">
         <div class="overview-sidebar">
         <div class="status-grid">
-            <div class="card" style="animation-delay: 0.1s">
+            <div class="card">
                 <div class="card-header">
                     <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#calendar"/></svg>
                     <span class="card-title">Сьогодні</span>
@@ -119,7 +119,7 @@
                 <div class="week-indicator" id="weekType">...</div>
             </div>
 
-            <div class="card next-class-card" id="statusCard" style="animation-delay: 0.2s">
+            <div class="card next-class-card" id="statusCard">
                 <div class="card-header">
                     <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#clock"/></svg>
                     <span class="card-title" id="statusLabel">Статус</span>
@@ -134,7 +134,7 @@
             </div>
             <div class="card upcoming-lesson-card" id="nextLessonCard">
                 <div class="card-header">
-                    <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#arrow-right"/></svg>
+                    <svg class="ui-icon status-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#list"/></svg>
                     <span class="card-title">Наступна пара</span>
                 </div>
                 <div class="highlight-info" id="nextLessonTitle">Завантаження…</div>
@@ -144,7 +144,7 @@
         </div>
 
         <nav class="links-grid" aria-label="Навчальні ресурси">
-            <a class="link-card" href="https://classroom.google.com/u/2/c/ODc2NTM2NzYyNDgw" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.3s">
+            <a class="link-card" href="https://classroom.google.com/u/2/c/ODc2NTM2NzYyNDgw" target="_blank" rel="noopener noreferrer">
                 <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#book"/></svg>
                 <div class="link-content">
                     <span class="link-title">Класрум</span>
@@ -152,7 +152,7 @@
                 </div>
                 <svg class="ui-icon resource-link-indicator" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg>
             </a>
-            <a class="link-card" href="https://meet.google.com/vib-ihvu-brs" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.4s">
+            <a class="link-card" href="https://meet.google.com/vib-ihvu-brs" target="_blank" rel="noopener noreferrer">
                 <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#video"/></svg>
                 <div class="link-content">
                     <span class="link-title">Відеоурок</span>
@@ -160,7 +160,7 @@
                 </div>
                 <svg class="ui-icon resource-link-indicator" aria-hidden="true" focusable="false"><use href="ui-icons.svg#link"/></svg>
             </a>
-            <a class="link-card" href="https://docs.google.com/spreadsheets/d/13S0yj6Y7RPheMGhn7ym8Jg0rixbxfHTymnp4Q2nnhL4/edit?pli=1&gid=781407494#gid=781407494" target="_blank" rel="noopener noreferrer" style="animation-delay: 0.5s">
+            <a class="link-card" href="https://docs.google.com/spreadsheets/d/13S0yj6Y7RPheMGhn7ym8Jg0rixbxfHTymnp4Q2nnhL4/edit?pli=1&gid=781407494#gid=781407494" target="_blank" rel="noopener noreferrer">
                 <svg class="ui-icon resource-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#table"/></svg>
                 <div class="link-content">
                     <span class="link-title">Журнал оцінок</span>

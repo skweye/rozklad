@@ -4,15 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../site-appearance.js?v=20261119-glass"></script>
+    <script src="../site-appearance.js?v=20261120-campus"></script>
     <script src="../site-notifications.js?v=20261119"></script>
-    <title>Автоматизація створення звіту</title>
+    <title>Мої звіти — Навчальний простір</title>
     <link rel="icon" id="siteFavicon" href="../brand-icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cascadia+Mono:wght@400;600&family=Google+Sans:wght@500&family=Inter:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=20261007-download-dialog">
     <link rel="stylesheet" href="../workspace.css">
     <link rel="stylesheet" href="../appearance.css?v=20261028-select-contrast">
@@ -28,8 +26,8 @@
     <script src="../schedule-time.js" defer></script>
     <script src="../background-notifications.js?v=20261119" defer></script>
     <script src="../schedule-notices.js" defer></script>
-    <link rel="stylesheet" href="flow.css?v=20261117-document-editor">
-    <link rel="stylesheet" href="../glass-workspace.css?v=20261120-frosted">
+    <link rel="stylesheet" href="flow.css?v=20261120-campus">
+    <link rel="stylesheet" href="../campus.css?v=20261120">
     <script src="../site-settings.js" defer></script>
 </head>
 
@@ -38,12 +36,13 @@
     <a class="studio-skip" href="#reportDetails">До заповнення звіту</a>
 
     <header class="reports-topbar">
-        <a class="reports-home-link" href="../index.html"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#calendar"/></svg><span>Навчальний простір</span></a>
-        <nav class="primary-navigation" aria-label="Основні розділи"><a href="../index.html">Розклад</a><a href="index.html" aria-current="page">Звіти</a></nav>
+        <a class="reports-home-link workspace-brand" href="../index.html" aria-label="Навчальний простір — розклад"><span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 10h8v20h-8zM21 10h9v8h-9zM21 21h9v9h-9z"/></svg></span><span class="brand-copy">Навчальний простір<small>ПЗ-24-1/9</small></span></a>
+        <nav class="primary-navigation" aria-label="Основні розділи"><a href="../index.html"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#calendar"/></svg>Розклад</a><a href="index.html" aria-current="page"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#file"/></svg>Звіти</a></nav>
         <div class="nav-links"></div>
     </header>
     <main id="reportsLibrary" class="reports-library" aria-labelledby="reportsTitle">
-        <div class="library-heading"><h1 id="reportsTitle" tabindex="-1">Мої звіти</h1>
+        <div class="library-heading">
+            <div><h1 id="reportsTitle" tabindex="-1">Мої звіти</h1><p>Створюй, редагуй і завантажуй лабораторні роботи.</p></div>
         <button type="button" class="btn btn-primary" id="btnNewDraft" disabled><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../ui-icons.svg#plus"/></svg>Новий звіт</button></div>
         <div class="library-layout">
         <section class="library-collection" aria-labelledby="savedReportsTitle">

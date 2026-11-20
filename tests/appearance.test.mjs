@@ -90,26 +90,26 @@ test('a blocked settings write keeps the choice usable until reload', () => {
 
 test('native menus and the white report paper keep readable input colors', async () => {
     assert.match(await read('appearance.css'), /select :is\(option,optgroup\)\s*\{\s*background-color: Canvas; color: CanvasText;/);
-    const css = await read('glass-workspace.css');
+    const css = await read('campus.css');
     assert.match(css, /\.document-sheet select\s*\{\s*color-scheme: light/);
     assert.match(css, /\.document-sheet \.form-control\s*\{[^}]*caret-color: #222228/);
 });
 
-test('all app pages prime before rendering and share the last-loaded glass stylesheet', async () => {
+test('all app pages prime before rendering and share the last-loaded campus stylesheet', async () => {
     for (const file of pages) {
         const html = await read(file);
-        const script = html.match(/<script src="[^"]*site-appearance\.js\?v=20261119-glass"><\/script>/);
+        const script = html.match(/<script src="[^"]*site-appearance\.js\?v=20261120-campus"><\/script>/);
         assert.ok(script && script.index < html.indexOf('rel="stylesheet"'));
         assert.match(html, /<body[^>]*>\s*<script>window\.studyAppearance\?\.prime\(document\.body\);<\/script>/);
         assert.match(html, /data-appearance-settings/);
         const styles = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1]);
-        assert.match(styles.at(-1), /glass-workspace\.css/);
+        assert.match(styles.at(-1), /campus\.css/);
         assert.ok(!styles.some(path => /neumorphism|deep-tech|frosted-glass/.test(path)));
     }
     const build = await read('scripts/build.mjs');
-    for (const asset of ['appearance.css', 'site-appearance.js', 'glass-workspace.css']) assert.ok(build.includes(`'${asset}'`));
-    const css = await read('glass-workspace.css');
+    for (const asset of ['appearance.css', 'site-appearance.js', 'campus.css']) assert.ok(build.includes(`'${asset}'`));
+    const css = await read('campus.css');
     assert.match(css, /\.schedule-notices,\.toast,\.app-notice/);
     assert.match(css, /prefers-reduced-motion: reduce/);
-    assert.match(css, /data-low-power="true"/);
+    assert.match(css, /forced-colors: active/);
 });

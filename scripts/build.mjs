@@ -7,13 +7,13 @@ const output = new URL('dist/', root);
 await mkdir(output, { recursive: true });
 const assets = [
     '_headers',
-    'index.html', 'styles.css', 'workspace.css', 'editorial.css', 'glass-workspace.css',
+    'index.html', 'styles.css', 'workspace.css', 'editorial.css', 'campus.css',
     'appearance.css', 'site-appearance.js', 'schedule-time.js', 'schedule-scroll.js', 'schedule-replacements.js', 'schedule-notices.js',
     'site-settings.js', 'site-notifications.js', 'background-notifications.js', 'schedule-notification-sw.js', 'site-permissions.js', 'site-presence.js',
     'site-admin.js', 'admin/index.html', 'admin/style.css', 'admin/online.js', 'admin/settings.js',
     'privacy.html', 'terms.html', 'legal.css',
     'background-particles.js', 'site-navigation.js', 'site-branding.js', 'site-auth.js', 'site-classroom.js',
-    'brand-icon.svg', 'ui-icons.svg', 'icon.png', 'sound.mp3', 'schedule-glass-hero.webp', 'schedule.json', 'announcement.json',
+    'brand-icon.svg', 'ui-icons.svg', 'icon.png', 'sound.mp3', 'schedule-hero.webp', 'schedule.json', 'announcement.json',
     'reports/index.html', 'reports/style.css', 'reports/script.js', 'reports/metadata.js', 'reports/blocks.js', 'reports/blocks.css', 'reports/delete-confirm.js',
     'reports/drafts-store.js', 'reports/drafts.js', 'reports/drafts.css',
     'reports/studio.css', 'reports/studio.js', 'reports/flow.css',

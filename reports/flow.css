@@ -162,7 +162,6 @@ dialog.rb-context-picker { inset: auto; position: fixed; margin: 0; width: min(3
     body.workspace-redesign.report-studio[data-app] .workspace-wrapper { display: block; max-width: none; }
     .library-filters { grid-template-columns: minmax(0,1fr) 220px; }
     #btnLibraryImport { justify-self: start; grid-column: 1 / -1; }
-    .reports-home-link span { display: none; }
     .reports-topbar { gap: 20px; height: 66px; }
 }
 @media (max-width: 600px) {

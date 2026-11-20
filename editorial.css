@@ -87,7 +87,6 @@ body.workspace-redesign[data-app] .week-indicator { background: transparent; bor
 body.workspace-redesign[data-app] .status-grid :is(.sub-info,.next-lesson-time,.next-lesson-details) { font-size: 12px; margin-top: 8px; }
 body.workspace-redesign[data-app] .overview-sidebar > .links-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 28px; padding: 14px 0; }
 body.workspace-redesign[data-app] .overview-layout .link-card { min-height: 44px; padding: 0; gap: 9px; flex: 0 1 auto; }
-body.workspace-redesign[data-app] .overview-layout .link-card + .link-card { border: 0 !important; }
 body.workspace-redesign[data-app] .link-subtitle { display: none; }
 body.workspace-redesign[data-app] .link-card .resource-icon { width: 17px; height: 17px; color: var(--ui-muted); padding: 0; background: transparent; border-radius: 0; box-shadow: none; }
 body.workspace-redesign[data-app] .resource-link-indicator { width: 13px; height: 13px; }

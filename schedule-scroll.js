@@ -93,11 +93,11 @@
     }
 
     function measureDock() {
-        const top = header.offsetHeight + 20;
+        const top = header.offsetHeight + 8;
         pane.style.setProperty('--schedule-dock-top', `${top}px`);
         pane.style.setProperty('--schedule-dock-height', `${dock.offsetHeight}px`);
-        const offset = parseFloat(getComputedStyle(pane).getPropertyValue('--schedule-dock-offset'));
-        readingLine = top + offset + 18;
+        const dockTop = parseFloat(getComputedStyle(dock).top);
+        readingLine = dockTop + dock.offsetHeight + 18;
         requestUpdate();
     }
 

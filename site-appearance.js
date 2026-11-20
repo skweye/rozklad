@@ -1,17 +1,17 @@
-/* The two glass palettes are shared and applied before the first paint. */
+/* Apply the shared palette before the first paint. */
 (() => {
     'use strict';
     const key = 'studyAppearanceV1';
     const themes = {
         light: {
-            label: 'Світла', ground: '#eef3fc', surface: '255,255,255', text: '#182237',
-            muted: '#495873', accent: '#0759c7', onAccent: '#ffffff',
-            blue: '#c5dcff', violet: '#e6d9fa', aqua: '#d5f1ef', danger: '#a62f48'
+            label: 'Світла', ground: '#f1f3ee', panel: '#fff', inset: '#f6f8f4', soft: '#edf2eb',
+            text: '#142722', muted: '#526862', line: '#d6dfd6',
+            accent: '#14614f', accentRgb: '20,97,79', onAccent: '#ffffff', danger: '#a22d36'
         },
         dark: {
-            label: 'Темна', ground: '#111726', surface: '32,42,63', text: '#f0f4ff',
-            muted: '#b7c3da', accent: '#a9cbff', onAccent: '#102545',
-            blue: '#1e365a', violet: '#322345', aqua: '#16383f', danger: '#ff9eac'
+            label: 'Темна', ground: '#101b18', panel: '#182923', inset: '#15221e', soft: '#233831',
+            text: '#eef6ec', muted: '#b0c4bb', line: '#3a5048',
+            accent: '#b7e6ac', accentRgb: '183,230,172', onAccent: '#132820', danger: '#ffb2b4'
         }
     };
     const legacyLight = new Set(['light', 'minimal', 'neumorphism', 'university', 'dualshot', 'graphite']);
@@ -40,27 +40,20 @@
         if (!target) return;
         const palette = themes[theme];
         const light = theme === 'light';
-        const line = light ? '#53698638' : '#acc7fa35';
-        const panel = `rgba(${palette.surface},.78)`;
-        const inset = light ? '#f6f9ffd9' : '#131b2cba';
-        const soft = light ? '#284a8010' : '#d1e0ff12';
         target.classList.toggle('theme-light', light);
         target.dataset.theme = theme;
         target.dataset.lowPower = String(lowPower);
         target.style.colorScheme = theme;
         const values = {
-            '--ui-ground': palette.ground, '--ui-panel': panel, '--ui-inset': inset, '--ui-soft': soft,
-            '--ui-text': palette.text, '--ui-muted': palette.muted, '--ui-line': line,
+            '--ui-ground': palette.ground, '--ui-panel': palette.panel, '--ui-inset': palette.inset, '--ui-soft': palette.soft,
+            '--ui-text': palette.text, '--ui-muted': palette.muted, '--ui-line': palette.line,
             '--ui-accent': palette.accent, '--ui-on-accent': palette.onAccent, '--ui-danger': palette.danger,
-            '--ui-glass-edge': line, '--ui-glass-edge-hover': palette.accent,
-            '--ui-glass-rim': light ? 'inset 0 1px #fffc' : 'inset 0 1px #ffffff24',
-            '--glass-rgb': palette.surface, '--glass-blue': palette.blue, '--glass-violet': palette.violet,
-            '--glass-aqua': palette.aqua, '--accent-rgb': light ? '7,89,199' : '169,203,255',
-            '--accent-color-rgb': light ? '7,89,199' : '169,203,255',
+            '--ui-glass-edge': palette.line, '--ui-glass-edge-hover': palette.accent, '--ui-glass-rim': 'none',
+            '--accent-rgb': palette.accentRgb, '--accent-color-rgb': palette.accentRgb,
             '--accent-color': palette.accent, '--sky-primary': palette.accent,
-            '--bg-color': palette.ground, '--card-bg': panel, '--bg-card': panel, '--glass-bg-card': panel,
+            '--bg-color': palette.ground, '--card-bg': palette.panel, '--bg-card': palette.panel, '--glass-bg-card': palette.panel,
             '--text-primary': palette.text, '--text-secondary': palette.muted, '--text-muted': palette.muted,
-            '--border-color': line
+            '--border-color': palette.line
         };
         for (const [name, value] of Object.entries(values)) target.style.setProperty(name, value);
         if (target === document.documentElement) target.style.setProperty('background-color', palette.ground);
@@ -80,10 +73,10 @@
             settings.innerHTML = `
                 <fieldset class="appearance-section">
                     <legend>Оформлення</legend>
-                    <div class="glass-theme-picker">
+                    <div class="theme-picker">
                         ${Object.entries(themes).map(([id, palette]) => `
                             <button type="button" data-theme-choice="${id}" aria-pressed="false">
-                                <span class="glass-theme-swatch" aria-hidden="true"></span>${palette.label}
+                                <span class="theme-swatch" aria-hidden="true"></span>${palette.label}
                             </button>`).join('')}
                     </div>
                 </fieldset>

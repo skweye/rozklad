@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="/site-appearance.js?v=20261119-glass"></script>
+    <script src="/site-appearance.js?v=20261120-campus"></script>
     <script src="/site-notifications.js?v=20261119"></script>
     <meta name="robots" content="noindex, nofollow">
     <title>Адмін-панель — Навчальний простір</title>
     <link rel="icon" id="siteFavicon" href="/brand-icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500&family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/workspace.css">
     <link rel="stylesheet" href="/appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="/admin/style.css">
     <link rel="stylesheet" href="/editorial.css?v=20261020">
-    <link rel="stylesheet" href="/glass-workspace.css?v=20261120-frosted">
+    <link rel="stylesheet" href="/campus.css?v=20261120">
     <script src="/site-settings.js" defer></script>
     <script src="/site-navigation.js" defer></script>
     <script src="/site-branding.js" defer></script>
@@ -43,10 +46,10 @@
         </details>
         <div class="header-inner">
             <a class="workspace-brand" href="/" aria-label="Навчальний простір — розклад">
-                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 14h12v14h-3V17h-6v11H7zm14 1.5c2-1.9 7-2.3 9-.1 2 2 1 4.6-1.2 5.6 2.7.8 3.2 4 1.2 6-2.5 2.5-7.5 2-9.5 0l1.5-2.2c2 1.6 6 2 6.5-.3.4-1.7-1.7-2.2-4.5-2.2v-2.6c2.8 0 4.8-.7 4.1-2.4-.7-1.6-3.7-1.3-5.6.3z"/><circle cx="34" cy="26.5" r="1.7"/></svg></span>
+                <span class="brand-mark" aria-hidden="true"><svg class="brand-glyph" viewBox="0 0 40 40" aria-hidden="true"><path d="M10 10h8v20h-8zM21 10h9v8h-9zM21 21h9v9h-9z"/></svg></span>
                 <span class="brand-copy">Навчальний простір<small>Керування сайтом</small></span>
             </a>
-            <div class="nav-links"><nav class="primary-navigation" aria-label="Основні розділи"><a href="/">Розклад</a><a href="/reports/">Звіти</a><a href="/admin/" aria-current="page">Керування</a></nav></div>
+            <div class="nav-links"><nav class="primary-navigation" aria-label="Основні розділи"><a href="/"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#calendar"/></svg>Розклад</a><a href="/reports/"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#file"/></svg>Звіти</a><a href="/admin/" aria-current="page"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="/ui-icons.svg#shield"/></svg>Керування</a></nav></div>
         </div>
     </header>
     <div class="settings-fab-container">
@@ -70,6 +73,7 @@
     <main class="admin-main">
         <section class="admin-hero" aria-labelledby="admin-title">
             <h1 id="admin-title">Керування сайтом</h1>
+            <div class="page-banner-icon" aria-hidden="true"><svg class="ui-icon" focusable="false"><use href="/ui-icons.svg#shield"/></svg></div>
         </section>
         <section class="admin-gate" data-admin-gate aria-labelledby="access-title">
             <h2 id="access-title">Доступ адміністратора</h2>

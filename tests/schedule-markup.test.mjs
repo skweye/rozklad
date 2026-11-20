@@ -49,7 +49,7 @@ test('summary and resource links precede the timetable, assignments follow it in
     assert.ok(html.indexOf('id="scheduleGrid"') < html.indexOf('data-classroom'));
     assert.match(html, /href="#assignments"/);
     assert.match(html, /class="dashboard-layout">\s*<section class="timetable-pane"/);
-    const css = await readFile(new URL('../glass-workspace.css', import.meta.url), 'utf8');
+    const css = await readFile(new URL('../campus.css', import.meta.url), 'utf8');
     assert.match(css, /\.dashboard-layout\s*\{[^}]*align-items: start/);
     assert.match(css, /\.dashboard-layout,\.management-layout\s*\{\s*grid-template-columns: minmax\(0,1fr\)/);
 });
