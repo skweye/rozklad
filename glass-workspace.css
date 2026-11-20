@@ -134,7 +134,7 @@ body.workspace-redesign[data-app] :is(.primary-navigation a[aria-current],.sched
 body.workspace-redesign[data-app] .site-switcher-toggle { border-radius: 50% !important; }
 
 /* Cards, floating surfaces, menus and notifications. */
-body.workspace-redesign[data-app][data-theme] :is(.status-grid > .card,.schedule-grid > .card,.link-card,.classroom-panel,.draft-card,.library-empty,.library-collection,.library-account,.editor-toolbar,.report-steps,.admin-widget,.admin-gate,.admin-sections) {
+body.workspace-redesign[data-app][data-theme] :is(.status-grid > .card,.schedule-grid > .card,.link-card,.week-dock,.classroom-panel,.draft-card,.library-empty,.library-collection,.library-account,.editor-toolbar,.report-steps,.admin-widget,.admin-gate,.admin-sections) {
     background: var(--glass-card) !important;
     border: 1px solid var(--glass-stroke) !important;
     border-radius: var(--ui-radius) !important;
@@ -208,7 +208,7 @@ body.workspace-redesign[data-app] .status-grid .week-indicator { color: var(--ui
 .dashboard-layout { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,1fr); align-items: start; gap: clamp(18px,3vw,40px); margin-top: 28px; }
 .timetable-pane { min-width: 0; }
 body.workspace-redesign[data-app] .schedule-heading { padding: 0; margin: 0 0 14px; border: 0; color: var(--ui-text); }
-body.workspace-redesign[data-app] .schedule-day-navigation { display: flex; width: fit-content; margin: 0 0 16px; }
+body.workspace-redesign[data-app] .schedule-day-navigation { display: flex; width: fit-content; margin: 0; }
 body.workspace-redesign[data-app] .schedule-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; }
 body.workspace-redesign[data-app] .schedule-grid > .day-card,
 body.workspace-redesign[data-app] .schedule-grid > .day-card:is(:first-child,:last-child),
@@ -601,7 +601,14 @@ body.workspace-redesign[data-app="schedule"] .link-card .link-title { font-size:
 body.workspace-redesign[data-app="schedule"] .link-card .link-subtitle { display: block; color: var(--ui-muted); font-size: .75rem; }
 body.workspace-redesign[data-app="schedule"] .link-card .resource-link-indicator { margin-left: auto; color: var(--ui-muted); }
 
-body.workspace-redesign[data-app="schedule"] .dashboard-layout { gap: clamp(16px, 2vw, 26px); margin-top: 26px; }
+body.workspace-redesign[data-app="schedule"] .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(30px, 5vw, 72px);
+    margin-top: 26px;
+}
+body.workspace-redesign[data-app="schedule"] .timetable-pane {
+    --schedule-dock-offset: var(--schedule-dock-height, 60px);
+}
 body.workspace-redesign[data-app="schedule"] .schedule-heading h2,
 body.workspace-redesign[data-app="schedule"] .classroom-heading h2 { font-weight: 700; letter-spacing: -.045em; }
 body.workspace-redesign[data-app="schedule"] .schedule-heading h2 { margin: 0; }
@@ -613,22 +620,37 @@ body.workspace-redesign[data-app="schedule"] .replacement-status-bar {
     margin: 0 0 10px;
 }
 body.workspace-redesign[data-app="schedule"] .replacement-status-bar p { color: var(--ui-text); }
-body.workspace-redesign[data-app="schedule"] .schedule-day-navigation {
+body.workspace-redesign[data-app="schedule"] .week-dock {
     position: sticky;
     inset-block-start: var(--schedule-dock-top);
     z-index: 4;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 16px;
+    padding: 5px;
+}
+.week-scene { padding: 3px 10px 0; }
+.week-scene-copy, .week-scene-date {
+    display: flex;
+    align-items: baseline;
+    gap: .3em;
+    color: var(--ui-text);
+    font-size: .8125rem;
+}
+.week-scene-copy { justify-content: space-between; }
+.week-scene-day { margin: 0; font-weight: 720; }
+.week-scene-date { color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+.week-lesson-index { display: none; }
+body.workspace-redesign[data-app="schedule"] .schedule-day-navigation {
+    position: relative;
     flex-wrap: nowrap;
-    padding: 4px 5px 10px;
-    border: 1px solid var(--glass-stroke);
-    background: var(--glass-card);
-    box-shadow: var(--glass-control-shadow);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
+    padding: 2px 2px 8px;
+    background: transparent;
 }
 body.workspace-redesign[data-app="schedule"] .schedule-day-navigation::after {
     content: '';
     position: absolute;
-    inset: auto 16px 5px;
+    inset: auto 10px 3px;
     height: 2px;
     border-radius: 999px;
     pointer-events: none;
@@ -647,17 +669,24 @@ body.workspace-redesign[data-app="schedule"] .schedule-day-navigation a[aria-cur
     background: color-mix(in srgb, var(--schedule-accent) 15%, var(--ui-panel));
     box-shadow: inset 0 1px 2px var(--glass-sheen), inset 0 0 0 1px var(--ui-line);
 }
-body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card {
-    scroll-margin-top: calc(var(--schedule-dock-top) + var(--schedule-dock-height, 60px) + 14px);
+body.workspace-redesign[data-app="schedule"] .schedule-grid :is(.day-card,.lesson-item) {
+    scroll-margin-top: calc(var(--schedule-dock-top) + var(--schedule-dock-offset) + 14px);
 }
 body.workspace-redesign[data-app="schedule"][data-theme] .day-card[data-day-in-view]:not(.is-today) {
     border-color: color-mix(in srgb, var(--schedule-accent) 48%, var(--glass-stroke)) !important;
 }
 body.workspace-redesign[data-app="schedule"] .day-header { flex-direction: row; align-items: center; }
-body.workspace-redesign[data-app="schedule"] .day-name { font-size: 1.125rem; font-weight: 700; letter-spacing: -.025em; }
+body.workspace-redesign[data-app="schedule"] .day-name { margin: 0; font-size: 1.125rem; font-weight: 700; letter-spacing: -.025em; }
 body.workspace-redesign[data-app="schedule"] .day-card.is-today :is(.day-header,.day-name) { color: var(--schedule-accent); border-color: var(--schedule-accent); }
 body.workspace-redesign[data-app="schedule"] .lesson-item.is-current-lesson { border-radius: 10px; }
-body.workspace-redesign[data-app="schedule"] .classroom-heading h2 { font-size: clamp(1.125rem, 2vw, 1.5rem); margin: 0; }
+body.workspace-redesign[data-app="schedule"] .lesson-item:target:not(.is-current-lesson) {
+    background: color-mix(in srgb, var(--schedule-accent) 10%, transparent) !important;
+    border-radius: 10px;
+    outline: 1px solid var(--schedule-accent);
+    outline-offset: -1px;
+}
+body.workspace-redesign[data-app="schedule"] .classroom-panel { padding: clamp(18px, 3.6vw, 44px); }
+body.workspace-redesign[data-app="schedule"] .classroom-heading h2 { font-size: clamp(1.25rem, 3vw, 2rem); margin: 0; }
 body.workspace-redesign[data-app="schedule"] .classroom-heading { gap: 10px; }
 body.workspace-redesign[data-app="schedule"] .classroom-status { font-size: .875rem; margin: 15px 0; }
 body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem; }
@@ -668,10 +697,105 @@ body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem
 }
 @supports (animation-timeline: view()) and (animation-range: entry 0px entry 120px) {
     @media (prefers-reduced-motion: no-preference) {
-        body.workspace-redesign[data-app="schedule"]:not([data-low-power="true"]) .schedule-grid > .day-card:not(:focus-within) {
+        body.workspace-redesign[data-app="schedule"]:not([data-low-power="true"]) :is(.schedule-grid > .day-card,.assignments-section .classroom-panel):not(:focus-within) {
             animation: schedule-day-enter linear both !important;
             animation-timeline: view() !important;
             animation-range: entry 0px entry 120px !important;
+        }
+    }
+}
+
+@media (min-width: 1000px) and (min-height: 570px) {
+    body.workspace-redesign[data-app="schedule"] .timetable-pane {
+        --schedule-dock-offset: 0px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+        grid-template-rows: auto auto 1fr;
+        column-gap: clamp(20px, 3.2vw, 44px);
+    }
+    .timetable-pane > :is(.schedule-heading,.replacement-status-bar,.schedule-grid) { grid-column: 1; }
+    body.workspace-redesign[data-app="schedule"] .week-dock {
+        --ui-radius: 30px;
+        grid-column: 2;
+        grid-row: 1 / 4;
+        align-self: start;
+        width: auto;
+        min-width: 0;
+        margin: 0;
+        padding: clamp(12px, 1.45vw, 20px);
+    }
+    .week-scene {
+        --scene-hue: 262;
+        --scene-glow: hsl(var(--scene-hue) 90% 65% / .42);
+        --scene-light: hsl(calc(var(--scene-hue) - 38) 93% 78% / .86);
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        align-items: end;
+        min-height: clamp(206px, 20vw, 278px);
+        padding: clamp(16px, 2.2vw, 30px);
+        overflow: hidden;
+        border: 1px solid var(--glass-stroke);
+        border-radius: 20px;
+        background: radial-gradient(ellipse at 94% 6%, var(--scene-glow), transparent 78%), rgba(var(--glass-rgb), .46);
+        box-shadow: inset 0 1px 1px var(--glass-sheen), inset 0 -3px 12px var(--glass-rim-tint);
+    }
+    .week-scene[data-week-day="2"] { --scene-hue: 212; }
+    .week-scene[data-week-day="3"] { --scene-hue: 173; }
+    .week-scene[data-week-day="4"] { --scene-hue: 288; }
+    .week-scene[data-week-day="5"] { --scene-hue: 325; }
+    .week-scene::before {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        top: -52%;
+        right: -19%;
+        width: 84%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: conic-gradient(from 18deg, var(--scene-glow), #fff9 13%, var(--scene-light) 26%, #fff2 39%, #fffd 54%, var(--scene-glow) 68%, var(--scene-light) 84%, var(--scene-glow));
+        mask-image: radial-gradient(farthest-side, transparent 59%, #0003 65%, #000 78% 94%, transparent 100%);
+        rotate: -28deg;
+        scale: .93 1.04;
+    }
+    .week-scene-copy { display: grid; gap: 10px; }
+    .week-scene-day { font-size: clamp(1rem, 1.6vw, 1.375rem); letter-spacing: -.032em; }
+    .week-scene-date { gap: .55rem; }
+    .week-scene-number {
+        color: var(--ui-text);
+        font-size: clamp(4.5rem, 8vw, 7.25rem);
+        font-weight: 720;
+        line-height: .82;
+        letter-spacing: -.085em;
+    }
+    .week-scene-month { font-size: clamp(.875rem, 1.45vw, 1.1rem); }
+    body.workspace-redesign[data-app="schedule"] .schedule-day-navigation {
+        width: auto;
+        margin-top: 9px;
+    }
+    body.workspace-redesign[data-app="schedule"] .schedule-day-navigation a { flex: 1 1 0; }
+    .week-lesson-index { display: block; margin-top: 11px; padding: 10px 2px 0; }
+    .week-lesson-index p { margin: 0 0 7px; color: var(--ui-muted); font-size: .75rem; font-weight: 650; }
+    .week-lesson-links { display: flex; flex-wrap: wrap; gap: 6px; }
+    .week-lesson-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 5px 9px;
+        border: 1px solid var(--glass-stroke);
+        border-radius: 10px;
+        background: var(--ui-panel);
+        color: var(--ui-text);
+        font-size: .8125rem;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+        text-decoration: none;
+    }
+    .week-lesson-links a:hover { border-color: var(--schedule-accent); color: var(--schedule-accent); }
+    @media (prefers-reduced-motion: no-preference) {
+        body.workspace-redesign[data-app="schedule"]:not([data-low-power="true"]) .week-scene::before {
+            rotate: calc(-28deg + var(--week-progress, 0) * 105deg);
         }
     }
 }
@@ -741,7 +865,8 @@ body.workspace-redesign[data-app="schedule"] .classroom-note { font-size: .75rem
     body.workspace-redesign[data-app][data-theme]::before { display: none !important; }
 }
 @media print {
-    body.workspace-redesign[data-app="schedule"] .schedule-day-navigation { display: none; }
+    body.workspace-redesign[data-app="schedule"] .week-dock { display: none; }
+    body.workspace-redesign[data-app="schedule"] .timetable-pane { display: block; }
 }
 @media (forced-colors: active) {
     body.workspace-redesign[data-app] :is(.primary-navigation,.schedule-day-navigation) a[aria-current] {

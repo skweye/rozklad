@@ -15,10 +15,10 @@
     <link rel="stylesheet" href="appearance.css?v=20261028-select-contrast">
     <link rel="stylesheet" href="editorial.css?v=20261020">
     <link rel="preload" href="schedule-glass-hero.webp" as="image">
-    <link rel="stylesheet" href="glass-workspace.css?v=20261120-week-scroll">
+    <link rel="stylesheet" href="glass-workspace.css?v=20261120-week-scene">
     <script src="site-settings.js" defer></script>
     <script src="schedule-time.js" defer></script>
-    <script src="schedule-scroll.js" defer></script>
+    <script src="schedule-scroll.js?v=20261120-week-scene" defer></script>
     <script src="site-navigation.js" defer></script>
     <script src="site-branding.js" defer></script>
     <script src="site-auth.js?v=20261021-auto-transfer" defer></script>
@@ -185,13 +185,25 @@
                 <button type="button" class="btn" id="refreshReplacements" aria-label="Оновити заміни" title="Оновити заміни"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="ui-icons.svg#refresh"/></svg></button>
             </div>
         </div>
-        <nav class="schedule-day-navigation" aria-label="Перейти до дня">
-            <a href="#scheduleDay1" aria-label="Понеділок">Пн</a>
-            <a href="#scheduleDay2" aria-label="Вівторок">Вт</a>
-            <a href="#scheduleDay3" aria-label="Середа">Ср</a>
-            <a href="#scheduleDay4" aria-label="Четвер">Чт</a>
-            <a href="#scheduleDay5" aria-label="П’ятниця">Пт</a>
-        </nav>
+        <div class="week-dock">
+            <div class="week-scene" aria-hidden="true" hidden>
+                <div class="week-scene-copy">
+                    <p class="week-scene-day"></p>
+                    <time class="week-scene-date"><span class="week-scene-number"></span><span class="week-scene-month"></span></time>
+                </div>
+            </div>
+            <nav class="schedule-day-navigation" aria-label="Перейти до дня">
+                <a href="#scheduleDay1" aria-label="Понеділок">Пн</a>
+                <a href="#scheduleDay2" aria-label="Вівторок">Вт</a>
+                <a href="#scheduleDay3" aria-label="Середа">Ср</a>
+                <a href="#scheduleDay4" aria-label="Четвер">Чт</a>
+                <a href="#scheduleDay5" aria-label="П’ятниця">Пт</a>
+            </nav>
+            <div class="week-lesson-index" hidden>
+                <p id="weekLessonIndexTitle">Початок пар</p>
+                <nav class="week-lesson-links" aria-labelledby="weekLessonIndexTitle"></nav>
+            </div>
+        </div>
         <div id="scheduleGrid" class="schedule-grid">
             <!-- JS generated cards -->
         </div>
@@ -566,27 +578,22 @@
             const currentDay = window.studyScheduleTime.schoolNow().getDay();
 
             const now = window.studyScheduleTime.schoolNow();
-            const monday = new Date(now);
-            const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
-            monday.setDate(now.getDate() - (dayOfWeek - 1));
-            monday.setHours(0, 0, 0, 0);
-
-            function formatDayDate(offsetDays) {
-                const d = new Date(monday);
-                d.setDate(monday.getDate() + offsetDays);
-                return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            }
+            const todayKey = window.studyScheduleTime.dateKey(now);
 
             function buildDayCard(d) {
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card card';
                 dayCard.id = `scheduleDay${d}`;
+                dayCard.tabIndex = -1;
                 if (d === currentDay) dayCard.classList.add('is-today');
 
+                const date = window.studyScheduleTime.dateForDay(d, now);
+                const dateKey = window.studyScheduleTime.dateKey(date);
+                const dateLabel = date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
                 let html = `
                     <div class="day-header">
-                        <span class="day-name">${days[d-1]}</span>
-                        <span class="day-date">${formatDayDate(d - 1)}</span>
+                        <h3 class="day-name">${days[d-1]}</h3>
+                        <time class="day-date" datetime="${dateKey}">${dateLabel}</time>
                     </div>
                     <div class="day-lessons">
                 `;
@@ -594,10 +601,8 @@
                 let hasLessons = false;
                 timeSlots.forEach((slot, index) => {
                     const rawSlot = schedule[d] ? schedule[d][index] : null;
-                    const date = window.studyScheduleTime.dateForDay(d, now);
-                    const dateKey = window.studyScheduleTime.dateKey(date);
                     const replacement = window.studyScheduleTime.replacementAt(window.studyReplacements?.entries() || [], date, index);
-                    const editable = (window.studyReplacements?.canEditSlot?.(replacement) ?? window.studyReplacements?.canEdit()) && dateKey >= window.studyScheduleTime.dateKey(now);
+                    const editable = (window.studyReplacements?.canEditSlot?.(replacement) ?? window.studyReplacements?.canEdit()) && dateKey >= todayKey;
                     const hasAny = rawSlot && (rawSlot.common != null || rawSlot.num != null || rawSlot.den != null);
                     if (hasAny || replacement || editable) {
                         hasLessons = true;
@@ -608,15 +613,15 @@
                         }
 
                         html += `
-                            <div class="${cellClass}" data-lesson-day="${d}" data-lesson-index="${index}">
+                            <div class="${cellClass}" id="${dayCard.id}Lesson${index + 1}" tabindex="-1" data-lesson-day="${d}" data-lesson-index="${index}">
                                 <div class="lesson-time">
                                     <span class="lesson-number">${index + 1}</span>
-                                    <span class="lesson-hours">${slot.start} - ${slot.end}</span>
+                                    <span class="lesson-hours" data-start="${slot.start}">${slot.start} - ${slot.end}</span>
                                     <span class="lesson-current-badge" hidden>Зараз</span>
                                 </div>
                                 <div class="lesson-content">
-                                    ${replacement ? `<span class="replacement-badge">Заміна · ${formatDayDate(d - 1)}</span>${replacement.lesson ? renderLessonCell(replacement.lesson) : '<span class="subject-name">Вікно</span><span class="subject-details">Пари немає</span>'}<span class="replacement-original">Замість: ${escapeLessonText(formatLessonString(window.studyScheduleTime.lessonAt(schedule, d, index, currentWeekType)) || 'вікна')}</span>` : renderSlotWithWeeks(rawSlot)}
-                                    ${editable ? `<button type="button" class="replacement-edit" data-replacement-date="${dateKey}" data-replacement-index="${index}" aria-label="${replacement ? 'Редагувати заміну' : 'Заміна'}: ${formatDayDate(d - 1)}, пара ${index + 1}">${replacement ? 'Редагувати заміну' : 'Заміна'}</button>` : ''}
+                                    ${replacement ? `<span class="replacement-badge">Заміна · ${dateLabel}</span>${replacement.lesson ? renderLessonCell(replacement.lesson) : '<span class="subject-name">Вікно</span><span class="subject-details">Пари немає</span>'}<span class="replacement-original">Замість: ${escapeLessonText(formatLessonString(window.studyScheduleTime.lessonAt(schedule, d, index, currentWeekType)) || 'вікна')}</span>` : renderSlotWithWeeks(rawSlot)}
+                                    ${editable ? `<button type="button" class="replacement-edit" data-replacement-date="${dateKey}" data-replacement-index="${index}" aria-label="${replacement ? 'Редагувати заміну' : 'Заміна'}: ${dateLabel}, пара ${index + 1}">${replacement ? 'Редагувати заміну' : 'Заміна'}</button>` : ''}
                                 </div>
                             </div>
                         `;
