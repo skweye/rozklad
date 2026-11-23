@@ -583,22 +583,24 @@ body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card.is-today
         isolation: isolate;
     }
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .schedule-grid {
+        --week-side: clamp(25px,10%,86px);
+        grid-template-columns: none;
+        grid-auto-columns: calc(100% - 2 * var(--week-side));
+        grid-auto-flow: column;
         align-items: start;
+        translate: var(--week-track-x,var(--week-side)) 0;
     }
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card {
-        grid-area: 1 / 1;
         opacity: 0;
         pointer-events: none;
+        translate: 0 var(--week-day-y,0px);
     }
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card[data-week-visible] {
         opacity: var(--week-day-opacity,1);
-        translate: 0 var(--week-day-y,0px);
+        filter: var(--week-day-filter,none);
     }
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card[data-week-visible][data-day-in-view] {
         pointer-events: auto;
-    }
-    .timetable-pane[data-week-story] .week-stage[data-week-transition] .day-card[data-week-visible] {
-        filter: blur(calc((1 - var(--week-day-opacity,1)) * 6px));
     }
 }
 @media screen and (min-width: 661px) and (prefers-reduced-motion: no-preference) {

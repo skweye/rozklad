@@ -28,8 +28,14 @@
     let frame = 0;
     let readingLine = 0;
     let stageTop = 0;
+    let trackInset = 0;
+    let cardStride = 0;
     let storyLength = 0;
     let steps = [];
+    let lastScrollY = window.scrollY;
+    let scrollDirection = 1;
+    let settleTimer;
+    const nativeScrollEnd = 'onscrollend' in document;
     const clamp = (value, max) => Math.min(max, Math.max(0, value));
 
     function setActiveDay(day) {
@@ -65,7 +71,7 @@
 
         if (direction && scene.offsetWidth && !reduceMotion.matches && document.body.dataset.lowPower !== 'true') {
             sceneAnimation = sceneCopy.animate(
-                [{ opacity: .45, translate: `0 ${direction * 6}px`, filter: 'blur(3px)' },
+                [{ opacity: .45, translate: `${direction * 10}px 0`, filter: 'blur(3px)' },
                  { opacity: 1, translate: '0 0', filter: 'none' }],
                 { duration: 200, easing: 'ease-out' }
             );
@@ -76,21 +82,27 @@
         const bounds = story.getBoundingClientRect();
         const offset = clamp(stageTop - bounds.top, storyLength);
         const step = steps.findLast(item => offset >= item.start);
-        const progress = step.travel ? clamp((offset - step.transitionStart) / step.travel, 1) : 0;
+        const travelOffset = offset - step.transitionStart;
+        // Scrolling rounds to device pixels, while the sticky stage can start at a fraction.
+        let progress = 0;
+        if (step.travel && travelOffset > 1) {
+            progress = travelOffset >= step.travel - 1 ? 1 : travelOffset / step.travel;
+        }
         const blend = progress * progress * (3 - 2 * progress);
-        stage.toggleAttribute('data-week-transition', blend > 0 && blend < 1);
+        const position = step.index + blend;
+        grid.style.setProperty('--week-track-x', `${trackInset - position * cardStride}px`);
         for (const { day, index, start, overflow } of steps) {
-            const distance = index - step.index - blend;
-            const opacity = 1 - Math.abs(distance);
-            day.card.toggleAttribute('data-week-visible', opacity > 0);
-            if (opacity <= 0) continue;
-            // Read a tall card to the bottom before fading it out.
-            const y = distance * 42 - clamp(offset - start, overflow);
-            day.card.style.setProperty('--week-day-y', `${y}px`);
-            day.card.style.setProperty('--week-day-opacity', opacity);
+            const distance = Math.abs(index - position);
+            const visible = distance < 1.5;
+            day.card.toggleAttribute('data-week-visible', visible);
+            if (!visible) continue;
+            const defocus = clamp(distance, 1);
+            day.card.style.setProperty('--week-day-y', `${-clamp(offset - start, overflow)}px`);
+            day.card.style.setProperty('--week-day-opacity', 1 - defocus * .46);
+            day.card.style.setProperty('--week-day-filter', defocus ? `blur(${defocus * 5}px)` : 'none');
         }
         dock.style.setProperty('--week-progress', offset / storyLength);
-        const day = steps[step.index + Number(blend >= .5)].day;
+        const day = steps[Math.round(position)].day;
         setActiveDay(bounds.top < viewportHeight && bounds.bottom > stageTop ? day : null);
         showDay(day);
     }
@@ -127,6 +139,28 @@
         if (!frame) frame = requestAnimationFrame(update);
     }
 
+    function settleDay() {
+        if (!steps.length) return;
+        const offset = stageTop - story.getBoundingClientRect().top;
+        const step = steps.findLast(item => offset >= item.start);
+        if (!step?.travel || offset <= step.transitionStart + 1 || offset >= step.transitionStart + step.travel - 1) return;
+        const targetOffset = scrollDirection < 0 ? step.transitionStart : step.transitionStart + step.travel;
+        const targetY = window.scrollY + targetOffset - offset;
+        const top = scrollDirection < 0 ? Math.floor(targetY) : Math.ceil(targetY);
+        window.scrollTo({ top, behavior: 'smooth' });
+    }
+
+    function onScroll() {
+        const scrollY = window.scrollY;
+        if (scrollY !== lastScrollY) scrollDirection = Math.sign(scrollY - lastScrollY);
+        lastScrollY = scrollY;
+        requestUpdate();
+        if (!nativeScrollEnd) {
+            clearTimeout(settleTimer);
+            if (steps.length) settleTimer = setTimeout(settleDay, 150);
+        }
+    }
+
     function measure() {
         const top = header.offsetHeight + 8;
         pane.style.setProperty('--schedule-dock-top', `${top}px`);
@@ -140,12 +174,15 @@
         pane.toggleAttribute('data-week-story', enabled);
         steps = [];
         if (enabled) {
+            const cardWidth = days[0].card.getBoundingClientRect().width;
+            trackInset = (grid.getBoundingClientRect().width - cardWidth) / 2;
+            cardStride = cardWidth + parseFloat(getComputedStyle(grid).columnGap);
             const stageHeight = Math.min(available, Math.max(...days.map(({ card }) => card.offsetHeight)));
-            const travel = Math.min(260, Math.max(128, Math.round(stageHeight * .42)));
+            const travel = Math.min(320, Math.max(180, Math.round(stageHeight * .48)));
             let start = 0;
             steps = days.map((day, index) => {
                 const overflow = Math.max(0, day.card.offsetHeight - stageHeight);
-                const transitionStart = start + overflow + 48;
+                const transitionStart = start + overflow + 100;
                 const duration = index === days.length - 1 ? 0 : travel;
                 const step = { day, index, start, overflow, transitionStart, travel: duration };
                 start = transitionStart + duration;
@@ -222,7 +259,8 @@
     resize?.observe(header);
     resize?.observe(grid);
     resize?.observe(dock);
-    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    if (nativeScrollEnd) document.addEventListener('scrollend', settleDay);
     window.addEventListener('resize', measure);
     window.addEventListener('pageshow', measure);
     window.addEventListener('hashchange', followHash);
