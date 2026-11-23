@@ -6,8 +6,8 @@
     color: var(--ui-text,CanvasText);
     background: var(--ui-ground,Canvas);
 }
-:root[data-theme="gray"] { --legal-banner: #292a2e; --legal-banner-accent: #e9e9ed; }
-:root[data-theme="gray"] .brand img { filter: grayscale(1); }
+:root:is([data-theme="gray"],[data-theme="dark-gray"]) { --legal-banner: #292a2e; --legal-banner-accent: #e9e9ed; }
+:root:is([data-theme="gray"],[data-theme="dark-gray"]) .brand img { filter: grayscale(1); }
 * { box-sizing: border-box; }
 body { margin: 0; }
 header {

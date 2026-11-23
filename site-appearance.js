@@ -17,6 +17,11 @@
             label: 'Сіра', scheme: 'light', ground: '#ececee', panel: '#fff', inset: '#f5f5f6', soft: '#e9e9ec',
             text: '#232427', muted: '#565960', line: '#d3d4d8',
             accent: '#44474e', accentRgb: '68,71,78', onAccent: '#ffffff', danger: '#a22d36'
+        },
+        'dark-gray': {
+            label: 'Темно-сіра', scheme: 'dark', ground: '#191919', panel: '#262626', inset: '#1e1e1e', soft: '#303030',
+            text: '#f4f4f4', muted: '#bcbcbc', line: '#545454',
+            accent: '#dedede', accentRgb: '222,222,222', onAccent: '#202020', danger: '#ffb2b4'
         }
     };
     const legacyLight = new Set(['light', 'minimal', 'neumorphism', 'university', 'dualshot', 'graphite']);
@@ -35,7 +40,7 @@
             catch { /* Fall back to the old preference. */ }
             const cookie = document.cookie?.match(/(?:^|;\s*)theme=([^;]+)/)?.[1];
             const previous = stored?.theme || localStorage.getItem('theme') || cookie;
-            if (previous === 'gray') return 'gray';
+            if (Object.hasOwn(themes, previous)) return previous;
             if (legacyLight.has(previous)) return 'light';
             if (legacyDark.has(previous)) return 'dark';
         } catch { /* Storage may be unavailable. */ }
@@ -82,7 +87,8 @@
                     <div class="theme-picker">
                         ${Object.entries(themes).map(([id, palette]) => `
                             <button type="button" data-theme-choice="${id}" aria-pressed="false">
-                                <span class="theme-swatch" aria-hidden="true"></span>${palette.label}
+                                <span class="theme-swatch" aria-hidden="true"></span>
+                                <span class="theme-name">${palette.label}</span>
                             </button>`).join('')}
                     </div>
                 </fieldset>
