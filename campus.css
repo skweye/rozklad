@@ -564,6 +564,12 @@ body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card + .day-c
 }
 body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card.is-today { border-color: var(--ui-accent) !important; }
 @media screen and (prefers-reduced-motion: no-preference) {
+    @supports (backdrop-filter: blur(10px)) and (background: color-mix(in srgb, white 88%, transparent)) {
+        body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .week-dock {
+            background: color-mix(in srgb,var(--ui-panel) 88%,transparent);
+            backdrop-filter: blur(10px);
+        }
+    }
     .timetable-pane[data-week-story] .week-story {
         min-block-size: var(--week-story-height);
         overflow-anchor: none;
@@ -574,16 +580,26 @@ body.workspace-redesign[data-app="schedule"] .schedule-grid > .day-card.is-today
         block-size: var(--week-stage-height);
         overflow: hidden;
         overflow: clip;
+        isolation: isolate;
     }
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .schedule-grid {
-        grid-template-columns: none;
-        grid-auto-columns: 100%;
-        grid-auto-flow: column;
         align-items: start;
-        gap: 12px;
-        translate: var(--week-track-x,0px);
     }
-    .timetable-pane[data-week-story] .day-card { translate: 0 var(--week-day-y,0px); }
+    body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card {
+        grid-area: 1 / 1;
+        opacity: 0;
+        pointer-events: none;
+    }
+    body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card[data-week-visible] {
+        opacity: var(--week-day-opacity,1);
+        translate: 0 var(--week-day-y,0px);
+    }
+    body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .day-card[data-week-visible][data-day-in-view] {
+        pointer-events: auto;
+    }
+    .timetable-pane[data-week-story] .week-stage[data-week-transition] .day-card[data-week-visible] {
+        filter: blur(calc((1 - var(--week-day-opacity,1)) * 6px));
+    }
 }
 @media screen and (min-width: 661px) and (prefers-reduced-motion: no-preference) {
     body.workspace-redesign[data-app="schedule"] .timetable-pane[data-week-story] .week-lesson-index { min-block-size: 32px; }

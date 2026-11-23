@@ -28,7 +28,6 @@
     let frame = 0;
     let readingLine = 0;
     let stageTop = 0;
-    let stepWidth = 0;
     let storyLength = 0;
     let steps = [];
     const clamp = (value, max) => Math.min(max, Math.max(0, value));
@@ -66,8 +65,9 @@
 
         if (direction && scene.offsetWidth && !reduceMotion.matches && document.body.dataset.lowPower !== 'true') {
             sceneAnimation = sceneCopy.animate(
-                [{ opacity: .35, translate: `${direction * 12}px 0` }, { opacity: 1, translate: '0 0' }],
-                { duration: 240, easing: 'ease-out' }
+                [{ opacity: .45, translate: `0 ${direction * 6}px`, filter: 'blur(3px)' },
+                 { opacity: 1, translate: '0 0', filter: 'none' }],
+                { duration: 200, easing: 'ease-out' }
             );
         }
     }
@@ -76,13 +76,21 @@
         const bounds = story.getBoundingClientRect();
         const offset = clamp(stageTop - bounds.top, storyLength);
         const step = steps.findLast(item => offset >= item.start);
-        const transition = step.travel ? clamp((offset - step.transitionStart) / step.travel, 1) : 0;
-        grid.style.setProperty('--week-track-x', `${-(step.index + transition) * stepWidth}px`);
-        for (const { day, start, overflow } of steps) {
-            day.card.style.setProperty('--week-day-y', `${-clamp(offset - start, overflow)}px`);
+        const progress = step.travel ? clamp((offset - step.transitionStart) / step.travel, 1) : 0;
+        const blend = progress * progress * (3 - 2 * progress);
+        stage.toggleAttribute('data-week-transition', blend > 0 && blend < 1);
+        for (const { day, index, start, overflow } of steps) {
+            const distance = index - step.index - blend;
+            const opacity = 1 - Math.abs(distance);
+            day.card.toggleAttribute('data-week-visible', opacity > 0);
+            if (opacity <= 0) continue;
+            // Read a tall card to the bottom before fading it out.
+            const y = distance * 42 - clamp(offset - start, overflow);
+            day.card.style.setProperty('--week-day-y', `${y}px`);
+            day.card.style.setProperty('--week-day-opacity', opacity);
         }
         dock.style.setProperty('--week-progress', offset / storyLength);
-        const day = steps[step.index + Number(transition >= .5)].day;
+        const day = steps[step.index + Number(blend >= .5)].day;
         setActiveDay(bounds.top < viewportHeight && bounds.bottom > stageTop ? day : null);
         showDay(day);
     }
@@ -127,17 +135,17 @@
         readingLine = dockTop + dock.offsetHeight + 18;
         stageTop = readingLine - 8;
         const available = document.documentElement.clientHeight - stageTop - 12;
-        const enabled = !reduceMotion.matches && Number.isFinite(available) && available >= 180 && days.length > 1;
+        const enabled = !reduceMotion.matches && document.body.dataset.lowPower !== 'true' &&
+            Number.isFinite(available) && available >= 180 && days.length > 1;
         pane.toggleAttribute('data-week-story', enabled);
         steps = [];
         if (enabled) {
             const stageHeight = Math.min(available, Math.max(...days.map(({ card }) => card.offsetHeight)));
-            const travel = Math.min(360, Math.max(160, Math.round(stageHeight * .55)));
-            stepWidth = grid.getBoundingClientRect().width + parseFloat(getComputedStyle(grid).columnGap);
+            const travel = Math.min(260, Math.max(128, Math.round(stageHeight * .42)));
             let start = 0;
             steps = days.map((day, index) => {
                 const overflow = Math.max(0, day.card.offsetHeight - stageHeight);
-                const transitionStart = start + overflow + 72;
+                const transitionStart = start + overflow + 48;
                 const duration = index === days.length - 1 ? 0 : travel;
                 const step = { day, index, start, overflow, transitionStart, travel: duration };
                 start = transitionStart + duration;
@@ -179,11 +187,13 @@
     });
 
     grid.addEventListener('focusin', ({ target }) => {
-        if (!steps.length || target.classList.contains('day-card')) return;
+        const card = target.closest('.day-card');
+        if (!steps.length || !card || target === card) return;
         const content = target.getBoundingClientRect();
         const viewport = stage.getBoundingClientRect();
-        if (content.left < viewport.left || content.right > viewport.right ||
-            content.top < viewport.top || content.bottom > viewport.bottom) scrollToTarget(target);
+        if (card !== activeDay?.card || content.top < viewport.top || content.bottom > viewport.bottom) {
+            scrollToTarget(target);
+        }
     });
 
     const resize = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
@@ -218,6 +228,7 @@
     window.addEventListener('hashchange', followHash);
     reduceMotion.addEventListener('change', () => {
         const card = activeDay?.card;
+        sceneAnimation?.cancel();
         measure();
         if (card && !scrollToTarget(card)) card.scrollIntoView({ block: 'start' });
     });
