@@ -5,7 +5,7 @@
 .rb-block > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
 .rb-block h3 { display: flex; align-items: center; gap: 9px; font-weight: 600; line-height: 1.4; font-size: .9rem; margin: 0; color: var(--text-primary); }
 .rb-block svg, .rb-add-bottom svg, .rb-picker svg { width: 20px; height: 20px; flex: 0 0 20px; }
-.rb-actions, .rb-table-tools, .rb-format { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.rb-actions, .rb-format { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .rb-block .rb-icon-button, .rb-picker .rb-icon-button { padding: 8px; min-width: 36px; min-height: 36px; border-radius: 9px; color: var(--text-primary); }
 .rb-block button:disabled { opacity: .35; cursor: default; }
 .rb-block :focus-visible, .rb-picker :focus-visible, .rb-add-bottom:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
@@ -29,28 +29,38 @@
 .rb-upload input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 .rb-upload:focus-within { outline: 2px solid var(--text-primary); outline-offset: 3px; }
 .rb-table-scroll { overflow: auto; margin-bottom: 10px; }
-.rb-edit-table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: max(300px, calc(var(--rb-table-columns, 2) * 120px + 56px)); }
-.rb-table-size { margin: 0 0 6px; font-variant-numeric: tabular-nums; }
-.rb-edit-table th { padding: 6px; text-align: center; font-size: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
-.rb-edit-table .rb-table-corner { width: 56px; }
+.rb-edit-table { --rb-table-rail: 64px; --rb-table-control: 24px; width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: max(300px, calc(var(--rb-table-columns, 2) * 120px + var(--rb-table-rail))); }
+.rb-table-meta { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; margin-bottom: 4px; }
+.rb-table-size { margin: 0; font-variant-numeric: tabular-nums; }
+.rb-edit-table th { padding: 3px; text-align: center; font-size: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.rb-edit-table .rb-table-corner { width: var(--rb-table-rail); }
 .rb-edit-table .rb-table-corner, .rb-edit-table th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--ui-ground, var(--surface-solid, #16191e)); border-radius: 6px; }
+.rb-table-axis { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.rb-edit-table th[scope="row"] .rb-table-axis { flex-wrap: wrap; }
+.rb-edit-table th[scope="row"] .rb-table-index-number { flex-basis: 100%; line-height: 1; }
 .rb-table-index {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 2px;
+    display: inline-grid;
+    place-items: center;
+    width: var(--rb-table-control);
+    height: var(--rb-table-control);
+    padding: 0;
     border: 1px solid var(--ui-line);
-    border-radius: 7px;
+    border-radius: 5px;
     background: var(--ui-inset);
-    color: var(--ui-text);
-    font: inherit;
+    color: var(--ui-accent);
+    font-family: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1;
     cursor: pointer;
 }
-.rb-table-index > :first-child { color: var(--ui-accent); font-size: 1rem; }
-.rb-table-index:is(:hover,:focus-visible) { border-color: var(--ui-accent); background: var(--ui-soft); }
+.rb-table-index[data-action^="remove-"] { color: var(--ui-muted); }
+.rb-table-index:not(:disabled):is(:hover,:focus-visible) { color: var(--ui-accent); border-color: currentColor; background: var(--ui-soft); }
+.rb-table-index[data-action^="remove-"]:not(:disabled):is(:hover,:focus-visible) { color: var(--ui-danger); }
+.rb-edit-table .rb-table-index:focus-visible { outline-offset: 1px; }
+@media (pointer: coarse) {
+    .rb-edit-table { --rb-table-rail: 78px; --rb-table-control: 32px; }
+}
 .rb-edit-table td { min-width: 80px; vertical-align: top; }
 .rb-edit-table textarea { width: 100%; padding: 8px; min-height: 64px; font-size: .8rem; }
 .rb-picker { width: min(660px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid color-mix(in srgb, var(--text-primary) 22%, transparent); border-radius: 22px; color: var(--text-primary); background: var(--surface-solid, #16191e); box-shadow: 0 24px 100px #0006; overflow-y: auto; margin: auto; }

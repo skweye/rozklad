@@ -281,15 +281,24 @@
             returnFocus = null;
             dialog.close(); changed(true); focusBlock(blocks[0].id, false);
         });
-        function tableIndexLabel(scope, index) {
-            return scope === 'row'
-                ? `Вставити рядок вище рядка ${index + 1}`
-                : `Вставити стовпець ліворуч від стовпця ${index + 1}`;
+        function tableIndexLabels(scope, index) {
+            const row = scope === 'row';
+            const number = index + 1;
+            const coordinate = `${row ? 'Рядок' : 'Стовпець'} ${number}`;
+            return [coordinate, row ? `Вставити рядок під рядком ${number}` : `Вставити стовпець праворуч від стовпця ${number}`,
+                `Видалити ${coordinate.toLowerCase()}`];
         }
-        function tableHeader(scope, index) {
-            const label = tableIndexLabel(scope, index);
-            const action = scope === 'row' ? 'add-row' : 'add-column';
-            return `<th scope="${scope}" aria-label="${scope === 'row' ? 'Рядок' : 'Стовпець'} ${index + 1}"><button type="button" class="rb-table-index" data-action="${action}" data-insert-before="${index}" aria-label="${label}" title="${label}"><span aria-hidden="true">+</span><span>${index + 1}</span></button></th>`;
+        function tableButton(action, index, label, symbol, disabled = false) {
+            return `<button type="button" class="rb-table-index" data-action="${action}" data-table-index="${index}" aria-label="${label}" title="${label}"${disabled ? ' disabled' : ''}>${symbol}</button>`;
+        }
+        function tableHeader(scope, index, onlyOne = false) {
+            const axis = scope === 'row' ? 'row' : 'column';
+            const [coordinate, addLabel, removeLabel] = tableIndexLabels(scope, index);
+            return `<th scope="${scope}" aria-label="${coordinate}"><div class="rb-table-axis">
+                <span class="rb-table-index-number">${index + 1}</span>
+                ${tableButton(`add-${axis}`, index, addLabel, '+')}
+                ${tableButton(`remove-${axis}`, index, removeLabel, '−', onlyOne)}
+            </div></th>`;
         }
         function render() {
             const items = getItems(); let step = 0, figure = 0;
@@ -303,21 +312,20 @@
                     body = `<label class="rb-field">Назва таблиці <span class="rb-hint">Наприклад: Результат. Номер додається автоматично.</span><textarea class="form-control" rows="1" data-field="caption" placeholder="Результат">${escape(b.caption)}</textarea></label>`;
                     // Coordinates belong only to the editor, never to the saved cells or document.
                     body += `
-                        <p class="rb-hint">Натисніть «+» біля номера, щоб вставити рядок вище або стовпець ліворуч.</p>
-                        <p class="rb-table-size rb-hint" aria-live="polite">Рядків: ${b.rows.length} · Стовпців: ${b.rows[0].length}</p>
+                        <div class="rb-table-meta rb-hint">
+                            <p class="rb-table-size" aria-live="polite">Рядків: ${b.rows.length} · Стовпців: ${b.rows[0].length}</p>
+                            <span>«+» вставляє нижче або праворуч, «−» видаляє.</span>
+                        </div>
                         <div class="rb-table-scroll">
                             <table class="rb-edit-table" style="--rb-table-columns:${b.rows[0].length}">
-                                <thead><tr><th class="rb-table-corner" scope="col" aria-label="Номери рядків">№</th>${b.rows[0].map((_, c) => tableHeader('col', c)).join("")}</tr></thead>
-                                <tbody>${b.rows.map((row, r) => `<tr>${tableHeader('row', r)}${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody>
+                                <thead><tr><th class="rb-table-corner" scope="col" aria-label="Вставити на початку таблиці"><div class="rb-table-axis">
+                                    ${tableButton('add-row', -1, 'Вставити перший рядок', '+↓')}
+                                    ${tableButton('add-column', -1, 'Вставити перший стовпець', '+→')}
+                                </div></th>${b.rows[0].map((_, c) => tableHeader('col', c, b.rows[0].length === 1)).join("")}</tr></thead>
+                                <tbody>${b.rows.map((row, r) => `<tr>${tableHeader('row', r, b.rows.length === 1)}${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody>
                             </table>
                         </div>
-                        <div class="rb-table-tools">
-                            <button type="button" class="btn btn-sm" data-action="add-row">+ Рядок у кінці</button>
-                            <button type="button" class="btn btn-sm" data-action="add-column">+ Стовпець у кінці</button>
-                            <button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button>
-                            <button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button>
-                        </div>
-                        <p class="rb-hint">Номери рядків і стовпців видно лише в редакторі. Широку таблицю можна прокручувати горизонтально. У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
+                        <p class="rb-hint">У Word довга таблиця продовжиться на наступній сторінці.</p>`;
                 } else if (b.kind === "pageBreak") {
                     body = '<p class="rb-hint">Наступний блок почнеться з нової сторінки у Word.</p>';
                 } else {
@@ -345,20 +353,21 @@
             if (e.key !== "Tab" || !e.target.matches(".code-editor-textarea")) return;
             e.preventDefault(); const t = e.target; t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input", { bubbles: true }));
         });
-        function updateTableStructure(card, block, action, insertAt) {
+        function updateTableStructure(card, block, axis, adding, at) {
             const body = card.querySelector('.rb-edit-table tbody');
             const header = card.querySelector('.rb-edit-table thead tr');
             const columns = block.rows[0].length;
             card.querySelector('.rb-edit-table').style.setProperty('--rb-table-columns', columns);
             card.querySelector('.rb-table-size').textContent = `Рядків: ${block.rows.length} · Стовпців: ${columns}`;
             const numberHeader = (cell, scope, index) => {
-                const button = cell.firstElementChild;
-                const label = tableIndexLabel(scope, index);
-                cell.setAttribute('aria-label', `${scope === 'row' ? 'Рядок' : 'Стовпець'} ${index + 1}`);
-                button.dataset.insertBefore = String(index);
-                button.setAttribute('aria-label', label);
-                button.title = label;
-                button.lastElementChild.textContent = String(index + 1);
+                const [coordinate, ...labels] = tableIndexLabels(scope, index);
+                cell.setAttribute('aria-label', coordinate);
+                cell.querySelector('.rb-table-index-number').textContent = String(index + 1);
+                cell.querySelectorAll('button').forEach((button, i) => {
+                    button.dataset.tableIndex = String(index);
+                    button.setAttribute('aria-label', labels[i]);
+                    button.title = labels[i];
+                });
             };
             const positionCell = (input, r, c) => {
                 input.dataset.row = String(r); input.dataset.column = String(c);
@@ -372,30 +381,29 @@
                 input.value = block.rows[r][c]; cell.append(input); resize(cell);
             };
             // Keep existing fields and buttons in the DOM so their focus and selection survive.
-            if (action === 'add-row') {
-                const row = body.insertRow(insertAt);
-                row.insertAdjacentHTML('afterbegin', tableHeader('row', insertAt));
-                block.rows[insertAt].forEach((_, c) => addCell(row, insertAt, c));
-                for (let r = insertAt + 1; r < body.rows.length; r++) {
+            if (axis === 'row') {
+                if (adding) {
+                    const row = body.insertRow(at);
+                    row.insertAdjacentHTML('afterbegin', tableHeader('row', at));
+                    block.rows[at].forEach((_, c) => addCell(row, at, c));
+                } else body.deleteRow(at);
+                for (let r = at + Number(adding); r < body.rows.length; r++) {
                     const { cells } = body.rows[r];
                     numberHeader(cells[0], 'row', r);
                     for (let c = 0; c < columns; c++) positionCell(cells[c + 1].firstElementChild, r, c);
                 }
-            } else if (action === 'add-column') {
-                header.cells[insertAt].insertAdjacentHTML('afterend', tableHeader('col', insertAt));
-                for (let c = insertAt + 1; c < columns; c++) numberHeader(header.cells[c + 1], 'col', c);
+            } else {
+                if (adding) header.cells[at].insertAdjacentHTML('afterend', tableHeader('col', at));
+                else header.deleteCell(at + 1);
+                for (let c = at + Number(adding); c < columns; c++) numberHeader(header.cells[c + 1], 'col', c);
                 [...body.rows].forEach((row, r) => {
-                    addCell(row, r, insertAt);
-                    for (let c = insertAt + 1; c < columns; c++) positionCell(row.cells[c + 1].firstElementChild, r, c);
+                    if (adding) addCell(row, r, at);
+                    else row.deleteCell(at + 1);
+                    for (let c = at + Number(adding); c < columns; c++) positionCell(row.cells[c + 1].firstElementChild, r, c);
                 });
-            } else if (action === 'remove-row') body.deleteRow(-1);
-            else if (action === 'remove-column') {
-                header.deleteCell(-1);
-                [...body.rows].forEach(row => row.deleteCell(-1));
             }
-            for (const [name, disabled] of [['remove-row', block.rows.length <= 1], ['remove-column', block.rows[0].length <= 1]]) {
-                card.querySelector(`[data-action="${name}"]`).disabled = disabled;
-            }
+            const axisLength = axis === 'row' ? block.rows.length : columns;
+            card.querySelectorAll(`[data-action="remove-${axis}"]`).forEach(button => { button.disabled = axisLength <= 1; });
         }
         container.addEventListener("click", async e => {
             const button = e.target.closest("button"); if (!button) return;
@@ -404,30 +412,44 @@
             if (!b) return;
             const action = button.dataset.action;
             if (action === "plus") { open(id); return; }
-            if (action === "remove" || action === "remove-row" || action === "remove-column") {
-                if (!await confirm({ anchor: button, skipConfirmation: e.shiftKey, title: action === "remove" ? "Видалити блок?" : action === "remove-row" ? "Видалити останній рядок?" : "Видалити останній стовпець?", message: "Вміст буде видалено без можливості скасування.", confirmLabel: "Видалити" })) return;
-                if (!getItems().includes(b)) return;
-            }
-            const index = items.indexOf(b);
-            let insertAt;
-            if (action === "up" || action === "down") move(items, id, action === "up" ? -1 : 1);
-            else if (action === "copy") { const copy = normalize([b])[0]; copy.id = uid(); items.splice(index + 1, 0, copy); }
-            else if (action === "remove") items.splice(index, 1);
-            else if (action === "add-row" || action === "add-column") {
-                const length = action === "add-row" ? b.rows.length : b.rows[0].length;
-                insertAt = Number(button.dataset.insertBefore ?? length);
-                if (!Number.isInteger(insertAt) || insertAt < 0 || insertAt > length) return;
-                if (action === "add-row") b.rows.splice(insertAt, 0, Array(b.rows[0].length).fill(""));
-                else b.rows.forEach(row => row.splice(insertAt, 0, ""));
-            }
-            else if (action === "remove-row" && b.rows.length > 1) b.rows.pop();
-            else if (action === "remove-column" && b.rows[0].length > 1) b.rows.forEach(row => row.pop());
-            else return;
-            if (['add-row', 'add-column', 'remove-row', 'remove-column'].includes(action)) {
-                updateTableStructure(button.closest('[data-block]'), b, action, insertAt);
+            const tableAction = /^(add|remove)-(row|column)$/.exec(action);
+            if (tableAction) {
+                const [, operation, axis] = tableAction;
+                const adding = operation === 'add';
+                const row = axis === 'row';
+                const position = Number(button.dataset.tableIndex);
+                const at = position + Number(adding);
+                const axisLength = () => row ? b.rows.length : b.rows[0].length;
+                if (!Number.isInteger(at) || at < 0 || at >= axisLength() + Number(adding)) return;
+                if (!adding) {
+                    if (axisLength() <= 1) return;
+                    const title = `${tableIndexLabels(row ? 'row' : 'col', at)[2]}?`;
+                    if (!await confirm({ anchor: button, skipConfirmation: e.shiftKey, title, message: "Вміст буде видалено без можливості скасування.", confirmLabel: "Видалити" })) return;
+                    if (!getItems().includes(b) || !button.isConnected || Number(button.dataset.tableIndex) !== position || axisLength() <= 1) return;
+                }
+                const card = button.closest('[data-block]');
+                const restoreFocus = !adding && card.ownerDocument.activeElement === button;
+                if (row) {
+                    if (adding) b.rows.splice(at, 0, Array(b.rows[0].length).fill(""));
+                    else b.rows.splice(at, 1);
+                } else b.rows.forEach(cells => {
+                    if (adding) cells.splice(at, 0, "");
+                    else cells.splice(at, 1);
+                });
+                updateTableStructure(card, b, axis, adding, at);
+                if (restoreFocus) card.querySelector(`[data-action="add-${axis}"][data-table-index="${Math.min(at, axisLength() - 1)}"]`)?.focus({ preventScroll: true });
                 onChange();
                 return;
             }
+            if (action === "remove") {
+                if (!await confirm({ anchor: button, skipConfirmation: e.shiftKey, title: "Видалити блок?", message: "Вміст буде видалено без можливості скасування.", confirmLabel: "Видалити" })) return;
+                if (!getItems().includes(b)) return;
+            }
+            const index = items.indexOf(b);
+            if (action === "up" || action === "down") move(items, id, action === "up" ? -1 : 1);
+            else if (action === "copy") { const copy = normalize([b])[0]; copy.id = uid(); items.splice(index + 1, 0, copy); }
+            else if (action === "remove") items.splice(index, 1);
+            else return;
             changed(true);
             const card = container.querySelector(`[data-block="${id}"]`);
             const restoredButton = card?.querySelector(`[data-action="${action}"]:not(:disabled)`);
