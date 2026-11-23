@@ -281,6 +281,16 @@
             returnFocus = null;
             dialog.close(); changed(true); focusBlock(blocks[0].id, false);
         });
+        function tableIndexLabel(scope, index) {
+            return scope === 'row'
+                ? `Вставити рядок вище рядка ${index + 1}`
+                : `Вставити стовпець ліворуч від стовпця ${index + 1}`;
+        }
+        function tableHeader(scope, index) {
+            const label = tableIndexLabel(scope, index);
+            const action = scope === 'row' ? 'add-row' : 'add-column';
+            return `<th scope="${scope}" aria-label="${scope === 'row' ? 'Рядок' : 'Стовпець'} ${index + 1}"><button type="button" class="rb-table-index" data-action="${action}" data-insert-before="${index}" aria-label="${label}" title="${label}"><span aria-hidden="true">+</span><span>${index + 1}</span></button></th>`;
+        }
         function render() {
             const items = getItems(); let step = 0, figure = 0;
             container.innerHTML = items.length ? items.map((b, i) => {
@@ -292,7 +302,22 @@
                 } else if (b.kind === "table") {
                     body = `<label class="rb-field">Назва таблиці <span class="rb-hint">Наприклад: Результат. Номер додається автоматично.</span><textarea class="form-control" rows="1" data-field="caption" placeholder="Результат">${escape(b.caption)}</textarea></label>`;
                     // Coordinates belong only to the editor, never to the saved cells or document.
-                    body += `<p class="rb-table-size rb-hint" aria-live="polite">Рядків: ${b.rows.length} · Стовпців: ${b.rows[0].length}</p><div class="rb-table-scroll"><table class="rb-edit-table" style="--rb-table-columns:${b.rows[0].length}"><thead><tr><th class="rb-table-corner" scope="col" aria-label="Номери рядків">№</th>${b.rows[0].map((_, c) => `<th scope="col" aria-label="Стовпець ${c + 1}">${c + 1}</th>`).join("")}</tr></thead><tbody>${b.rows.map((row, r) => `<tr><th scope="row" aria-label="Рядок ${r + 1}">${r + 1}</th>${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="rb-table-tools"><button type="button" class="btn btn-sm" data-action="add-row">+ Рядок</button><button type="button" class="btn btn-sm" data-action="add-column">+ Стовпець</button><button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button><button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button></div><p class="rb-hint">Номери рядків і стовпців видно лише в редакторі. Додавайте стільки рядків і стовпців, скільки потрібно. Широку таблицю можна прокручувати горизонтально. У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
+                    body += `
+                        <p class="rb-hint">Натисніть «+» біля номера, щоб вставити рядок вище або стовпець ліворуч.</p>
+                        <p class="rb-table-size rb-hint" aria-live="polite">Рядків: ${b.rows.length} · Стовпців: ${b.rows[0].length}</p>
+                        <div class="rb-table-scroll">
+                            <table class="rb-edit-table" style="--rb-table-columns:${b.rows[0].length}">
+                                <thead><tr><th class="rb-table-corner" scope="col" aria-label="Номери рядків">№</th>${b.rows[0].map((_, c) => tableHeader('col', c)).join("")}</tr></thead>
+                                <tbody>${b.rows.map((row, r) => `<tr>${tableHeader('row', r)}${row.map((cell, c) => `<td><textarea class="form-control" rows="2" data-row="${r}" data-column="${c}" aria-label="Рядок ${r + 1}, стовпець ${c + 1}">${escape(cell)}</textarea></td>`).join("")}</tr>`).join("")}</tbody>
+                            </table>
+                        </div>
+                        <div class="rb-table-tools">
+                            <button type="button" class="btn btn-sm" data-action="add-row">+ Рядок у кінці</button>
+                            <button type="button" class="btn btn-sm" data-action="add-column">+ Стовпець у кінці</button>
+                            <button type="button" class="btn btn-sm" data-action="remove-row" ${b.rows.length <= 1 ? "disabled" : ""}>− Останній рядок</button>
+                            <button type="button" class="btn btn-sm" data-action="remove-column" ${b.rows[0].length <= 1 ? "disabled" : ""}>− Останній стовпець</button>
+                        </div>
+                        <p class="rb-hint">Номери рядків і стовпців видно лише в редакторі. Широку таблицю можна прокручувати горизонтально. У Word довга таблиця продовжиться на новій сторінці з написом «Продовження таблиці №…».</p>`;
                 } else if (b.kind === "pageBreak") {
                     body = '<p class="rb-hint">Наступний блок почнеться з нової сторінки у Word.</p>';
                 } else {
@@ -320,34 +345,49 @@
             if (e.key !== "Tab" || !e.target.matches(".code-editor-textarea")) return;
             e.preventDefault(); const t = e.target; t.setRangeText("    ", t.selectionStart, t.selectionEnd, "end"); t.dispatchEvent(new Event("input", { bubbles: true }));
         });
-        function updateTableStructure(card, block, action) {
+        function updateTableStructure(card, block, action, insertAt) {
             const body = card.querySelector('.rb-edit-table tbody');
             const header = card.querySelector('.rb-edit-table thead tr');
-            card.querySelector('.rb-edit-table').style.setProperty('--rb-table-columns', block.rows[0].length);
-            card.querySelector('.rb-table-size').textContent = `Рядків: ${block.rows.length} · Стовпців: ${block.rows[0].length}`;
-            const addNumber = (row, scope, number) => {
-                const cell = document.createElement('th');
-                cell.scope = scope; cell.textContent = String(number);
-                cell.setAttribute('aria-label', `${scope === 'row' ? 'Рядок' : 'Стовпець'} ${number}`);
-                row.append(cell);
+            const columns = block.rows[0].length;
+            card.querySelector('.rb-edit-table').style.setProperty('--rb-table-columns', columns);
+            card.querySelector('.rb-table-size').textContent = `Рядків: ${block.rows.length} · Стовпців: ${columns}`;
+            const numberHeader = (cell, scope, index) => {
+                const button = cell.firstElementChild;
+                const label = tableIndexLabel(scope, index);
+                cell.setAttribute('aria-label', `${scope === 'row' ? 'Рядок' : 'Стовпець'} ${index + 1}`);
+                button.dataset.insertBefore = String(index);
+                button.setAttribute('aria-label', label);
+                button.title = label;
+                button.lastElementChild.textContent = String(index + 1);
             };
-            const addCell = (row, r, c) => {
-                const cell = row.insertCell();
-                const input = document.createElement('textarea');
-                input.className = 'form-control'; input.rows = 2;
+            const positionCell = (input, r, c) => {
                 input.dataset.row = String(r); input.dataset.column = String(c);
                 input.setAttribute('aria-label', `Рядок ${r + 1}, стовпець ${c + 1}`);
+            };
+            const addCell = (row, r, c) => {
+                const cell = row.insertCell(c + 1);
+                const input = document.createElement('textarea');
+                input.className = 'form-control'; input.rows = 2;
+                positionCell(input, r, c);
                 input.value = block.rows[r][c]; cell.append(input); resize(cell);
             };
-            // Keep existing fields and the focused toolbar button in the DOM.
-            // Replacing the whole block makes the browser scroll to its beginning.
+            // Keep existing fields and buttons in the DOM so their focus and selection survive.
             if (action === 'add-row') {
-                const row = body.insertRow();
-                addNumber(row, 'row', block.rows.length);
-                block.rows.at(-1).forEach((_, c) => addCell(row, block.rows.length - 1, c));
+                const row = body.insertRow(insertAt);
+                row.insertAdjacentHTML('afterbegin', tableHeader('row', insertAt));
+                block.rows[insertAt].forEach((_, c) => addCell(row, insertAt, c));
+                for (let r = insertAt + 1; r < body.rows.length; r++) {
+                    const { cells } = body.rows[r];
+                    numberHeader(cells[0], 'row', r);
+                    for (let c = 0; c < columns; c++) positionCell(cells[c + 1].firstElementChild, r, c);
+                }
             } else if (action === 'add-column') {
-                addNumber(header, 'col', block.rows[0].length);
-                [...body.rows].forEach((row, r) => addCell(row, r, block.rows[0].length - 1));
+                header.cells[insertAt].insertAdjacentHTML('afterend', tableHeader('col', insertAt));
+                for (let c = insertAt + 1; c < columns; c++) numberHeader(header.cells[c + 1], 'col', c);
+                [...body.rows].forEach((row, r) => {
+                    addCell(row, r, insertAt);
+                    for (let c = insertAt + 1; c < columns; c++) positionCell(row.cells[c + 1].firstElementChild, r, c);
+                });
             } else if (action === 'remove-row') body.deleteRow(-1);
             else if (action === 'remove-column') {
                 header.deleteCell(-1);
@@ -369,16 +409,22 @@
                 if (!getItems().includes(b)) return;
             }
             const index = items.indexOf(b);
+            let insertAt;
             if (action === "up" || action === "down") move(items, id, action === "up" ? -1 : 1);
             else if (action === "copy") { const copy = normalize([b])[0]; copy.id = uid(); items.splice(index + 1, 0, copy); }
             else if (action === "remove") items.splice(index, 1);
-            else if (action === "add-row") b.rows.push(Array(b.rows[0].length).fill(""));
-            else if (action === "add-column") b.rows.forEach(row => row.push(""));
+            else if (action === "add-row" || action === "add-column") {
+                const length = action === "add-row" ? b.rows.length : b.rows[0].length;
+                insertAt = Number(button.dataset.insertBefore ?? length);
+                if (!Number.isInteger(insertAt) || insertAt < 0 || insertAt > length) return;
+                if (action === "add-row") b.rows.splice(insertAt, 0, Array(b.rows[0].length).fill(""));
+                else b.rows.forEach(row => row.splice(insertAt, 0, ""));
+            }
             else if (action === "remove-row" && b.rows.length > 1) b.rows.pop();
             else if (action === "remove-column" && b.rows[0].length > 1) b.rows.forEach(row => row.pop());
             else return;
             if (['add-row', 'add-column', 'remove-row', 'remove-column'].includes(action)) {
-                updateTableStructure(button.closest('[data-block]'), b, action);
+                updateTableStructure(button.closest('[data-block]'), b, action, insertAt);
                 onChange();
                 return;
             }
